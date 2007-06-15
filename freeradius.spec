@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 1.1.6
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPL
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -159,6 +159,7 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %post
+/bin/chown -R radiusd.radiusd %{_sysconfdir}/raddb
 /sbin/ldconfig
 if [ $1 = 1 ]; then
   /sbin/chkconfig --add radiusd
@@ -174,6 +175,7 @@ if [ $1 = 0 ]; then
   /sbin/chkconfig --del radiusd
 fi
 
+
 %postun
 if [ $1 -ge 1 ]; then
   /sbin/service radiusd condrestart >/dev/null 2>&1 || :
@@ -187,28 +189,29 @@ fi
 %config (noreplace) %{_sysconfdir}/pam.d/radiusd
 %config (noreplace) %{_sysconfdir}/logrotate.d/radiusd
 %config (noreplace) %{_initrddir}/radiusd
-%dir %{_sysconfdir}/raddb
-%config (noreplace) %{_sysconfdir}/raddb/acct_users
-%config (noreplace) %{_sysconfdir}/raddb/attrs
-%config (noreplace) %{_sysconfdir}/raddb/certs
-%config (noreplace) %{_sysconfdir}/raddb/clients
-%config (noreplace) %{_sysconfdir}/raddb/clients.conf
-%config (noreplace) %{_sysconfdir}/raddb/dictionary
-%config (noreplace) %{_sysconfdir}/raddb/eap.conf
-%config (noreplace) %{_sysconfdir}/raddb/example.pl
-%config (noreplace) %{_sysconfdir}/raddb/hints
-%config (noreplace) %{_sysconfdir}/raddb/huntgroups
-%config (noreplace) %{_sysconfdir}/raddb/ldap.attrmap
-%config (noreplace) %{_sysconfdir}/raddb/naslist
-%config (noreplace) %{_sysconfdir}/raddb/naspasswd
-%config (noreplace) %{_sysconfdir}/raddb/otp.conf
-%config (noreplace) %{_sysconfdir}/raddb/preproxy_users
-%config (noreplace) %{_sysconfdir}/raddb/proxy.conf
-%config (noreplace) %{_sysconfdir}/raddb/radiusd.conf
-%config (noreplace) %{_sysconfdir}/raddb/realms
-%config (noreplace) %{_sysconfdir}/raddb/snmp.conf
-%config (noreplace) %{_sysconfdir}/raddb/sqlippool.conf
-%config (noreplace) %{_sysconfdir}/raddb/users
+%dir %attr(0700,radiusd,radiusd) %{_sysconfdir}/raddb
+%dir %attr(0700,radiusd,radiusd) %{_sysconfdir}/raddb/certs
+%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/acct_users
+%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/attrs
+%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/certs/*
+%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/clients
+%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/clients.conf
+%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/dictionary
+%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/eap.conf
+%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/example.pl
+%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/hints
+%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/huntgroups
+%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/ldap.attrmap
+%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/naslist
+%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/naspasswd
+%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/otp.conf
+%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/preproxy_users
+%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/proxy.conf
+%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/radiusd.conf
+%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/realms
+%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/snmp.conf
+%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/sqlippool.conf
+%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/users
 %{_bindir}/*
 %{_libdir}/libeap*.so
 %{_libdir}/libradius*.so
@@ -268,21 +271,25 @@ fi
 
 %files mysql
 %defattr(-,root,root,-)
-%{_sysconfdir}/raddb/sql.conf
+%attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/sql.conf
 %{_libdir}/*_mysql*.so
 
 %files postgresql
 %defattr(-,root,root,-)
-%{_sysconfdir}/raddb/postgresql.conf
+%attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/postgresql.conf
 %{_libdir}/*_postgresql*.so
 
 %files unixODBC
 %defattr(-,root,root,-)
-%{_sysconfdir}/raddb/mssql.conf
+%attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/mssql.conf
 %{_libdir}/*_unixodbc*.so
 
 
 %changelog
+* Fri Jun 15 2007 Thomas Woerner <twoerner@redhat.com> 1.1.6-2
+- radiusd expects /etc/raddb to not be world readable or writable
+  /etc/raddb now belongs to radiusd, post script sets permissions
+
 * Fri Jun 15 2007 Thomas Woerner <twoerner@redhat.com> 1.1.6-1
 - new version 1.1.6
 
