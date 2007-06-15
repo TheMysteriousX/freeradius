@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 1.1.5
-Release: 1
+Version: 1.1.6
+Release: 1%{?dist}
 License: GPL
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -283,6 +283,9 @@ fi
 
 
 %changelog
+* Fri Jun 15 2007 Thomas Woerner <twoerner@redhat.com> 1.1.6-1
+- new version 1.1.6
+
 * Fri Mar  9 2007 Thomas Woerner <twoerner@redhat.com> 1.1.5-1
 - new version 1.1.5
   - no /etc/raddb/otppasswd.sample anymore
