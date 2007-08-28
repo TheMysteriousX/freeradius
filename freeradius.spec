@@ -1,8 +1,8 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 1.1.6
+Version: 1.1.7
 Release: 2%{?dist}
-License: GPL
+License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
 Source0: ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
@@ -23,7 +23,9 @@ Patch4: freeradius-0.9.0-com_err.patch
 Patch8: freeradius-1.0.0-samba3.patch
 Patch10: freeradius-1.1.3-build.patch
 Patch11: freeradius-1.1.2-no_sql_inc.patch
-Patch12: freeradius-1.1.3-ldap.patch
+Patch12: freeradius-1.1.7-ldap.patch
+Patch13: freeradius-1.1.7-db_dir.patch
+Patch14: freeradius-1.1.7-lsb.patch
 
 %description
 The FreeRADIUS Server Project is a high performance and highly configurable 
@@ -80,13 +82,15 @@ This plugin provides the unixODBC bindings for the FreeRADIUS server project.
 %patch10 -p1 -b .build
 %patch11 -p1 -b .no_sql_inc
 %patch12 -p1 -b .ldap
+%patch13 -p1 -b .db_dir
+%patch14 -p1 -b .lsb
 
 
 %build
 %ifarch s390 s390x
-export CFLAGS="$RPM_OPT_FLAGS -fPIC -DLDAP_DEPRECATED"
+export CFLAGS="$RPM_OPT_FLAGS -fPIC"
 %else
-export CFLAGS="$RPM_OPT_FLAGS -fpic -DLDAP_DEPRECATED"
+export CFLAGS="$RPM_OPT_FLAGS -fpic"
 %endif
 
 # bad fix for libtool: clear buildroot early, set LDFLAGS to buildroot libdir
@@ -118,6 +122,8 @@ make #%{?_smp_mflags}
 %install
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/{logrotate.d,pam.d,rc.d/init.d}
+# create database directory
+mkdir -p $RPM_BUILD_ROOT/var/lib/radiusd
 
 # fix for bad libtool bug - can not rebuild dependent libs and bins
 export LD_LIBRARY_PATH=$RPM_BUILD_ROOT/%{_libdir}
@@ -133,6 +139,10 @@ perl -i -pe 's/#	shadow =/shadow =/' $RADDB/radiusd.conf
 install -m 755 redhat/rc.radiusd-redhat $RPM_BUILD_ROOT/%{_initrddir}/radiusd
 install -m 644 redhat/radiusd-logrotate $RPM_BUILD_ROOT/%{_sysconfdir}/logrotate.d/radiusd
 install -m 644 redhat/radiusd-pam $RPM_BUILD_ROOT/%{_sysconfdir}/pam.d/radiusd
+
+# install SNMP MIB files
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/snmp/mibs/
+install -m 644 mibs/RADIUS*.txt $RPM_BUILD_ROOT%{_datadir}/snmp/mibs/
 
 # remove unwanted rc.radiusd
 rm -f $RPM_BUILD_ROOT%{_prefix}/sbin/rc.radiusd
@@ -186,32 +196,33 @@ fi
 %files
 %defattr(-,root,root,-)
 %doc %{_docdir}/freeradius-%{version}/
-%config (noreplace) %{_sysconfdir}/pam.d/radiusd
-%config (noreplace) %{_sysconfdir}/logrotate.d/radiusd
-%config (noreplace) %{_initrddir}/radiusd
+%config(noreplace) %{_sysconfdir}/pam.d/radiusd
+%config(noreplace) %{_sysconfdir}/logrotate.d/radiusd
+%config(noreplace) %{_initrddir}/radiusd
 %dir %attr(0700,radiusd,radiusd) %{_sysconfdir}/raddb
 %dir %attr(0700,radiusd,radiusd) %{_sysconfdir}/raddb/certs
-%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/acct_users
-%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/attrs
-%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/certs/*
-%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/clients
-%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/clients.conf
-%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/dictionary
-%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/eap.conf
-%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/example.pl
-%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/hints
-%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/huntgroups
-%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/ldap.attrmap
-%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/naslist
-%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/naspasswd
-%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/otp.conf
-%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/preproxy_users
-%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/proxy.conf
-%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/radiusd.conf
-%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/realms
-%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/snmp.conf
-%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/sqlippool.conf
-%config %attr(0600,radiusd,radiusd) (noreplace) %{_sysconfdir}/raddb/users
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/acct_users
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/attrs
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/certs/*
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/clients
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/clients.conf
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/dictionary
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/eap.conf
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/example.pl
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/hints
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/huntgroups
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/ldap.attrmap
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/naslist
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/naspasswd
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/otp.conf
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/postgresqlippool.conf
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/preproxy_users
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/proxy.conf
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/radiusd.conf
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/realms
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/snmp.conf
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/sqlippool.conf
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/users
 %{_bindir}/*
 %{_libdir}/libeap*.so
 %{_libdir}/libradius*.so
@@ -255,9 +266,11 @@ fi
 %{_libdir}/rlm_sql-%{version}.so
 %{_libdir}/rlm_sql.so
 %{_libdir}/rlm_sqlcounter*.so
+%{_libdir}/rlm_sqlippool*.so
 %{_libdir}/rlm_sql_log*.so
 %{_libdir}/rlm_unix*.so
 %{_datadir}/freeradius
+%{_datadir}/snmp/mibs/RADIUS*.txt
 %{_sbindir}/*
 %{_mandir}/man1/*.1*
 %{_mandir}/man5/*.5*
@@ -268,24 +281,37 @@ fi
 %ghost %attr(0600,radiusd,radiusd) /var/log/radius/radius.log
 %attr(0700,radiusd,radiusd) %dir /var/log/radius/radacct
 %attr(0700,radiusd,radiusd) %dir /var/run/radiusd
+# use only for database files:
+%attr(0700,radiusd,radiusd) %dir /var/lib/radiusd
 
 %files mysql
 %defattr(-,root,root,-)
-%attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/sql.conf
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/sql.conf
 %{_libdir}/*_mysql*.so
 
 %files postgresql
 %defattr(-,root,root,-)
-%attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/postgresql.conf
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/postgresql.conf
 %{_libdir}/*_postgresql*.so
 
 %files unixODBC
 %defattr(-,root,root,-)
-%attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/mssql.conf
+%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/mssql.conf
 %{_libdir}/*_unixodbc*.so
 
 
 %changelog
+* Tue Aug 28 2007 Thomas Woerner <twoerner@redhat.com> 1.1.7-2
+- fixed initscript for LSB (rhbz#243671, rhbz#243928)
+- fixed license tag
+
+* Tue Aug  7 2007 Thomas Woerner <twoerner@redhat.com> 1.1.7-1
+- new versin 1.1.7
+- install snmp MIB files
+- dropped LDAP_DEPRECATED flag, it is upstream
+- marked config files for sub packages as config (rhbz#240400)
+- moved db files to /var/lib/raddb (rhbz#199082)
+
 * Fri Jun 15 2007 Thomas Woerner <twoerner@redhat.com> 1.1.6-2
 - radiusd expects /etc/raddb to not be world readable or writable
   /etc/raddb now belongs to radiusd, post script sets permissions

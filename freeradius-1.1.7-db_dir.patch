@@ -1,0 +1,37 @@
+diff -up freeradius-1.1.7/raddb/radiusd.conf.in.db_dir freeradius-1.1.7/raddb/radiusd.conf.in
+--- freeradius-1.1.7/raddb/radiusd.conf.in.db_dir	2007-08-07 15:41:35.000000000 +0200
++++ freeradius-1.1.7/raddb/radiusd.conf.in	2007-08-07 15:44:47.000000000 +0200
+@@ -33,6 +33,11 @@ radacctdir = @radacctdir@
+ confdir = ${raddbdir}
+ run_dir = ${localstatedir}/run/radiusd
+ 
++# Location of db files
++# Please use this directory for all db files (e.g. db.daily, db.ippool and
++# db.ipindex).
++db_dir = ${localstatedir}/lib/radiusd
++
+ #
+ #  The logging messages for the server are appended to the
+ #  tail of this file.
+@@ -1398,7 +1403,7 @@ $INCLUDE ${confdir}/eap.conf
+ 	#  'check-name' attribute.
+ 	#
+ 	counter daily {
+-		filename = ${raddbdir}/db.daily
++		filename = ${db_dir}/db.daily
+ 		key = User-Name
+ 		count-attribute = Acct-Session-Time
+ 		reset = daily
+@@ -1713,10 +1718,10 @@ $INCLUDE ${confdir}/eap.conf
+ 		cache-size = 800
+ 
+ 		# session-db: The main db file used to allocate ip's to clients
+-		session-db = ${raddbdir}/db.ippool
++		session-db = ${db_dir}/db.ippool
+ 
+ 		# ip-index: Helper db index file used in multilink
+-		ip-index = ${raddbdir}/db.ipindex
++		ip-index = ${db_dir}/db.ipindex
+ 
+ 		# override: Will this ippool override a Framed-IP-Address already set
+ 		override = no

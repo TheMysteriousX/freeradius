@@ -1,6 +1,7 @@
---- freeradius-1.1.3/src/modules/rlm_ldap/rlm_ldap.c.ldap	2006-05-09 01:45:02.000000000 +0200
-+++ freeradius-1.1.3/src/modules/rlm_ldap/rlm_ldap.c	2006-11-13 15:51:48.000000000 +0100
-@@ -1013,7 +1013,7 @@
+diff -up freeradius-1.1.7/src/modules/rlm_ldap/rlm_ldap.c.ldap freeradius-1.1.7/src/modules/rlm_ldap/rlm_ldap.c
+--- freeradius-1.1.7/src/modules/rlm_ldap/rlm_ldap.c.ldap	2007-06-18 11:00:27.000000000 +0200
++++ freeradius-1.1.7/src/modules/rlm_ldap/rlm_ldap.c	2007-08-06 14:40:31.000000000 +0200
+@@ -1041,7 +1041,7 @@ static int ldap_groupcmp(void *instance,
  		radlog(L_ERR, "rlm_ldap: Add ldap connections are in use");
  		return 1;
  	}
@@ -9,7 +10,7 @@
  					filter, group_attrs,&result)) != RLM_MODULE_OK){
  		DEBUG("rlm_ldap::ldap_groupcmp: Search returned error");
  		ldap_release_conn(conn_id, inst->conns);
-@@ -1327,7 +1327,7 @@
+@@ -1356,7 +1356,7 @@ ldap_authorize(void *instance, REQUEST *
  
  		strNcpy(filter,inst->base_filter,sizeof(filter));
  		if (user_profile)
@@ -18,16 +19,16 @@
  		if (profile && strlen(profile)){
  			if ((res = perform_search(instance, conn,
  				profile, LDAP_SCOPE_BASE,
-@@ -1430,7 +1430,7 @@
- 								return RLM_MODULE_FAIL;
+@@ -1460,7 +1460,7 @@ ldap_authorize(void *instance, REQUEST *
  							}
+ 							added_known_password = 1;
  							passwd_len = strlen(passwd_val);
 -							strncpy(passwd_item->strvalue,passwd_val,MAX_STRING_LEN - 1);
 +							strncpy((char *)passwd_item->strvalue,passwd_val,MAX_STRING_LEN - 1);
  							passwd_item->length = (passwd_len > (MAX_STRING_LEN - 1)) ? (MAX_STRING_LEN - 1) : passwd_len;
  							pairadd(&request->config_items,passwd_item);
  							DEBUG("rlm_ldap: Added password %s in check items",passwd_item->strvalue);
-@@ -1748,16 +1748,16 @@
+@@ -1804,12 +1804,12 @@ ldap_authenticate(void *instance, REQUES
  		ldap_msgfree(result);
  	}
  
@@ -42,12 +43,16 @@
  			       1, &res, NULL);
  #else
  
+@@ -1954,7 +1954,7 @@ retry:
+ 		}
+ 	}
+ 
 -	ld_user = ldap_connect(instance, user_dn, request->password->strvalue,
 +	ld_user = ldap_connect(instance, user_dn, (char *)request->password->strvalue,
  			1, &res, &err);
  
  	if(err != NULL){
-@@ -2023,7 +2023,7 @@
+@@ -2208,7 +2208,7 @@ ldap_connect(void *instance, const char 
  
  #ifdef HAVE_LDAP_INT_TLS_CONFIG
  
@@ -56,8 +61,8 @@
  							  (inst->tls_require_cert) )
  		 != LDAP_OPT_SUCCESS) {
  		radlog(L_ERR, "rlm_ldap: could not set "
-@@ -2430,7 +2430,7 @@
- 				}
+@@ -2622,7 +2622,7 @@ ldap_pairget(LDAP * ld, LDAPMessage * en
+ 
  				if (do_xlat) {
  					newpair->flags.do_xlat = 1;
 -					strNcpy(newpair->strvalue, buf,

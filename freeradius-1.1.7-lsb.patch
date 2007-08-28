@@ -1,0 +1,84 @@
+diff -up freeradius-1.1.7/redhat/rc.radiusd-redhat.lsb freeradius-1.1.7/redhat/rc.radiusd-redhat
+--- freeradius-1.1.7/redhat/rc.radiusd-redhat.lsb	2002-09-14 01:13:58.000000000 +0200
++++ freeradius-1.1.7/redhat/rc.radiusd-redhat	2007-08-28 15:21:59.000000000 +0200
+@@ -20,6 +20,14 @@
+ #    Copyright (C) 2001 The FreeRADIUS Project   http://www.freeradius.org
+ #
+ 
++### BEGIN INIT INFO
++# Provides: RADIUS server daemon
++# Required-Start: $local_fs $network
++# Required-Stop: $local_fs $network
++# Short-Description: start and stop RADIUS server daemon
++# Description: radiusd - Authentication, Authorization and Accounting server
++### END INIT INFO
++
+ # Source function library.
+ . /etc/rc.d/init.d/functions
+ 
+@@ -27,13 +35,17 @@ RADIUSD=/usr/sbin/radiusd
+ LOCKF=/var/lock/subsys/radiusd
+ CONFIG=/etc/raddb/radiusd.conf
+ 
+-[ -f $RADIUSD ] || exit 0
+-[ -f $CONFIG ] || exit 0
++[ -f $RADIUSD ] || exit 5
++[ -f $CONFIG ] || exit 6
+ 
+ RETVAL=0
+ 
++status radiusd
++running=$?
++
+ case "$1" in
+   start)
++	[ $running -eq 0 ] && exit 0
+ 	echo -n $"Starting RADIUS server: "
+ 	daemon $RADIUSD -y
+ 	RETVAL=$?
+@@ -42,6 +54,7 @@ case "$1" in
+ 	    ln -s /var/run/radiusd/radiusd.pid /var/run/radiusd.pid 2>/dev/null
+ 	;;
+   stop)
++	[ $running -ne 0 ] || exit 0
+ 	echo -n $"Stopping RADIUS server: "
+ 	killproc $RADIUSD
+ 	RETVAL=$?
+@@ -53,28 +66,28 @@ case "$1" in
+ 	RETVAL=$?
+         ;;
+   reload)
++	[ $running -ne 0 ] && exit 7
+ 	echo -n $"Reloading RADIUS server: "
+ 	killproc $RADIUSD -HUP
+ 	RETVAL=$?
+ 	echo
+ 	;;
+-  restart)
++  restart|force-reload)
+ 	$0 stop
+ 	sleep 3
+ 	$0 start
+ 	RETVAL=$?
+ 	;;
+-  condrestart)
+-	if [ -f $LOCKF ]; then
+-		$0 stop
+-		sleep 3
+-		$0 start
+-		RETVAL=$?
+-	fi
++  condrestart|try-restart)
++	[ ! -f $LOCKF ] && exit 7
++	$0 stop
++	sleep 3
++	$0 start
++	RETVAL=$?
+ 	;;
+   *)
+ 	echo $"Usage: $0 {start|stop|status|restart|reload|condrestart}"
+-	exit 1
++	RETVAL=3
+ esac
+ 
+ exit $RETVAL
