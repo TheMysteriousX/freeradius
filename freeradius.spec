@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 1.1.7
-Release: 3%{?dist}
+Release: 3.1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -301,6 +301,9 @@ fi
 
 
 %changelog
+* Mon Sep 17 2007 Thomas Woerner <twoerner@redhat.com> 1.1.7-3.1
+- made init script fully lsb conform
+
 * Mon Sep 17 2007 Thomas Woerner <twoerner@redhat.com> 1.1.7-3
 - fixed initscript problem (rhbz#292521)
 
