@@ -1,11 +1,12 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 1.1.7
-Release: 3.1%{?dist}
+Release: 3.2.ipa%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
 Source0: ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
+Source1: freeradius-autogen.sh
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires: net-snmp krb5-libs net-snmp-utils
 BuildRequires: net-snmp-devel net-snmp-utils krb5-devel openldap-devel 
@@ -13,6 +14,7 @@ BuildRequires: openssl-devel pam-devel
 BuildRequires: libtool-ltdl-devel libtool
 BuildRequires: gdbm-devel zlib-devel
 BuildRequires: perl-devel
+BuildRequires: autoconf
 Requires(pre): shadow-utils
 Requires(post): /sbin/ldconfig /sbin/chkconfig
 Requires(postun): /sbin/ldconfig
@@ -26,6 +28,7 @@ Patch11: freeradius-1.1.2-no_sql_inc.patch
 Patch12: freeradius-1.1.7-ldap.patch
 Patch13: freeradius-1.1.7-db_dir.patch
 Patch14: freeradius-1.1.7-lsb.patch
+Patch15: freeradius-1.1.7-ipa.patch
 
 %description
 The FreeRADIUS Server Project is a high performance and highly configurable 
@@ -84,6 +87,7 @@ This plugin provides the unixODBC bindings for the FreeRADIUS server project.
 %patch12 -p1 -b .ldap
 %patch13 -p1 -b .db_dir
 %patch14 -p1 -b .lsb
+%patch15 -p1 -b .ipa
 
 
 %build
@@ -97,6 +101,8 @@ export CFLAGS="$RPM_OPT_FLAGS -fpic"
 rm -rf $RPM_BUILD_ROOT
 export LDFLAGS="-L${RPM_BUILD_ROOT}%{_libdir}"
 
+cp %{SOURCE1} .
+./freeradius-autogen.sh
 %configure \
 	--with-gnu-ld \
 	--with-threads \
@@ -109,7 +115,9 @@ export LDFLAGS="-L${RPM_BUILD_ROOT}%{_libdir}"
 	--with-mysql-lib-dir=%{_libdir}/mysql \
 	--with-unixodbc-lib-dir=%{_libdir} \
 	--with-rlm-dbm-lib-dir=%{_libdir} \
-	--with-rlm-krb5-include-dir=/usr/kerberos/include
+	--with-rlm-krb5-include-dir=/usr/kerberos/include \
+	--with-rlm-ldap-sasl2 --with-rlm-ldap-sasl2-include-dir=/usr/include/sasl \
+	--with-rlm-ldap-krb5
 
 %if "%{_lib}" == "lib64"
 perl -pi -e 's:sys_lib_search_path_spec=.*:sys_lib_search_path_spec="/lib64 /usr/lib64 /usr/local/lib64":' libtool
@@ -301,6 +309,9 @@ fi
 
 
 %changelog
+* Sat Nov 10 2007  <jdennis@redhat.com> - 1.1.7-3.2.ipa
+- add support in rlm_ldap for SASL/GSSAPI binds to the LDAP server
+
 * Mon Sep 17 2007 Thomas Woerner <twoerner@redhat.com> 1.1.7-3.1
 - made init script fully lsb conform
 

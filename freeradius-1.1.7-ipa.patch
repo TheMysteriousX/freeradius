@@ -1,0 +1,509 @@
+diff -r -u freeradius-1.1.7/src/modules/rlm_ldap/configure.in work/src/modules/rlm_ldap/configure.in
+--- freeradius-1.1.7/src/modules/rlm_ldap/configure.in	2007-06-26 03:34:58.000000000 -0400
++++ work/src/modules/rlm_ldap/configure.in	2007-11-03 14:49:46.000000000 -0400
+@@ -70,6 +70,75 @@
+ 		;;
+ 	    esac ])
+ 
++	dnl extra argument: --with-rlm-ldap-krb5-include-dir
++	rlm_ldap_krb5_inc_dir=
++	AC_ARG_WITH(rlm-ldap-krb5-include-dir,
++	[  --with-rlm-ldap-krb5-include-dir=DIR   Directory for krb5 include files []],
++	[ case "$withval" in
++	    no)
++		AC_MSG_ERROR(Need rlm-ldap-krb5-include-dir)
++		;;
++	    yes)
++		;;
++	    *)
++		rlm_ldap_krb5_include_dir="$withval"
++		;;
++	  esac ]
++	)
++
++	dnl extra argument: --with-rlm-ldap-sasl2-include-dir
++	rlm_ldap_sasl2_inc_dir=
++	AC_ARG_WITH(rlm-ldap-sasl2-include-dir,
++	[  --with-rlm-ldap-sasl2-include-dir=DIR   Directory for sasl2 include files []],
++	[ case "$withval" in
++	    no)
++		AC_MSG_ERROR(Need rlm-ldap-sasl2-include-dir)
++		;;
++	    yes)
++		;;
++	    *)
++		rlm_ldap_sasl2_include_dir="$withval"
++		;;
++	  esac ]
++	)
++
++	dnl extra argument: --with-rlm-ldap-sasl2
++	rlm_ldap_with_sasl2=yes
++	AC_ARG_WITH(rlm-ldap-sasl2,
++	[  --with-rlm-ldap-sasl2            use sasl2, if available. (default=yes) ],
++	[ case "$withval" in
++	    no)
++		rlm_ldap_with_sasl2=no
++		;;
++	    *)
++		;;
++	    esac ])
++
++	if test "x$rlm_ldap_with_sasl2" = "xyes"; then
++	    AC_DEFINE(USE_SASL2, [], [Defined if building with SASL2 support])
++	fi
++
++	dnl extra argument: --with-rlm-ldap-krb5
++	rlm_ldap_with_krb5=yes
++	AC_ARG_WITH(rlm-ldap-krb5,
++	[  --with-rlm-ldap-krb5             use krb5, if available. (default=yes) ],
++	[ case "$withval" in
++	    no)
++		rlm_ldap_with_krb5=no
++		;;
++	    *)
++		;;
++	    esac ])
++
++	if test "x$rlm_ldap_with_krb5" = "xyes"; then
++	    if test "x$rlm_ldap_with_sasl2" != "xyes"; then
++	        fail="$fail sasl2 if using krb5"
++		# force sasl on if using krb5
++		#rlm_ldap_with_sasl2="yes"
++	    fi
++	    AC_DEFINE(USE_KRB5, [], [Defined if building with krb5 support])
++	fi
++
+ 	dnl ############################################################
+ 	dnl # Check for libraries
+ 	dnl ############################################################
+@@ -102,6 +171,20 @@
+ 	    fi
+ 	fi
+ 
++	if test "x$rlm_ldap_with_sasl2" = "xyes"; then
++	    AC_SMART_CHECK_LIB(sasl2, sasl_client_start)
++	    if test "x$ac_cv_lib_sasl2_sasl_client_start" != "xyes"; then
++		fail="$fail libsasl2"
++	    fi
++	fi
++
++	if test "x$rlm_ldap_with_krb5" = "xyes"; then
++	    AC_SMART_CHECK_LIB(krb5, krb5_init_context)
++	    if test "x$ac_cv_lib_krb5_krb5_init_context" != xyes; then
++		    fail="$fail krb5"
++	    fi
++	fi
++
+ 	dnl ############################################################
+ 	dnl # Check for header files
+ 	dnl ############################################################
+@@ -112,6 +195,23 @@
+ 	  fail="$fail ldap.h"
+ 	fi
+ 
++	if test "x$rlm_ldap_with_sasl2" = "xyes"; then
++	    smart_try_dir=$rlm_ldap_sasl2_include_dir
++	    AC_SMART_CHECK_INCLUDE(sasl.h)
++	    if test "$ac_cv_header_sasl_h" != "yes"; then
++	        fail="$fail sasl.h"
++	    fi
++	fi
++
++	if test "x$rlm_ldap_with_krb5" = "xyes"; then
++	    smart_try_dir=$rlm_ldap_krb5_include_dir
++	    AC_SMART_CHECK_INCLUDE(krb5.h)
++	    if test "$ac_cv_header_krb5_h" != "yes"; then
++	        fail="$fail krb5.h"
++	    fi
++	fi
++
++
+ 	dnl ############################################################
+ 	dnl # Check for library functions
+ 	dnl ############################################################
+@@ -168,4 +268,5 @@
+ AC_SUBST(ldap_ldflags)
+ AC_SUBST(ldap_cflags)
+ AC_SUBST(targetname)
++AC_CONFIG_HEADER(config.h)
+ AC_OUTPUT(Makefile)
+diff -r -u freeradius-1.1.7/src/modules/rlm_ldap/rlm_ldap.c work/src/modules/rlm_ldap/rlm_ldap.c
+--- freeradius-1.1.7/src/modules/rlm_ldap/rlm_ldap.c	2007-11-01 13:16:18.000000000 -0400
++++ work/src/modules/rlm_ldap/rlm_ldap.c	2007-11-02 13:12:30.000000000 -0400
+@@ -1,3 +1,4 @@
++// -*- mode: c; indent-tabs-mode: t; c-basic-offset: 8; -*-
+ /*
+  * rlm_ldap.c	LDAP authorization and authentication module.
+  *
+@@ -159,7 +160,9 @@
+  */
+ static const char rcsid[] = "$Id: rlm_ldap.c,v 1.122.2.8.2.12 2007/06/18 09:00:27 aland Exp $";
+ 
++#define _GNU_SOURCE
+ #include "autoconf.h"
++#include "config.h"
+ 
+ #include	<sys/types.h>
+ #include	<sys/socket.h>
+@@ -187,6 +190,14 @@
+ #include	"modules.h"
+ #include	"rad_assert.h"
+ 
++#ifdef USE_KRB5
++#include <krb5.h>
++#endif
++
++#ifdef USE_SASL2
++#include <sasl.h>
++#endif
++
+ #ifndef HAVE_PTHREAD_H
+ /*
+  *      This is a lot simpler than putting ifdef's around
+@@ -274,6 +285,19 @@
+ #endif
+ } LDAP_CONN;
+ 
++#ifdef USE_KRB5
++typedef struct krb_session {
++    krb5_context context;
++    char *realm_name;
++    krb5_principal principal;
++    krb5_keytab keytab;
++    char *ccname;
++    char *ccache_file;
++    krb5_ccache ccache;
++    krb5_creds creds;
++} krb_session;
++#endif
++
+ typedef struct {
+ 	char           *server;
+ 	int             port;
+@@ -322,6 +346,15 @@
+ 	int			edir_account_policy_check;
+ #endif
+ 	int		set_auth_type;
++#ifdef USE_SASL2
++	int		use_sasl;
++	char		*sasl_mech;
++#endif
++#ifdef USE_KRB5
++	char		*krb_keytab;
++	char		*krb_principal;
++	krb_session	krb;
++#endif
+ }               ldap_instance;
+ 
+ /* The default setting for TLS Certificate Verification */
+@@ -370,6 +403,14 @@
+ #endif
+ 
+ 	{"set_auth_type", PW_TYPE_BOOLEAN, offsetof(ldap_instance,set_auth_type), NULL, "yes"},
++#ifdef USE_SASL2
++	{"use_sasl", PW_TYPE_BOOLEAN, offsetof(ldap_instance,use_sasl), NULL, "no"},
++	{"sasl_mech", PW_TYPE_STRING_PTR, offsetof(ldap_instance,sasl_mech), NULL, "GSSAPI"},
++#endif
++#ifdef USE_KRB5
++	{"krb_keytab", PW_TYPE_STRING_PTR, offsetof(ldap_instance,krb_keytab), NULL, "${confdir}/krb5.keytab"},
++	{"krb_principal", PW_TYPE_STRING_PTR, offsetof(ldap_instance,krb_principal), NULL, NULL},
++#endif
+ 	{NULL, -1, 0, NULL, NULL}
+ };
+ 
+@@ -380,6 +421,214 @@
+ #ifdef FIELDCPY
+ static void     fieldcpy(char *, char **);
+ #endif
++
++#ifdef USE_KRB5
++static krb5_timestamp ticket_lifetime = 300;
++
++static void krb_session_zero(krb_session *krb)
++{
++	DEBUG("rlm_ldap: krb_session_zero (%p)", krb);
++	krb->context = NULL;
++	krb->realm_name = NULL;
++	memset ((char*)&krb->principal, 0, sizeof(krb->principal));
++	krb->keytab = NULL;
++	krb->ccname = NULL;
++	krb->ccache_file = NULL;
++	krb->ccache = NULL;
++	memset ((char*)&krb->creds, 0, sizeof(krb->creds));
++}
++
++static void krb_session_free(krb_session *krb)
++{
++	DEBUG("rlm_ldap: krb_session_free (%p)", krb);
++	if (krb->ccache_file) {
++		unlink(krb->ccache_file);
++		free(krb->ccache_file);
++	}
++
++	if (krb->ccname) {
++		free(krb->ccname);
++		if (unsetenv("KRB5CCNAME") < 0) {
++			radlog(L_ERR, "rlm_ldap: Unable remove the environment variable KRB5CCNAME (%d)%s",
++			       errno, strerror(errno));
++		}
++	}
++
++	if (krb->context) {
++		krb5_free_cred_contents(krb->context, &krb->creds);
++		if (krb->ccache) krb5_cc_close(krb->context, krb->ccache);
++		if (krb->keytab) krb5_kt_close(krb->context, krb->keytab);
++		if (krb->principal) krb5_free_principal(krb->context, krb->principal);
++		if (krb->realm_name) krb5_free_default_realm(krb->context, krb->realm_name);
++		krb5_free_context(krb->context);
++	}
++	krb_session_zero(krb);
++}
++
++static int krb_session_expired(krb_session *krb)
++{
++	int retval;
++	krb5_timestamp currenttime;
++	krb5_timestamp epsilon = 60;
++
++	if (!krb->context) return TRUE;
++
++	if ((retval = krb5_timeofday (krb->context, &currenttime))){ 
++		radlog(L_ERR, "rlm_ldap: could not get time of day (%s)", krb5_get_error_message(krb->context, retval));
++		return TRUE;		
++	}	
++
++	if (krb->creds.times.endtime < currenttime+epsilon) {
++		return TRUE;
++	} else {
++		return FALSE;
++	}
++
++}
++
++static char *get_tmp_file()
++{
++	char *tmp_template = "/tmp/XXXXXX";
++	char *tmp_file = NULL;
++	int fd = -1;
++        
++	if (!(tmp_file = strdup(tmp_template))) {
++		radlog(L_ERR, "rlm_ldap: Out of memory!");
++		return NULL;
++	}
++
++	if ((fd = mkstemp(tmp_file)) < 0) {
++		radlog(L_ERR, "rlm_ldap: Failed to create tmp file with errno: (%d)%s", errno, strerror(errno));
++		free(tmp_file);
++		return NULL;
++	}
++	/* close mimmediately, we don't need to keep the file open */
++	close(fd);
++	return tmp_file;
++}
++
++static int krb_session_get_ticket(krb_session *krb)
++{
++	int krberr;
++	int ticket_expired;
++	krb5_get_init_creds_opt options;
++
++	ticket_expired = krb_session_expired(krb);
++	DEBUG("rlm_ldap: krb_session_get_ticket, %s",
++	      ticket_expired ? "expired, getting new ticket":"ticket still valid, returning");
++	if (!ticket_expired) return 0;
++
++	memset(&options, 0, sizeof(options));
++	krb5_get_init_creds_opt_set_address_list(&options, NULL);
++	krb5_get_init_creds_opt_set_forwardable(&options, 0);
++	krb5_get_init_creds_opt_set_proxiable(&options, 0);
++	/* set a very short lifetime, we don't keep the ticket around */
++	krb5_get_init_creds_opt_set_tkt_life(&options, ticket_lifetime);
++
++	if ((krberr = krb5_get_init_creds_keytab(krb->context, &krb->creds, krb->principal,
++						 krb->keytab, 0, NULL, &options))) {
++		radlog(L_ERR, "rlm_ldap: Failed to init credentials: %s", krb5_get_error_message(krb->context, krberr));
++		return -1;
++	}
++
++	if ((krberr = krb5_cc_initialize(krb->context, krb->ccache, krb->principal))) {
++		radlog(L_ERR, "rlm_ldap: Failed to init ccache: %s", krb5_get_error_message(krb->context, krberr));
++		return -1;
++	}
++    
++	if ((krberr = krb5_cc_store_cred(krb->context, krb->ccache, &krb->creds))) {
++		radlog(L_ERR, "rlm_ldap: Failed to store creds: %s", krb5_get_error_message(krb->context, krberr));
++		return -1;
++        }
++
++	return 0;
++}
++
++static int krb_session_init(void *instance, krb_session *krb)
++{
++	ldap_instance  *inst = instance;
++	int krberr;
++
++	DEBUG("rlm_ldap: krb_session_init (%p) principal=%s keytab=%s" , krb, inst->krb_principal, inst->krb_keytab);
++	if ((krberr = krb5_init_context(&krb->context))) {
++		radlog(L_ERR, "rlm_ldap: Failed to init kerberos context");
++		return -1;
++	}
++
++	if ((krberr = krb5_get_default_realm(krb->context, &krb->realm_name))) {
++		radlog(L_ERR, "rlm_ldap: Failed to get default realm name: %s", krb5_get_error_message(krb->context, krberr));
++		return -1;
++	}
++
++	if ((krberr = krb5_parse_name(krb->context, inst->krb_principal, &krb->principal))) {
++		radlog(L_ERR, "rlm_ldap: Unable to parse principal %s: %s", inst->krb_principal, krb5_get_error_message(krb->context, krberr));
++		return -1;
++	}
++
++	if ((krberr = krb5_kt_resolve(krb->context, inst->krb_keytab, &krb->keytab))) {
++		radlog(L_ERR, "rlm_ldap: Failed to read keytab file: %s", krb5_get_error_message(krb->context, krberr));
++		return -1;
++	}
++
++	if (!(krb->ccache_file = get_tmp_file())) {
++		radlog(L_ERR, "rlm_ldap: could not create krb credential cached file");
++		return -1;
++	}
++
++	if (asprintf(&krb->ccname, "FILE:%s", krb->ccache_file) < 0) {
++		radlog(L_ERR, "rlm_ldap: Out of memory!");
++		return -1;
++	}
++
++	if (setenv("KRB5CCNAME", krb->ccname, 1) < 0) {
++		radlog(L_ERR, "rlm_ldap: Unable to set environment variable KRB5CCNAME (%d)%s", errno, strerror(errno));
++		return -1;
++	}
++
++	if ((krberr = krb5_cc_resolve(krb->context, krb->ccname, &krb->ccache))) {
++		radlog(L_ERR, "rlm_ldap: Failed to set cache name: %s", krb5_get_error_message(krb->context, krberr));
++		return -1;
++	}
++
++	return 0;
++}
++
++#endif
++
++#ifdef USE_SASL2
++static int ldap_sasl_interact(LDAP *ld, unsigned flags, void *priv_data, void *in)
++{
++    sasl_interact_t *interact = NULL;
++    int ret = LDAP_OTHER;
++
++    DEBUG("rlm_ldap: ldap_sasl_interact");
++
++    if (!ld) return LDAP_PARAM_ERROR;
++
++    for (interact = in; interact->id != SASL_CB_LIST_END; interact++) {
++        switch(interact->id) {
++        case SASL_CB_USER:
++            interact->result = "";
++            interact->len = strlen(interact->result);
++            ret = LDAP_SUCCESS;
++            break;
++        case SASL_CB_GETREALM:
++            interact->result = "";
++            interact->len = strlen(interact->result);
++            ret = LDAP_SUCCESS;
++            break;
++        default:
++            radlog(L_ERR, "rlm_ldap: Unhandled SASL int. option %ld", interact->id);
++            interact->result = NULL;
++            interact->len = 0;
++            ret = LDAP_OTHER;
++        }
++    }
++    return ret;
++}
++
++#endif
++
+ static VALUE_PAIR *ldap_pairget(LDAP *, LDAPMessage *, TLDAP_RADIUS *,VALUE_PAIR **,char);
+ static int ldap_groupcmp(void *, REQUEST *, VALUE_PAIR *, VALUE_PAIR *, VALUE_PAIR *, VALUE_PAIR **);
+ static int ldap_xlat(void *, REQUEST *, char *, char *, size_t, RADIUS_ESCAPE_STRING);
+@@ -662,6 +911,11 @@
+ 
+ 	DEBUG("conns: %p",inst->conns);
+ 
++#ifdef USE_KRB5
++	if (krb_session_init(inst, &inst->krb)) {
++		radlog(L_ERR, "rlm_ldap: Failed to init kerberos session");
++	}
++#endif
+ 	*instance = inst;
+ 
+ 
+@@ -2167,6 +2421,12 @@
+ 	ldap_version = LDAP_VERSION3;
+ 	if (ldap_set_option(ld, LDAP_OPT_PROTOCOL_VERSION, &ldap_version) != LDAP_OPT_SUCCESS) {
+ 		radlog(L_ERR, "rlm_ldap: Could not set LDAP version to V3");
++#ifdef USE_SASL2
++		if (inst->use_sasl) {
++			radlog(L_ERR, "rlm_ldap: sasl was enabled, but sasl requires LDAP V3, disabling sasl");
++			inst->use_sasl = FALSE;
++		}
++#endif
+ 	}
+ #ifdef HAVE_LDAP_START_TLS
+         if(inst->tls_mode) {
+@@ -2273,6 +2533,25 @@
+ 	else{
+ 		DEBUG("rlm_ldap: bind as %s/%s to %s:%d", dn, password, inst->server, inst->port);
+ 	}
++#ifdef USE_SASL2
++	if (inst->use_sasl) {
++		DEBUG("rlm_ldap: performing sasl bind");
++#ifdef USE_KRB5
++		if (krb_session_get_ticket(&inst->krb)) {
++			radlog(L_ERR, "rlm_ldap: could not get kerberos ticket");
++		}
++#endif
++		ldap_errno = ldap_sasl_interactive_bind_s(ld,			/* ldap connection */
++							  NULL,			/* dn */
++							  "GSSAPI",		/* mechanism */
++							  NULL,			/* server controls */
++							  NULL,			/* client controls */
++							  LDAP_SASL_QUIET,	/* flags */
++							  ldap_sasl_interact,	/* callback function */
++							  NULL);		/* defaults */
++	} else {
++#endif
++	DEBUG("rlm_ldap: performing simple bind");
+ 	msgid = ldap_bind(ld, dn, password,LDAP_AUTH_SIMPLE);
+ 	if (msgid == -1) {
+ 		ldap_get_option(ld, LDAP_OPT_ERROR_NUMBER, &ldap_errno);
+@@ -2314,6 +2593,9 @@
+ 		return (NULL);
+ 	}
+ 	ldap_errno = ldap_result2error(ld, res, 1);
++#ifdef USE_SASL2
++	}
++#endif
+ 	switch (ldap_errno) {
+ 	case LDAP_SUCCESS:
+ 		DEBUG("rlm_ldap: Bind was successful");
+@@ -2406,6 +2688,18 @@
+ 		free(inst->conns);
+ 	}
+ 
++#ifdef USE_SASL2
++	if (inst->sasl_mech)
++		free((char *)inst->sasl_mech);
++#endif
++#ifdef USE_KRB5
++	if (inst->krb_keytab)
++		free((char *)inst->krb_keytab);
++	if (inst->krb_principal)
++		free((char *)inst->krb_principal);
++	krb_session_free(&inst->krb);
++#endif
++
+ #ifdef NOVELL
+ 	if (inst->apc_conns){ 
+ 		int i;
