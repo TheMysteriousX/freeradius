@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 1.1.7
-Release: 3.2.ipa%{?dist}
+Release: 3.3.ipa%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -103,6 +103,7 @@ export LDFLAGS="-L${RPM_BUILD_ROOT}%{_libdir}"
 
 cp %{SOURCE1} .
 ./freeradius-autogen.sh
+
 %configure \
 	--with-gnu-ld \
 	--with-threads \
@@ -309,7 +310,15 @@ fi
 
 
 %changelog
-* Sat Nov 10 2007  <jdennis@redhat.com> - 1.1.7-3.2.ipa
+* Sat Nov 10 2007  <jdennis@redhat.com> - 1.1.7-3.3.ipa
+- add support in rlm_ldap for reading clients from ldap
+- fix TLS parameter controling if a cert which fails to validate
+  will be accepted (i.e. self-signed),
+  rlm_ldap config parameter=tls_require_cert
+  ldap LDAP_OPT_X_TLS_REQUIRE_CERT parameter was being passed to
+  ldap_set_option() when it should have been ldap_int_tls_config()
+
+* Sat Nov 3 2007  <jdennis@redhat.com> - 1.1.7-3.2.ipa
 - add support in rlm_ldap for SASL/GSSAPI binds to the LDAP server
 
 * Mon Sep 17 2007 Thomas Woerner <twoerner@redhat.com> 1.1.7-3.1

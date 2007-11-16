@@ -1,4 +1,4 @@
-diff -r -u freeradius-1.1.7/src/modules/rlm_ldap/configure.in work/src/modules/rlm_ldap/configure.in
+diff -u -r freeradius-1.1.7/src/modules/rlm_ldap/configure.in work/src/modules/rlm_ldap/configure.in
 --- freeradius-1.1.7/src/modules/rlm_ldap/configure.in	2007-06-26 03:34:58.000000000 -0400
 +++ work/src/modules/rlm_ldap/configure.in	2007-11-03 14:49:46.000000000 -0400
 @@ -70,6 +70,75 @@
@@ -128,9 +128,9 @@ diff -r -u freeradius-1.1.7/src/modules/rlm_ldap/configure.in work/src/modules/r
  AC_SUBST(targetname)
 +AC_CONFIG_HEADER(config.h)
  AC_OUTPUT(Makefile)
-diff -r -u freeradius-1.1.7/src/modules/rlm_ldap/rlm_ldap.c work/src/modules/rlm_ldap/rlm_ldap.c
+diff -u -r freeradius-1.1.7/src/modules/rlm_ldap/rlm_ldap.c work/src/modules/rlm_ldap/rlm_ldap.c
 --- freeradius-1.1.7/src/modules/rlm_ldap/rlm_ldap.c	2007-11-01 13:16:18.000000000 -0400
-+++ work/src/modules/rlm_ldap/rlm_ldap.c	2007-11-02 13:12:30.000000000 -0400
++++ work/src/modules/rlm_ldap/rlm_ldap.c	2007-11-09 16:52:36.000000000 -0500
 @@ -1,3 +1,4 @@
 +// -*- mode: c; indent-tabs-mode: t; c-basic-offset: 8; -*-
  /*
@@ -181,7 +181,7 @@ diff -r -u freeradius-1.1.7/src/modules/rlm_ldap/rlm_ldap.c work/src/modules/rlm
  typedef struct {
  	char           *server;
  	int             port;
-@@ -322,6 +346,15 @@
+@@ -322,6 +346,17 @@
  	int			edir_account_policy_check;
  #endif
  	int		set_auth_type;
@@ -194,10 +194,12 @@ diff -r -u freeradius-1.1.7/src/modules/rlm_ldap/rlm_ldap.c work/src/modules/rlm
 +	char		*krb_principal;
 +	krb_session	krb;
 +#endif
++	char           *clients_basedn;
++	char           *clients_filter;
  }               ldap_instance;
  
  /* The default setting for TLS Certificate Verification */
-@@ -370,6 +403,14 @@
+@@ -370,6 +405,16 @@
  #endif
  
  	{"set_auth_type", PW_TYPE_BOOLEAN, offsetof(ldap_instance,set_auth_type), NULL, "yes"},
@@ -209,10 +211,12 @@ diff -r -u freeradius-1.1.7/src/modules/rlm_ldap/rlm_ldap.c work/src/modules/rlm
 +	{"krb_keytab", PW_TYPE_STRING_PTR, offsetof(ldap_instance,krb_keytab), NULL, "${confdir}/krb5.keytab"},
 +	{"krb_principal", PW_TYPE_STRING_PTR, offsetof(ldap_instance,krb_principal), NULL, NULL},
 +#endif
++	{"clients_basedn", PW_TYPE_STRING_PTR, offsetof(ldap_instance,clients_basedn), NULL, NULL},
++	{"clients_filter", PW_TYPE_STRING_PTR, offsetof(ldap_instance,clients_filter), NULL, "(objectclass=radiusClientProfile)"},
  	{NULL, -1, 0, NULL, NULL}
  };
  
-@@ -380,6 +421,214 @@
+@@ -380,11 +425,220 @@
  #ifdef FIELDCPY
  static void     fieldcpy(char *, char **);
  #endif
@@ -427,7 +431,13 @@ diff -r -u freeradius-1.1.7/src/modules/rlm_ldap/rlm_ldap.c work/src/modules/rlm
  static VALUE_PAIR *ldap_pairget(LDAP *, LDAPMessage *, TLDAP_RADIUS *,VALUE_PAIR **,char);
  static int ldap_groupcmp(void *, REQUEST *, VALUE_PAIR *, VALUE_PAIR *, VALUE_PAIR *, VALUE_PAIR **);
  static int ldap_xlat(void *, REQUEST *, char *, char *, size_t, RADIUS_ESCAPE_STRING);
-@@ -662,6 +911,11 @@
+ static LDAP    *ldap_connect(void *instance, const char *, const char *, int, int *, char **);
+ static int     read_mappings(ldap_instance* inst);
++static int generate_ldap_clients(ldap_instance* inst);
+ 
+ static inline int ldap_get_conn(LDAP_CONN *conns,LDAP_CONN **ret,void *instance)
+ {
+@@ -662,6 +916,15 @@
  
  	DEBUG("conns: %p",inst->conns);
  
@@ -436,10 +446,276 @@ diff -r -u freeradius-1.1.7/src/modules/rlm_ldap/rlm_ldap.c work/src/modules/rlm
 +		radlog(L_ERR, "rlm_ldap: Failed to init kerberos session");
 +	}
 +#endif
++	if (generate_ldap_clients(inst)) {
++		radlog(L_ERR, "rlm_ldap: Failed to read client list from ldap");
++	}
++
  	*instance = inst;
  
  
-@@ -2167,6 +2421,12 @@
+@@ -770,7 +1033,7 @@
+ 
+ static int
+ perform_search(void *instance, LDAP_CONN *conn, char *search_basedn, int scope, char *filter,
+-		char **attrs, LDAPMessage ** result)
++	       char **attrs, int single, LDAPMessage ** result)
+ {
+ 	int             res = RLM_MODULE_OK;
+ 	int		ldap_errno = 0;
+@@ -854,11 +1117,13 @@
+ 		return (RLM_MODULE_FAIL);
+ 	}
+ 
+-	if ((ldap_count_entries(conn->ld, *result)) != 1) {
++	
++	if (single && (ldap_count_entries(conn->ld, *result)) != 1) {
+ 		DEBUG("rlm_ldap: object not found or got ambiguous search result");
+ 		res = RLM_MODULE_NOTFOUND;
+ 		ldap_msgfree(*result);
+ 	}
++
+ 	return res;
+ }
+ 
+@@ -914,6 +1179,156 @@
+ }
+ 
+ /*
++ * generate_ldap_clients(). read clients from ldap, append to client list
++ */
++
++static int generate_ldap_clients(ldap_instance* inst)
++{
++	LDAP_CONN	*conn;
++	int		conn_id = -1;
++	int		res;
++	LDAPMessage    *result, *entry;
++	int		client_idx;
++
++	if (!inst->clients_basedn) {
++		DEBUG("rlm_ldap: generate_ldap_clients, client basedn not set, skipping...");
++		return 0;
++	}
++	DEBUG("rlm_ldap: generate_ldap_clients, client_basedn=%s", inst->clients_basedn);
++
++
++	if ((conn_id = ldap_get_conn(inst->conns,&conn,inst)) == -1){
++		radlog(L_ERR, "rlm_ldap: All ldap connections are in use");
++		return 1;
++	}
++	if ((res = perform_search(inst, conn, inst->clients_basedn, LDAP_SCOPE_SUBTREE,
++				  inst->clients_filter, NULL, FALSE, &result)) != RLM_MODULE_OK){
++		DEBUG("rlm_ldap::generate_ldap_clients: search failed");
++		ldap_release_conn(conn_id,inst->conns);
++		return 1;
++	}
++
++	for (entry = ldap_first_entry(conn->ld, result), client_idx = 0;
++	     entry != NULL;
++	     entry = ldap_next_entry(conn->ld, entry), client_idx++) {
++		char *val, **vals;
++		RADCLIENT client, *p_client; 
++		char *netmask;
++		char ip_buf[64];
++
++		memset(&client, 0, sizeof(client));
++
++		if ((vals = ldap_get_values(conn->ld, entry, "radiusClientNASIpAddress")) != NULL) {
++			val = vals[0];
++			if (strlen(val) >= sizeof(client.longname)) {
++				radlog(L_ERR, "rlm_ldap, retrieving clients: address (%s) length %d exceeds %d maximum",
++				       val, strlen(val), sizeof(client.longname)-1);
++				ldap_value_free(vals);
++				continue;
++			} else {
++				strcpy(client.longname, val);
++				ldap_value_free(vals);
++			}
++		}
++
++
++		if ((vals = ldap_get_values(conn->ld, entry, "radiusClientSecret")) != NULL) {
++			val = vals[0];
++			if (strlen(val) >= sizeof(client.secret)) {
++				radlog(L_ERR, "rlm_ldap, retrieving clients: secret length %d exceeds %d maximum",
++				       strlen(val), sizeof(client.secret)-1);
++				ldap_value_free(vals);
++				continue;
++			} else {
++				strcpy(client.secret, val);
++				ldap_value_free(vals);
++			}
++		}
++
++
++		if ((vals = ldap_get_values(conn->ld, entry, "radiusClientNASType")) != NULL) {
++			val = vals[0];
++			if (strlen(val) >= sizeof(client.nastype)) {
++				radlog(L_ERR, "rlm_ldap, retrieving clients:NAS Type (%s) length %d exceeds %d maximum",
++				       val, strlen(val), sizeof(client.nastype)-1);
++				ldap_value_free(vals);
++				continue;
++			} else {
++				strcpy(client.nastype, val);
++				ldap_value_free(vals);
++			}
++		}
++
++
++		if ((vals = ldap_get_values(conn->ld, entry, "radiusClientShortName")) != NULL) {
++			val = vals[0];
++			if (strlen(val) >= sizeof(client.shortname)) {
++				radlog(L_ERR, "rlm_ldap, retrieving clients: address (%s) length %d exceeds %d maximum",
++				       val, strlen(val), sizeof(client.shortname)-1);
++				ldap_value_free(vals);
++				continue;
++			} else {
++				strcpy(client.shortname, val);
++				ldap_value_free(vals);
++			}
++		}
++
++
++		/* Look for a mask in the hostname */
++		netmask = strchr(client.longname, '/');
++		client.netmask = ~0;
++		if (netmask) {
++			int mask_length;
++
++			*netmask = '\0';
++			netmask++;
++
++			mask_length = atoi(netmask);
++			if ((mask_length < 0) || (mask_length > 32)) {
++				radlog(L_ERR, "rlm_ldap: Invalid value '%s' for IP network mask.for %s", netmask, client.longname);
++				continue;
++			}
++
++			if (mask_length == 0) {
++				client.netmask = 0;
++			} else {
++				client.netmask = ~0 << (32 - mask_length);
++			}
++		}
++
++		client.ipaddr = ip_getaddr(client.longname);
++		if (client.ipaddr == INADDR_NONE) {
++			radlog(L_ERR, "rlm_ldap: Failed to look up hostname %s", client.longname);
++			continue;
++		}
++		client.netmask = htonl(client.netmask);
++		client.ipaddr &= client.netmask; /* addr & mask are in network order */
++		if (netmask) *netmask = '/';
++
++
++		DEBUG("rlm_ldap: client[%2d] client=%s ip=%s mask=0x%x shortname=%s nastype=%s",
++		      client_idx, client.longname, ip_ntoa(ip_buf, client.ipaddr), client.netmask, client.shortname, client.nastype);
++
++
++		if ((p_client = rad_malloc(sizeof(RADCLIENT))) == NULL) {
++			radlog(L_ERR, "rlm_ldap: Out of memory!");
++			ldap_msgfree(result);
++			ldap_release_conn(conn_id,inst->conns);
++			return 1;
++		}
++		memcpy(p_client, &client, sizeof(client));
++		p_client->next = mainconfig.clients;
++		mainconfig.clients = p_client;
++
++	}
++
++	ldap_msgfree(result);
++	ldap_release_conn(conn_id,inst->conns);
++	// client_walk(); /* uncomment for debugging */
++	return 0;
++}
++
++/*
+  * ldap_groupcmp(). Implement the Ldap-Group == "group" filter
+  */
+ 
+@@ -967,7 +1382,7 @@
+ 			return 1;
+ 		}
+                 if ((res = perform_search(inst, conn, basedn, LDAP_SCOPE_SUBTREE,
+-					filter, attrs, &result)) != RLM_MODULE_OK){
++					filter, attrs, TRUE, &result)) != RLM_MODULE_OK){
+                         DEBUG("rlm_ldap::ldap_groupcmp: search failed");
+ 			ldap_release_conn(conn_id,inst->conns);
+                         return 1;
+@@ -1012,7 +1427,7 @@
+ 	}
+ 
+ 	if ((res = perform_search(inst, conn, basedn, LDAP_SCOPE_SUBTREE,
+-				filter, attrs, &result)) == RLM_MODULE_OK){
++				filter, attrs, TRUE, &result)) == RLM_MODULE_OK){
+ 		DEBUG("rlm_ldap::ldap_groupcmp: User found in group %s",
+ 				(char *)check->strvalue);
+ 		ldap_msgfree(result);
+@@ -1042,7 +1457,7 @@
+ 		return 1;
+ 	}
+ 	if ((res = perform_search(inst, conn, (char *)vp_user_dn->strvalue, LDAP_SCOPE_BASE,
+-					filter, group_attrs,&result)) != RLM_MODULE_OK){
++				filter, group_attrs, TRUE, &result)) != RLM_MODULE_OK){
+ 		DEBUG("rlm_ldap::ldap_groupcmp: Search returned error");
+ 		ldap_release_conn(conn_id, inst->conns);
+ 		return 1;
+@@ -1066,7 +1481,7 @@
+ 					(char *)check->strvalue);
+ 				if ((res = perform_search(inst, conn, vals[i],
+ 						LDAP_SCOPE_BASE, filter,
+-						attrs, &gr_result)) != RLM_MODULE_OK){
++						attrs, TRUE, &gr_result)) != RLM_MODULE_OK){
+ 					if (res != RLM_MODULE_NOTFOUND){
+ 						DEBUG("rlm_ldap::ldap_groupcmp: \
+ 							Search returned error");
+@@ -1161,7 +1576,7 @@
+ 		ldap_free_urldesc(ldap_url);
+ 		return 0;
+ 	}
+-	if ((res = perform_search(inst, conn, ldap_url->lud_dn, ldap_url->lud_scope, ldap_url->lud_filter, ldap_url->lud_attrs, &result)) != RLM_MODULE_OK){
++	if ((res = perform_search(inst, conn, ldap_url->lud_dn, ldap_url->lud_scope, ldap_url->lud_filter, ldap_url->lud_attrs, TRUE, &result)) != RLM_MODULE_OK){
+ 		if (res == RLM_MODULE_NOTFOUND){
+ 			DEBUG("rlm_ldap: Search returned not found");
+ 			ldap_free_urldesc(ldap_url);
+@@ -1275,7 +1690,7 @@
+ 		radlog(L_ERR, "rlm_ldap: All ldap connections are in use");
+ 		return RLM_MODULE_FAIL;
+ 	}
+-	if ((res = perform_search(instance, conn, basedn, LDAP_SCOPE_SUBTREE, filter, inst->atts, &result)) != RLM_MODULE_OK) {
++	if ((res = perform_search(instance, conn, basedn, LDAP_SCOPE_SUBTREE, filter, inst->atts, TRUE, &result)) != RLM_MODULE_OK) {
+ 		DEBUG("rlm_ldap: search failed");
+ 		if (res == RLM_MODULE_NOTFOUND){
+ 			snprintf(module_fmsg,sizeof(module_fmsg),"rlm_ldap: User not found");
+@@ -1360,7 +1775,7 @@
+ 		if (profile && strlen(profile)){
+ 			if ((res = perform_search(instance, conn,
+ 				profile, LDAP_SCOPE_BASE,
+-				filter, inst->atts, &def_result)) == RLM_MODULE_OK){
++				filter, inst->atts, TRUE, &def_result)) == RLM_MODULE_OK){
+ 				if ((def_msg = ldap_first_entry(conn->ld,def_result))){
+ 					if ((check_tmp = ldap_pairget(conn->ld,def_msg,inst->check_item_map,check_pairs,1))) {
+ 						if (inst->do_xlat){
+@@ -1399,7 +1814,7 @@
+ 			while(vals[i] != NULL && strlen(vals[i])){
+ 				if ((res = perform_search(instance, conn,
+ 					vals[i], LDAP_SCOPE_BASE,
+-					filter, inst->atts, &def_attr_result)) == RLM_MODULE_OK){
++					filter, inst->atts, TRUE, &def_attr_result)) == RLM_MODULE_OK){
+ 					if ((def_attr_msg = ldap_first_entry(conn->ld,def_attr_result))){
+ 						if ((check_tmp = ldap_pairget(conn->ld,def_attr_msg,inst->check_item_map,check_pairs,1))) {
+ 							if (inst->do_xlat){
+@@ -1778,7 +2193,7 @@
+ 			radlog(L_ERR, "rlm_ldap: All ldap connections are in use");
+ 			return RLM_MODULE_FAIL;
+ 		}
+-		if ((res = perform_search(instance, conn, basedn, LDAP_SCOPE_SUBTREE, filter, attrs, &result)) != RLM_MODULE_OK) {
++		if ((res = perform_search(instance, conn, basedn, LDAP_SCOPE_SUBTREE, filter, attrs, TRUE, &result)) != RLM_MODULE_OK) {
+ 			if (res == RLM_MODULE_NOTFOUND){
+ 				snprintf(module_fmsg,sizeof(module_fmsg),"rlm_ldap: User not found");
+ 				module_fmsg_vp = pairmake("Module-Failure-Message", module_fmsg, T_OP_EQ);
+@@ -2167,6 +2582,12 @@
  	ldap_version = LDAP_VERSION3;
  	if (ldap_set_option(ld, LDAP_OPT_PROTOCOL_VERSION, &ldap_version) != LDAP_OPT_SUCCESS) {
  		radlog(L_ERR, "rlm_ldap: Could not set LDAP version to V3");
@@ -452,7 +728,16 @@ diff -r -u freeradius-1.1.7/src/modules/rlm_ldap/rlm_ldap.c work/src/modules/rlm
  	}
  #ifdef HAVE_LDAP_START_TLS
          if(inst->tls_mode) {
-@@ -2273,6 +2533,25 @@
+@@ -2208,7 +2629,7 @@
+ 
+ #ifdef HAVE_LDAP_INT_TLS_CONFIG
+ 
+-	if ( ldap_set_option( NULL, LDAP_OPT_X_TLS_REQUIRE_CERT,
++	if ( ldap_int_tls_config( NULL, LDAP_OPT_X_TLS_REQUIRE_CERT,
+ 							  (inst->tls_require_cert) )
+ 		 != LDAP_OPT_SUCCESS) {
+ 		radlog(L_ERR, "rlm_ldap: could not set "
+@@ -2273,6 +2694,25 @@
  	else{
  		DEBUG("rlm_ldap: bind as %s/%s to %s:%d", dn, password, inst->server, inst->port);
  	}
@@ -478,7 +763,7 @@ diff -r -u freeradius-1.1.7/src/modules/rlm_ldap/rlm_ldap.c work/src/modules/rlm
  	msgid = ldap_bind(ld, dn, password,LDAP_AUTH_SIMPLE);
  	if (msgid == -1) {
  		ldap_get_option(ld, LDAP_OPT_ERROR_NUMBER, &ldap_errno);
-@@ -2314,6 +2593,9 @@
+@@ -2314,6 +2754,9 @@
  		return (NULL);
  	}
  	ldap_errno = ldap_result2error(ld, res, 1);
@@ -488,7 +773,7 @@ diff -r -u freeradius-1.1.7/src/modules/rlm_ldap/rlm_ldap.c work/src/modules/rlm
  	switch (ldap_errno) {
  	case LDAP_SUCCESS:
  		DEBUG("rlm_ldap: Bind was successful");
-@@ -2406,6 +2688,18 @@
+@@ -2406,6 +2849,18 @@
  		free(inst->conns);
  	}
  
