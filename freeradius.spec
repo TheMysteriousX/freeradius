@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 1.1.7
-Release: 3.3.ipa%{?dist}
+Release: 3.4.ipa%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -310,6 +310,9 @@ fi
 
 
 %changelog
+* Thu Dec 06 2007 Release Engineering <rel-eng at fedoraproject dot org> - 1.1.7-3.4.ipa
+- Rebuild for deps
+
 * Sat Nov 10 2007  <jdennis@redhat.com> - 1.1.7-3.3.ipa
 - add support in rlm_ldap for reading clients from ldap
 - fix TLS parameter controling if a cert which fails to validate
