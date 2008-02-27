@@ -1,34 +1,34 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 1.1.7
-Release: 4.4.ipa%{?dist}
+Version: 2.0.2
+Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
-Source0: ftp://ftp.freeradius.org/pub/radius/%{name}-%{version}.tar.bz2
-Source1: freeradius-autogen.sh
+
+Source0: ftp://ftp.freeradius.org/pub/radius/%{name}-server-%{version}.tar.bz2
+
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-Requires: net-snmp krb5-libs net-snmp-utils
-BuildRequires: net-snmp-devel net-snmp-utils krb5-devel openldap-devel 
-BuildRequires: openssl-devel pam-devel
-BuildRequires: libtool-ltdl-devel libtool
-BuildRequires: gdbm-devel zlib-devel
-BuildRequires: perl-devel
+
 BuildRequires: autoconf
+BuildRequires: gdbm-devel
+BuildRequires: krb5-devel
+BuildRequires: libtool
+BuildRequires: libtool-ltdl-devel
+BuildRequires: net-snmp-devel
+BuildRequires: net-snmp-utils
+BuildRequires: openldap-devel
+BuildRequires: openssl-devel
+BuildRequires: pam-devel
+BuildRequires: perl-devel
+BuildRequires: zlib-devel
+
+Requires: net-snmp krb5-libs
+Requires: net-snmp-utils
 Requires(pre): shadow-utils
 Requires(post): /sbin/ldconfig /sbin/chkconfig
 Requires(postun): /sbin/ldconfig
 Requires(preun): /sbin/chkconfig
-Patch1: freeradius-1.0.0-ltdl_no_la.patch
-Patch3: freeradius-0.9.0-pam-multilib.patch
-Patch4: freeradius-0.9.0-com_err.patch
-Patch8: freeradius-1.0.0-samba3.patch
-Patch10: freeradius-1.1.3-build.patch
-Patch11: freeradius-1.1.2-no_sql_inc.patch
-Patch12: freeradius-1.1.7-ldap.patch
-Patch13: freeradius-1.1.7-db_dir.patch
-Patch14: freeradius-1.1.7-lsb.patch
-Patch15: freeradius-1.1.7-ipa.patch
 
 %description
 The FreeRADIUS Server Project is a high performance and highly configurable 
@@ -77,18 +77,7 @@ This plugin provides the unixODBC bindings for the FreeRADIUS server project.
 
 
 %prep
-%setup -q 
-%patch1 -p1 -b .ltdl_no_la
-%patch3 -p1 -b .pam-multilib
-%patch4 -p1 -b .com_err
-%patch8 -p1 -b .samba3
-%patch10 -p1 -b .build
-%patch11 -p1 -b .no_sql_inc
-%patch12 -p1 -b .ldap
-%patch13 -p1 -b .db_dir
-%patch14 -p1 -b .lsb
-%patch15 -p1 -b .ipa
-
+%setup -q -n %{name}-server-%{version}
 
 %build
 %ifarch s390 s390x
@@ -101,10 +90,8 @@ export CFLAGS="$RPM_OPT_FLAGS -fpic"
 rm -rf $RPM_BUILD_ROOT
 export LDFLAGS="-L${RPM_BUILD_ROOT}%{_libdir}"
 
-cp %{SOURCE1} .
-./freeradius-autogen.sh
-
 %configure \
+	--libdir=%{_libdir}/freeradius \
 	--with-gnu-ld \
 	--with-threads \
 	--with-thread-pool \
@@ -117,16 +104,17 @@ cp %{SOURCE1} .
 	--with-unixodbc-lib-dir=%{_libdir} \
 	--with-rlm-dbm-lib-dir=%{_libdir} \
 	--with-rlm-krb5-include-dir=/usr/kerberos/include \
-	--with-rlm-ldap-sasl2 --with-rlm-ldap-sasl2-include-dir=/usr/include/sasl \
-	--with-rlm-ldap-krb5
+	--without-rlm_eap_ikev2 \
+	--without-rlm_sql_iodbc \
+	--without-rlm_sql_firebird \
+	--without-rlm_sql_db2 \
+	--without-rlm_sql_oracle
 
 %if "%{_lib}" == "lib64"
 perl -pi -e 's:sys_lib_search_path_spec=.*:sys_lib_search_path_spec="/lib64 /usr/lib64 /usr/local/lib64":' libtool
 %endif
 
-# Makefile not smp save
-make #%{?_smp_mflags}
-
+make
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -165,7 +153,6 @@ mkdir -p $RPM_BUILD_ROOT/var/log/radius/radacct
 mkdir -p $RPM_BUILD_ROOT/var/run/radiusd
 
 # remove unsupported config files
-rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/oraclesql.conf
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/experimental.conf
 
 
@@ -208,90 +195,123 @@ fi
 %config(noreplace) %{_sysconfdir}/pam.d/radiusd
 %config(noreplace) %{_sysconfdir}/logrotate.d/radiusd
 %config(noreplace) %{_initrddir}/radiusd
-%dir %attr(0700,radiusd,radiusd) %{_sysconfdir}/raddb
-%dir %attr(0700,radiusd,radiusd) %{_sysconfdir}/raddb/certs
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/acct_users
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/attrs
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/certs/*
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/clients
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/clients.conf
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/dictionary
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/eap.conf
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/example.pl
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/hints
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/huntgroups
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/ldap.attrmap
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/naslist
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/naspasswd
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/otp.conf
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/postgresqlippool.conf
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/preproxy_users
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/proxy.conf
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/radiusd.conf
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/realms
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/snmp.conf
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/sqlippool.conf
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/users
-%{_bindir}/*
-%{_libdir}/libeap*.so
-%{_libdir}/libradius*.so
-%{_libdir}/rlm_acct_unique*.so
-%{_libdir}/rlm_always*.so
-%{_libdir}/rlm_attr_filter*.so
-%{_libdir}/rlm_attr_rewrite*.so
-%{_libdir}/rlm_chap*.so
-%{_libdir}/rlm_checkval*.so
-%{_libdir}/rlm_counter*.so
-%{_libdir}/rlm_dbm*.so
-%{_libdir}/rlm_detail*.so
-%{_libdir}/rlm_digest*.so
-%{_libdir}/rlm_eap-*.so
-%{_libdir}/rlm_eap.so
-%{_libdir}/rlm_eap_gtc*.so
-%{_libdir}/rlm_eap_leap*.so
-%{_libdir}/rlm_eap_md5*.so
-%{_libdir}/rlm_eap_mschapv2*.so
-%{_libdir}/rlm_eap_peap*.so
-%{_libdir}/rlm_eap_sim*.so
-%{_libdir}/rlm_eap_tls*.so
-%{_libdir}/rlm_eap_ttls*.so
-%{_libdir}/rlm_exec*.so
-%{_libdir}/rlm_expr*.so
-%{_libdir}/rlm_fastusers*.so
-%{_libdir}/rlm_files*.so
-%{_libdir}/rlm_ippool*.so
-%{_libdir}/rlm_krb5*.so
-%{_libdir}/rlm_ldap*.so
-%{_libdir}/rlm_mschap*.so
-%{_libdir}/rlm_ns_mta_md5*.so
-%{_libdir}/rlm_otp*.so
-%{_libdir}/rlm_pam*.so
-%{_libdir}/rlm_pap*.so
-%{_libdir}/rlm_passwd*.so
-%{_libdir}/rlm_perl*.so
-%{_libdir}/rlm_preprocess*.so
-%{_libdir}/rlm_radutmp*.so
-%{_libdir}/rlm_realm*.so
-%{_libdir}/rlm_sql-%{version}.so
-%{_libdir}/rlm_sql.so
-%{_libdir}/rlm_sqlcounter*.so
-%{_libdir}/rlm_sqlippool*.so
-%{_libdir}/rlm_sql_log*.so
-%{_libdir}/rlm_unix*.so
-%{_datadir}/freeradius
-%{_datadir}/snmp/mibs/RADIUS*.txt
-%{_sbindir}/*
-%{_mandir}/man1/*.1*
-%{_mandir}/man5/*.5*
-%{_mandir}/man8/*.8*
-%attr(0700,radiusd,radiusd) %dir /var/log/radius
-%ghost %attr(0600,radiusd,radiusd) /var/log/radius/radutmp
-%ghost %attr(0600,radiusd,radiusd) /var/log/radius/radwtmp
-%ghost %attr(0600,radiusd,radiusd) /var/log/radius/radius.log
-%attr(0700,radiusd,radiusd) %dir /var/log/radius/radacct
-%attr(0700,radiusd,radiusd) %dir /var/run/radiusd
-# use only for database files:
-%attr(0700,radiusd,radiusd) %dir /var/lib/radiusd
+#--------------------
+%dir %attr(755,radiusd,radiusd) /var/lib/radiusd
+# configs
+%dir %attr(750,-,radiusd) /etc/raddb
+%defattr(-,root,radiusd)
+%config(noreplace) /etc/raddb/dictionary
+%config(noreplace) /etc/raddb/acct_users
+%config(noreplace) /etc/raddb/attrs
+%config(noreplace) /etc/raddb/attrs.access_reject
+%config(noreplace) /etc/raddb/attrs.accounting_response
+%config(noreplace) /etc/raddb/attrs.pre-proxy
+%attr(640,-,radiusd) %config(noreplace) /etc/raddb/clients.conf
+%config(noreplace) /etc/raddb/hints
+%config(noreplace) /etc/raddb/huntgroups
+%config(noreplace) /etc/raddb/ldap.attrmap
+%attr(640,-,radiusd) %config(noreplace) /etc/raddb/sqlippool.conf
+%attr(640,-,radiusd) %config(noreplace) /etc/raddb/preproxy_users
+%attr(640,-,radiusd) %config(noreplace) /etc/raddb/proxy.conf
+%attr(640,-,radiusd) %config(noreplace) /etc/raddb/radiusd.conf
+%attr(640,-,radiusd) %config(noreplace) /etc/raddb/snmp.conf
+%attr(640,-,radiusd) %config(noreplace) /etc/raddb/sql.conf
+#%attr(640,-,radiusd) %config(noreplace) /etc/raddb/radrelay.conf
+#%attr(640,-,radiusd) %config(noreplace) /etc/raddb/vmpsd.conf
+%dir %attr(640,-,radiusd) /etc/raddb/sql
+%attr(640,-,radiusd) %config(noreplace) /etc/raddb/sql/*/*.conf
+%attr(640,-,radiusd) %config(noreplace) /etc/raddb/sql/*/*.sql
+%attr(640,-,radiusd) %config(noreplace) /etc/raddb/users
+%attr(640,-,radiusd) %config(noreplace) /etc/raddb/otp.conf
+%dir %attr(750,-,radiusd) /etc/raddb/certs
+/etc/raddb/certs/Makefile
+/etc/raddb/certs/README
+/etc/raddb/certs/xpextensions
+%attr(640,-,radiusd) %config(noreplace) /etc/raddb/certs/*.cnf
+%attr(750,-,radiusd) /etc/raddb/certs/bootstrap
+%attr(750,-,radiusd) %config /etc/raddb/sites-available/example
+%attr(640,-,radiusd) /etc/raddb/sites-available/*
+%attr(640,-,radiusd) %config(noreplace) /etc/raddb/sites-enabled/*
+%attr(640,-,radiusd) %config(noreplace) /etc/raddb/eap.conf
+%attr(640,-,radiusd) /etc/raddb/example.pl
+%attr(640,-,radiusd) %config(noreplace) /etc/raddb/policy.conf
+/etc/raddb/policy.txt
+%attr(640,-,radiusd) %config(noreplace) /etc/raddb/templates.conf
+%attr(700,radiusd,radiusd) %dir /var/run/radiusd/
+# binaries
+%defattr(-,root,root)
+/usr/sbin/check-radiusd-config
+/usr/sbin/checkrad
+/usr/sbin/radiusd
+/usr/sbin/radrelay
+/usr/sbin/radwatch
+# man-pages
+%doc %{_mandir}/man1/*
+%doc %{_mandir}/man5/*
+%doc %{_mandir}/man8/*
+# dictionaries
+%attr(755,root,root) %dir /usr/share/freeradius
+/usr/share/freeradius/*
+# logs
+%attr(700,radiusd,radiusd) %dir /var/log/radius/
+%attr(700,radiusd,radiusd) %dir /var/log/radius/radacct/
+%attr(644,radiusd,radiusd) /var/log/radius/radutmp
+%config(noreplace) %attr(600,radiusd,radiusd) /var/log/radius/radius.log
+# RADIUS Loadable Modules
+%attr(755,root,root) %dir %{_libdir}/freeradius
+#%attr(755,root,root) %{_libdir}/freeradius/rlm_*.so*
+%{_libdir}/freeradius/libfreeradius-eap*.so
+%{_libdir}/freeradius/libfreeradius-radius*.so
+%{_libdir}/freeradius/rlm_acctlog*.so
+%{_libdir}/freeradius/rlm_acct_unique*.so
+%{_libdir}/freeradius/rlm_always*.so
+%{_libdir}/freeradius/rlm_attr_filter*.so
+%{_libdir}/freeradius/rlm_attr_rewrite*.so
+%{_libdir}/freeradius/rlm_chap*.so
+%{_libdir}/freeradius/rlm_checkval*.so
+%{_libdir}/freeradius/rlm_copy_packet*.so
+%{_libdir}/freeradius/rlm_counter*.so
+%{_libdir}/freeradius/rlm_dbm*.so
+%{_libdir}/freeradius/rlm_detail*.so
+%{_libdir}/freeradius/rlm_digest*.so
+%{_libdir}/freeradius/rlm_eap_gtc*.so
+%{_libdir}/freeradius/rlm_eap_leap*.so
+%{_libdir}/freeradius/rlm_eap_md5*.so
+%{_libdir}/freeradius/rlm_eap_mschapv2*.so
+%{_libdir}/freeradius/rlm_eap_peap*.so
+%{_libdir}/freeradius/rlm_eap_sim*.so
+%{_libdir}/freeradius/rlm_eap*.so
+%{_libdir}/freeradius/rlm_eap_tls*.so
+%{_libdir}/freeradius/rlm_eap_tnc*.so
+%{_libdir}/freeradius/rlm_eap_ttls*.so
+%{_libdir}/freeradius/rlm_exec*.so
+%{_libdir}/freeradius/rlm_expiration*.so
+%{_libdir}/freeradius/rlm_expr*.so
+%{_libdir}/freeradius/rlm_fastusers*.so
+%{_libdir}/freeradius/rlm_files*.so
+%{_libdir}/freeradius/rlm_ippool*.so
+%{_libdir}/freeradius/rlm_krb5*.so
+%{_libdir}/freeradius/rlm_ldap*.so
+%{_libdir}/freeradius/rlm_logintime*.so
+%{_libdir}/freeradius/rlm_mschap*.so
+%{_libdir}/freeradius/rlm_otp*.so
+%{_libdir}/freeradius/rlm_pam*.so
+%{_libdir}/freeradius/rlm_pap*.so
+%{_libdir}/freeradius/rlm_passwd*.so
+%{_libdir}/freeradius/rlm_perl*.so
+%{_libdir}/freeradius/rlm_policy*.so
+%{_libdir}/freeradius/rlm_preprocess*.so
+%{_libdir}/freeradius/rlm_python*.so
+%{_libdir}/freeradius/rlm_radutmp*.so
+%{_libdir}/freeradius/rlm_realm*.so
+%{_libdir}/freeradius/rlm_sqlcounter*.so
+%{_libdir}/freeradius/rlm_sqlippool*.so
+%{_libdir}/freeradius/rlm_sql_log*.so
+%{_libdir}/freeradius/rlm_sql_mysql*.so
+%{_libdir}/freeradius/rlm_sql_postgresql*.so
+%{_libdir}/freeradius/rlm_sql*.so
+%{_libdir}/freeradius/rlm_sql_unixodbc*.so
+%{_libdir}/freeradius/rlm_unix*.so
 
 %files mysql
 %defattr(-,root,root,-)

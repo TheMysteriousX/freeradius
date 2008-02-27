@@ -1,0 +1,333 @@
+#!/usr/bin/env python
+
+import re
+import os
+import sys
+import exceptions
+import rpm
+import select
+import subprocess
+
+#------------------------------------------------------------------------------
+
+debug = False
+verbose = False
+
+exclude_rpms = ['glibc']
+
+root = '/var/tmp/freeradius-2.0.2-1.fc8-root-jdennis/usr/lib/freeradius'
+modules = [
+    'rlm_acctlog.so',
+    'rlm_acct_unique.so',
+    'rlm_always.so',
+    'rlm_attr_filter.so',
+    'rlm_attr_rewrite.so',
+    'rlm_chap.so',
+    'rlm_checkval.so',
+    'rlm_copy_packet.so',
+    'rlm_counter.so',
+    'rlm_dbm.so',
+    'rlm_detail.so',
+    'rlm_digest.so',
+    'rlm_eap_gtc.so',
+    'rlm_eap_leap.so',
+    'rlm_eap_md5.so',
+    'rlm_eap_mschapv2.so',
+    'rlm_eap_peap.so',
+    'rlm_eap_sim.so',
+    'rlm_eap.so',
+    'rlm_eap_tls.so',
+    'rlm_eap_tnc.so',
+    'rlm_eap_ttls.so',
+    'rlm_exec.so',
+    'rlm_expiration.so',
+    'rlm_expr.so',
+    'rlm_fastusers.so',
+    'rlm_files.so',
+    'rlm_ippool.so',
+    'rlm_krb5.so',
+    'rlm_ldap.so',
+    'rlm_logintime.so',
+    'rlm_mschap.so',
+    'rlm_otp.so',
+    'rlm_pam.so',
+    'rlm_pap.so',
+    'rlm_passwd.so',
+    'rlm_perl.so',
+    'rlm_policy.so',
+    'rlm_preprocess.so',
+    'rlm_python.so',
+    'rlm_radutmp.so',
+    'rlm_realm.so',
+    'rlm_sqlcounter.so',
+    'rlm_sqlippool.so',
+    'rlm_sql_log.so',
+    'rlm_sql_mysql.so',
+    'rlm_sql_postgresql.so',
+    'rlm_sql.so',
+    'rlm_sql_unixodbc.so',
+    'rlm_unix.so',
+]
+
+module_paths = [os.path.join(root,x) for x in modules]
+
+#------------------------------------------------------------------------------
+
+def get_rpm_nvr_from_header(hdr):
+    'Given an RPM header return the package NVR as a string'
+    name    = hdr['name']
+    version = hdr['version']
+    release = hdr['release']
+
+    return "%s-%s-%s" % (name, version, release)
+
+def get_rpm_hdr_by_file_path(path):
+    if path is None:
+        return None
+
+    hdr = None
+    try:
+        ts = rpm.ts()
+        mi = ts.dbMatch(rpm.RPMTAG_BASENAMES, path)
+        for hdr in mi: break
+    except Exception, e:
+        print >> sys.stderr, "failed to retrieve rpm hdr for %s, %s" %(path, e)
+        hdr = None
+    return hdr
+
+def get_rpm_nvr_by_file_path(path):
+    if path is None:
+        return None
+
+    hdr = get_rpm_hdr_by_file_path(path)
+    if not hdr:
+        print >> sys.stderr, "failed to retrieve rpm info for %s" %(path)
+    nvr = get_rpm_nvr_from_header(hdr)
+    return nvr
+
+def get_rpm_name_by_file_path(path):
+    if path is None:
+        return None
+
+    hdr = get_rpm_hdr_by_file_path(path)
+    if not hdr:
+        print >> sys.stderr, "failed to retrieve rpm info for %s" %(path)
+    name = hdr['name']
+    return name
+
+#------------------------------------------------------------------------------
+
+class CmdError(exceptions.Exception):
+    def __init__(self, errno, msg):
+        self.errno = errno
+        self.msg = msg
+
+
+class Command:
+    def __init__(self, cmd):
+        self.cmd = cmd
+        self.sub_process = None
+        self.bufsize = 1024
+        self.stdout_buf = ''
+        self.stderr_buf = ''
+        self.stdout_lines = []
+        self.stderr_lines = []
+
+    def run(self, stdout_callback=None, stderr_callback=None):
+        self.sub_process = subprocess.Popen(self.cmd, \
+            stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
+            close_fds=True, shell=True)
+        self.stdout = self.sub_process.stdout
+        self.stderr = self.sub_process.stderr
+
+        read_watch = [self.stdout, self.stderr]
+        while read_watch:
+            readable = select.select(read_watch, [], [])[0]
+            for fd in readable:
+                if fd == self.stdout:
+                    data = os.read(fd.fileno(), self.bufsize)
+                    if not data:
+                        read_watch.remove(fd)
+                    else:
+                        self.stdout_buf += data
+                    for line in self.burst_lines('stdout_buf'):
+                        if stdout_callback: stdout_callback(line)
+                        self.stdout_lines.append(line)
+                if fd == self.stderr:
+                    data = os.read(fd.fileno(), self.bufsize)
+                    if not data:
+                        read_watch.remove(fd)
+                    else:
+                        self.stderr_buf += data
+                    for line in self.burst_lines('stderr_buf'):
+                        if stdout_callback: stderr_callback(line)
+                        self.stderr_lines.append(line)
+
+        self.returncode = self.sub_process.wait()
+        if self.returncode:
+            raise CmdError(self.returncode, "cmd \"%s\"\nreturned status %d\n%s" % (self.cmd, self.returncode, ''.join(self.stderr_lines)))
+
+        return self.returncode
+
+    def burst_lines(self, what):
+        buf = getattr(self, what)
+        start = 0
+        end = buf.find('\n', start)
+        while end >= 0:
+            end += 1                # include newline
+            line = buf[start:end]
+            yield line
+            start = end
+            end = buf.find('\n', start)
+        buf = buf[start:]
+        setattr(self, what, buf)
+
+#------------------------------------------------------------------------------
+
+class RPM_Prop:
+    def __init__(self, path=None, name=None):
+        self.name = name
+        self.paths = {}
+        if path:
+            self.register_path(path)
+            if not self.name:
+                self.name = get_rpm_name_by_file_path(path)                
+
+    def __str__(self):
+        return "name=%s paths=%s" % (self.name, ','.join(self.paths.keys()))
+
+    def register_path(self, path, name=None):
+        if debug: print "%s.register_path: path=%s" % (self.__class__.__name__, path)
+        return self.paths.setdefault(path, path)
+
+class RPM_Collection:
+    def __init__(self):
+        self.names = {}
+        self.paths = {}
+
+    def __str__(self):
+        text = ''
+        names = self.get_names()
+        for name in names:
+            text += "%s: %s\n" % (name, self.names[name])
+        return text
+
+    def register_path(self, path):
+        if debug: print "%s.register_path: path=%s" % (self.__class__.__name__, path)
+        rpm_prop = self.paths.setdefault(path, RPM_Prop(path=path))
+        self.names.setdefault(rpm_prop.name, rpm_prop)
+        return rpm_prop
+
+    def get_names(self):
+        names = self.names.keys()
+        names.sort()
+        return names
+
+class SO_File:
+    def __init__(self, name=None, path=None):
+        self.name = name
+        self.path = path
+        self.rpm = None
+
+    def __str__(self):
+        if self.rpm:
+            rpm_name = self.rpm.name
+        else:
+            rpm_name = None
+        return "name=%s rpm=%s" % (self.name, rpm_name)
+
+class SO_Collection:
+    def __init__(self):
+        self.names = {}
+        self.paths = {}
+
+    def __str__(self):
+        text = ''
+        names = self.get_names()
+        for name in names:
+            text += "%s: %s\n" % (name, self.names[name])
+        return text
+
+    def register_path(self, path, name=None):
+        if debug: print "%s.register_path: path=%s" % (self.__class__.__name__, path)
+        so_prop = self.paths.setdefault(path, SO_File(name, path=path))
+        self.names.setdefault(name, so_prop)
+        return so_prop
+
+    def get_names(self):
+        names = self.names.keys()
+        names.sort()
+        return names
+
+class LoadableModule:
+    def __init__(self, path, name=None):
+        if name is None:
+            name = os.path.basename(path)
+        self.name = name
+        self.path = path
+        self.rpms = RPM_Collection()
+        self.sos = SO_Collection()
+        self.get_so_libs()
+
+    def __str__(self):
+        text = '%s\n' % (self.name)
+        text += "    RPM's: %s\n" % (','.join(self.rpms.get_names()))
+        text += "    SO's: %s\n" % (','.join(self.sos.get_names()))
+        return text
+
+    def get_so_libs(self):
+        cmd = 'ldd %s' % (self.path)
+        so_re = re.compile(r'^\s*(\S+)\s+=>\s+(\S+)')
+
+        c = Command(cmd)
+        status = c.run()
+
+        for line in c.stdout_lines:
+            line = line.strip()
+            #print line
+            match = so_re.search(line)
+            if match:
+                so_name = match.group(1)
+                if match.group(2).startswith('/'):
+                    so_path = match.group(2)
+                else:
+                    so_path = None
+                if so_path:
+                    so_props = self.sos.register_path(so_path, so_name)
+                    rpm_props = self.rpms.register_path(so_props.path)
+                    so_props.rpm = rpm_props
+                else:
+                    so_props = None
+                if verbose: print "found so='%s' %s" % (so_name, so_props)
+
+    def register_so(self, so):
+        if debug: print "%s.register_so: so=%s" % (self.__class__.__name__, so)
+        self.sos.setdefault(so, so)
+        self.names.setdefault(so.name, so)
+        return so
+
+    def get_sos(self):
+        sos = self.sos.keys()
+        sos.sort(lambda a,b: cmp(a.name, b.name))
+        return sos
+
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+
+lms = []
+for module_path in module_paths[:]:
+    lm = LoadableModule(module_path)
+    lms.append(lm)
+
+
+for lm in lms:
+    rpms = [x for x in lm.rpms.get_names() if x not in exclude_rpms]
+    if rpms:
+        print lm.name
+        print '    %s' % (','.join(rpms))
+
+print "--------------"
+
+for lm in lms:
+    print lm
