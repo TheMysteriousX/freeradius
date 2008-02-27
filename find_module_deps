@@ -1,12 +1,24 @@
 #!/usr/bin/env python
 
-import re
-import os
-import sys
 import exceptions
+import getopt
+import os
+import re
 import rpm
 import select
 import subprocess
+import sys
+
+#------------------------------------------------------------------------------
+
+def get_rlms(root):
+    rlm_re = re.compile(r'^rlm_')
+    version_re = re.compile(r'-[0-9.]+\.so$')
+    names = os.listdir(root)
+    names = [x for x in names if rlm_re.search(x)]
+    names = [x for x in names if not version_re.search(x)]
+    names.sort()
+    return names
 
 #------------------------------------------------------------------------------
 
@@ -15,61 +27,8 @@ verbose = False
 
 exclude_rpms = ['glibc']
 
-root = '/var/tmp/freeradius-2.0.2-1.fc8-root-jdennis/usr/lib/freeradius'
-modules = [
-    'rlm_acctlog.so',
-    'rlm_acct_unique.so',
-    'rlm_always.so',
-    'rlm_attr_filter.so',
-    'rlm_attr_rewrite.so',
-    'rlm_chap.so',
-    'rlm_checkval.so',
-    'rlm_copy_packet.so',
-    'rlm_counter.so',
-    'rlm_dbm.so',
-    'rlm_detail.so',
-    'rlm_digest.so',
-    'rlm_eap_gtc.so',
-    'rlm_eap_leap.so',
-    'rlm_eap_md5.so',
-    'rlm_eap_mschapv2.so',
-    'rlm_eap_peap.so',
-    'rlm_eap_sim.so',
-    'rlm_eap.so',
-    'rlm_eap_tls.so',
-    'rlm_eap_tnc.so',
-    'rlm_eap_ttls.so',
-    'rlm_exec.so',
-    'rlm_expiration.so',
-    'rlm_expr.so',
-    'rlm_fastusers.so',
-    'rlm_files.so',
-    'rlm_ippool.so',
-    'rlm_krb5.so',
-    'rlm_ldap.so',
-    'rlm_logintime.so',
-    'rlm_mschap.so',
-    'rlm_otp.so',
-    'rlm_pam.so',
-    'rlm_pap.so',
-    'rlm_passwd.so',
-    'rlm_perl.so',
-    'rlm_policy.so',
-    'rlm_preprocess.so',
-    'rlm_python.so',
-    'rlm_radutmp.so',
-    'rlm_realm.so',
-    'rlm_sqlcounter.so',
-    'rlm_sqlippool.so',
-    'rlm_sql_log.so',
-    'rlm_sql_mysql.so',
-    'rlm_sql_postgresql.so',
-    'rlm_sql.so',
-    'rlm_sql_unixodbc.so',
-    'rlm_unix.so',
-]
-
-module_paths = [os.path.join(root,x) for x in modules]
+build = '2.0.2-1.fc8'
+root_template = '/var/tmp/freeradius-%s-root-jdennis/usr/lib/freeradius'
 
 #------------------------------------------------------------------------------
 
@@ -214,7 +173,9 @@ class RPM_Collection:
 
     def register_path(self, path):
         if debug: print "%s.register_path: path=%s" % (self.__class__.__name__, path)
-        rpm_prop = self.paths.setdefault(path, RPM_Prop(path=path))
+        rpm_prop = self.paths.get(path)
+        if not rpm_prop:
+            rpm_prop = self.paths.setdefault(path, RPM_Prop(path=path))
         self.names.setdefault(rpm_prop.name, rpm_prop)
         return rpm_prop
 
@@ -250,7 +211,9 @@ class SO_Collection:
 
     def register_path(self, path, name=None):
         if debug: print "%s.register_path: path=%s" % (self.__class__.__name__, path)
-        so_prop = self.paths.setdefault(path, SO_File(name, path=path))
+        so_prop = self.paths.get(path)
+        if not so_prop:
+            so_prop = self.paths.setdefault(path, SO_File(name, path=path))
         self.names.setdefault(name, so_prop)
         return so_prop
 
@@ -265,13 +228,13 @@ class LoadableModule:
             name = os.path.basename(path)
         self.name = name
         self.path = path
-        self.rpms = RPM_Collection()
+        self.rpm_names = {}
         self.sos = SO_Collection()
         self.get_so_libs()
 
     def __str__(self):
         text = '%s\n' % (self.name)
-        text += "    RPM's: %s\n" % (','.join(self.rpms.get_names()))
+        text += "    RPM's: %s\n" % (','.join(self.get_rpm_names()))
         text += "    SO's: %s\n" % (','.join(self.sos.get_names()))
         return text
 
@@ -293,18 +256,24 @@ class LoadableModule:
                 else:
                     so_path = None
                 if so_path:
-                    so_props = self.sos.register_path(so_path, so_name)
-                    rpm_props = self.rpms.register_path(so_props.path)
-                    so_props.rpm = rpm_props
+                    so_prop = self.sos.register_path(so_path, so_name)
+                    rpm_prop = rpms.register_path(so_prop.path)
+                    self.rpm_names.setdefault(rpm_prop.name, rpm_prop.name)
+                    so_prop.rpm = rpm_prop
                 else:
-                    so_props = None
-                if verbose: print "found so='%s' %s" % (so_name, so_props)
+                    so_prop = None
+                if verbose: print "found so='%s' %s" % (so_name, so_prop)
 
     def register_so(self, so):
         if debug: print "%s.register_so: so=%s" % (self.__class__.__name__, so)
         self.sos.setdefault(so, so)
         self.names.setdefault(so.name, so)
         return so
+
+    def get_rpm_names(self):
+        rpm_names = self.rpm_names.keys()
+        rpm_names.sort()
+        return rpm_names
 
     def get_sos(self):
         sos = self.sos.keys()
@@ -315,17 +284,34 @@ class LoadableModule:
 
 #------------------------------------------------------------------------------
 
+opts, args = getopt.getopt(sys.argv[1:], "b:v", ['build=','verbose'])
+for o, a in opts:
+    if o in ['-b', '--build']:
+        build = a
+    elif o in ['-v', '--verbose']:
+        verbose = True
+    else:
+        print >> sys.stderr, "Unknown arg: %s" % o
+        sys.exit(1)
+
+root = root_template % build
+modules = get_rlms(root)
+module_paths = [os.path.join(root,x) for x in modules]
+rpms = RPM_Collection()
+
 lms = []
 for module_path in module_paths[:]:
     lm = LoadableModule(module_path)
     lms.append(lm)
 
 
+print "RLM Modules(%s): %s\n" % (len(modules), ','.join(modules))
+
 for lm in lms:
-    rpms = [x for x in lm.rpms.get_names() if x not in exclude_rpms]
-    if rpms:
+    rpm_names = [x for x in lm.get_rpm_names() if x not in exclude_rpms]
+    if rpm_names:
         print lm.name
-        print '    %s' % (','.join(rpms))
+        print '    %s' % (','.join(rpm_names))
 
 print "--------------"
 
