@@ -1,3 +1,6 @@
+# FIXME: should pki certs be moved to /etc/pki?
+# FIXME: are the group names right?
+# FIXME: need to run rpmlint
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.0.2
@@ -12,18 +15,15 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires: autoconf
 BuildRequires: gdbm-devel
-BuildRequires: krb5-devel
 BuildRequires: libtool
 BuildRequires: libtool-ltdl-devel
 BuildRequires: net-snmp-devel
 BuildRequires: net-snmp-utils
-BuildRequires: openldap-devel
 BuildRequires: openssl-devel
 BuildRequires: pam-devel
-BuildRequires: perl-devel
 BuildRequires: zlib-devel
 
-Requires: net-snmp krb5-libs
+Requires: net-snmp
 Requires: net-snmp-utils
 Requires(pre): shadow-utils
 Requires(post): /sbin/ldconfig /sbin/chkconfig
@@ -44,6 +44,104 @@ also RADIUS clients available for Web servers, firewalls, Unix logins, and
 more.  Using RADIUS allows authentication and authorization for a network to 
 be centralized, and minimizes the amount of re-configuration which has to be 
 done when adding or deleting new users.
+
+%package libs
+Group:        Productivity/Networking/Radius/Servers
+Summary:      FreeRADIUS share library
+
+%description libs
+The FreeRADIUS shared library
+
+%package utils
+Group:        Productivity/Networking/Radius/Clients
+Summary:      FreeRADIUS Clients
+Requires:     %{name}-libs = %{version}
+
+%description utils
+The FreeRADIUS server has a number of features found in other servers,
+and additional features not found in any other server. Rather than
+doing a feature by feature comparison, we will simply list the features
+of the server, and let you decide if they satisfy your needs.
+
+Support for RFC and VSA Attributes Additional server configuration
+attributes Selecting a particular configuration Authentication methods
+
+%package dialupadmin
+Group:		Productivity/Networking/Radius/Servers
+Summary:	Web management for FreeRADIUS
+Requires:	http_daemon
+Requires:	perl-DateManip
+%if 0%{?suse_version} > 1000
+Requires:	apache2-mod_php5
+Requires:	php5
+Requires:	php5-ldap
+Requires:	php5-mysql
+Requires:	php5-pgsql
+%else
+Requires:	apache2-mod_php4
+Requires:	php4
+Requires:	php4-ldap
+Requires:	php4-mysql
+Requires:	php4-pgsql
+Requires:	php4-session
+%endif
+Autoreqprov:	off
+
+%description dialupadmin
+Dialup Admin supports users either in SQL (MySQL or PostgreSQL are
+supported) or in LDAP. Apart from the web pages, it also includes a
+number of scripts to make the administrator's life a lot easier.
+
+
+%package devel
+Group:        Development/Libraries/C and C++
+Summary:      FreeRADIUS Development Files (static libs)
+Autoreqprov:  off
+Requires:     %{name}-libs = %{version}
+
+%description devel
+These are the static libraries for the FreeRADIUS package.
+
+
+%package ldap
+Summary: LDAP bindings for freeradius
+Group: System Environment/Daemons
+Requires: %{name} = %{version}-%{release}
+Requires: openldap
+BuildRequires: openldap-devel
+
+%description ldap
+This plugin provides the LDAP bindings for the FreeRADIUS server project.
+
+%package krb5
+Summary: Kerberos 5 bindings for freeradius
+Group: System Environment/Daemons
+Requires: %{name} = %{version}-%{release}
+Requires: krb5-libs
+BuildRequires: krb5-devel
+
+%description krb5
+This plugin provides the Kerberos 5 bindings for the FreeRADIUS server project.
+
+%package perl
+Summary: Perl bindings for freeradius
+Group: System Environment/Daemons
+Requires: %{name} = %{version}-%{release}
+Requires: perl-libs
+BuildRequires: perl-devel
+
+%description perl
+This plugin provides the Perl bindings for the FreeRADIUS server project.
+
+%package python
+Summary: Python bindings for freeradius
+Group: System Environment/Daemons
+Requires: %{name} = %{version}-%{release}
+Requires: python-libs
+BuildRequires: python-devel
+
+%description python
+This plugin provides the Python bindings for the FreeRADIUS server project.
 
 %package mysql
 Summary: MySQL bindings for freeradius
@@ -118,6 +216,7 @@ make
 
 %install
 rm -rf $RPM_BUILD_ROOT
+mkdir -p $RPM_BUILD_ROOT/var/run/radiusd
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/{logrotate.d,pam.d,rc.d/init.d}
 mkdir -p $RPM_BUILD_ROOT/var/lib/radiusd
 # fix for bad libtool bug - can not rebuild dependent libs and bins
@@ -129,25 +228,32 @@ perl -i -pe 's/^#user =.*$/user = radiusd/'   $RADDB/radiusd.conf
 perl -i -pe 's/^#group =.*$/group = radiusd/' $RADDB/radiusd.conf
 perl -i -pe 's/^#user =.*$/user = radiusd/'   $RADDB/radrelay.conf
 perl -i -pe 's/^#group =.*$/group = radiusd/' $RADDB/radrelay.conf
-
-install -m 755 redhat/rc.radiusd-redhat $RPM_BUILD_ROOT/%{_initrddir}/radiusd
-install -m 644 redhat/radiusd-logrotate $RPM_BUILD_ROOT/%{_sysconfdir}/logrotate.d/radiusd
-install -m 644 redhat/radiusd-pam $RPM_BUILD_ROOT/%{_sysconfdir}/pam.d/radiusd
-
-# install SNMP MIB files
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/snmp/mibs/
-install -m 644 mibs/RADIUS*.txt $RPM_BUILD_ROOT%{_datadir}/snmp/mibs/
-
-# remove unwanted rc.radiusd
-rm -f $RPM_BUILD_ROOT%{_prefix}/sbin/rc.radiusd
-
-find $RPM_BUILD_ROOT%{_libdir} -name "*.la" -print | xargs rm -f
-find $RPM_BUILD_ROOT%{_libdir} -name "*.a" -print | xargs rm -f
-
-mkdir -p $RPM_BUILD_ROOT/var/log/radius
-touch $RPM_BUILD_ROOT/var/log/radius/{radutmp,radwtmp,radius.log}
+#ldconfig -n $RPM_BUILD_ROOT/usr/lib/freeradius
+# logs
 mkdir -p $RPM_BUILD_ROOT/var/log/radius/radacct
-mkdir -p $RPM_BUILD_ROOT/var/run/radiusd
+touch $RPM_BUILD_ROOT/var/log/radius/{radutmp,radius.log}
+
+install -m 644 redhat/radiusd-pam $RPM_BUILD_ROOT/%{_sysconfdir}/pam.d/radiusd
+install -m 644 redhat/radiusd-logrotate $RPM_BUILD_ROOT/%{_sysconfdir}/logrotate.d/radiusd
+install -m 755 redhat/rc.radiusd-redhat $RPM_BUILD_ROOT/%{_initrddir}/radiusd
+(cd $RPM_BUILD_ROOT/usr/sbin && ln -sf ./radiusd radrelay)
+# install dialup_admin
+DIALUPADMIN=$RPM_BUILD_ROOT%{_datadir}/dialup_admin
+mkdir -p $DIALUPADMIN
+cp -r dialup_admin/* $RPM_BUILD_ROOT%{_datadir}/dialup_admin
+perl -i -pe 's/^#general_base_dir\:.*$/general_base_dir\: \/usr\/share\/freeradius-dialupadmin/'   $DIALUPADMIN/conf/admin.conf
+perl -i -pe 's/^#general_radiusd_base_dir\:.*$/general_radiusd_base_dir\: \//'   $DIALUPADMIN/conf/admin.conf
+perl -i -pe 's/^#general_snmpwalk_command\:.*$/general_snmpwalk_command\: \/usr\/bin\/snmpwalk/'   $DIALUPADMIN/conf/admin.conf
+perl -i -pe 's/^#general_snmpget_command\:.*$/general_snmpget_command\: \/usr\/bin\/snmpget/'   $DIALUPADMIN/conf/admin.conf
+# httpd config
+install -d -m 755 $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf.d
+install -m 644 suse/admin-httpd.conf $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf.d/radius.conf
+# remove unneeded stuff
+rm -rf doc/00-OLD
+rm -f $RPM_BUILD_ROOT/usr/sbin/rc.radiusd
+rm -rf $RPM_BUILD_ROOT/%{_libdir}/freeradius/*.a
+rm -rf $RPM_BUILD_ROOT/%{_libdir}/freeradius/*.la
+rm -rf $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/sql/oracle
 
 # remove unsupported config files
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/experimental.conf
@@ -167,10 +273,6 @@ rm -rf $RPM_BUILD_ROOT
 if [ $1 = 1 ]; then
   /sbin/chkconfig --add radiusd
 fi
-for i in /var/log/radius/{radutmp,radwtmp,radius.log}; do
-  /bin/touch $i && /bin/chown radiusd $i && /bin/chmod 600 $i
-done
-
 
 %preun
 if [ $1 = 0 ]; then
@@ -192,7 +294,6 @@ fi
 %config(noreplace) %{_sysconfdir}/pam.d/radiusd
 %config(noreplace) %{_sysconfdir}/logrotate.d/radiusd
 %config(noreplace) %{_initrddir}/radiusd
-#--------------------
 %dir %attr(755,radiusd,radiusd) /var/lib/radiusd
 # configs
 %dir %attr(750,-,radiusd) /etc/raddb
@@ -206,7 +307,6 @@ fi
 %attr(640,-,radiusd) %config(noreplace) /etc/raddb/clients.conf
 %config(noreplace) /etc/raddb/hints
 %config(noreplace) /etc/raddb/huntgroups
-%config(noreplace) /etc/raddb/ldap.attrmap
 %attr(640,-,radiusd) %config(noreplace) /etc/raddb/sqlippool.conf
 %attr(640,-,radiusd) %config(noreplace) /etc/raddb/preproxy_users
 %attr(640,-,radiusd) %config(noreplace) /etc/raddb/proxy.conf
@@ -216,8 +316,8 @@ fi
 #%attr(640,-,radiusd) %config(noreplace) /etc/raddb/radrelay.conf
 #%attr(640,-,radiusd) %config(noreplace) /etc/raddb/vmpsd.conf
 %dir %attr(640,-,radiusd) /etc/raddb/sql
-%attr(640,-,radiusd) %config(noreplace) /etc/raddb/sql/*/*.conf
-%attr(640,-,radiusd) %config(noreplace) /etc/raddb/sql/*/*.sql
+%attr(640,-,radiusd) %config(noreplace) /etc/raddb/sql/mssql/*
+#%attr(640,-,radiusd) %config(noreplace) /etc/raddb/sql/oracle/*
 %attr(640,-,radiusd) %config(noreplace) /etc/raddb/users
 %attr(640,-,radiusd) %config(noreplace) /etc/raddb/otp.conf
 %dir %attr(750,-,radiusd) /etc/raddb/certs
@@ -226,7 +326,6 @@ fi
 /etc/raddb/certs/xpextensions
 %attr(640,-,radiusd) %config(noreplace) /etc/raddb/certs/*.cnf
 %attr(750,-,radiusd) /etc/raddb/certs/bootstrap
-%attr(750,-,radiusd) %config /etc/raddb/sites-available/example
 %attr(640,-,radiusd) /etc/raddb/sites-available/*
 %attr(640,-,radiusd) %config(noreplace) /etc/raddb/sites-enabled/*
 %attr(640,-,radiusd) %config(noreplace) /etc/raddb/eap.conf
@@ -314,10 +413,6 @@ fi
 %{_libdir}/freeradius/rlm_files-%{version}.so
 %{_libdir}/freeradius/rlm_ippool.so
 %{_libdir}/freeradius/rlm_ippool-%{version}.so
-%{_libdir}/freeradius/rlm_krb5.so
-%{_libdir}/freeradius/rlm_krb5-%{version}.so
-%{_libdir}/freeradius/rlm_ldap.so
-%{_libdir}/freeradius/rlm_ldap-%{version}.so
 %{_libdir}/freeradius/rlm_logintime.so
 %{_libdir}/freeradius/rlm_logintime-%{version}.so
 %{_libdir}/freeradius/rlm_mschap.so
@@ -330,14 +425,10 @@ fi
 %{_libdir}/freeradius/rlm_pap-%{version}.so
 %{_libdir}/freeradius/rlm_passwd.so
 %{_libdir}/freeradius/rlm_passwd-%{version}.so
-%{_libdir}/freeradius/rlm_perl.so
-%{_libdir}/freeradius/rlm_perl-%{version}.so
 %{_libdir}/freeradius/rlm_policy.so
 %{_libdir}/freeradius/rlm_policy-%{version}.so
 %{_libdir}/freeradius/rlm_preprocess.so
 %{_libdir}/freeradius/rlm_preprocess-%{version}.so
-%{_libdir}/freeradius/rlm_python.so
-%{_libdir}/freeradius/rlm_python-%{version}.so
 %{_libdir}/freeradius/rlm_radutmp.so
 %{_libdir}/freeradius/rlm_radutmp-%{version}.so
 %{_libdir}/freeradius/rlm_realm.so
@@ -346,12 +437,6 @@ fi
 %{_libdir}/freeradius/rlm_sql-%{version}.so
 %{_libdir}/freeradius/rlm_sql_log.so
 %{_libdir}/freeradius/rlm_sql_log-%{version}.so
-%{_libdir}/freeradius/rlm_sql_mysql.so
-%{_libdir}/freeradius/rlm_sql_mysql-%{version}.so
-%{_libdir}/freeradius/rlm_sql_postgresql.so
-%{_libdir}/freeradius/rlm_sql_postgresql-%{version}.so
-%{_libdir}/freeradius/rlm_sql_unixodbc.so
-%{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 %{_libdir}/freeradius/rlm_sqlcounter.so
 %{_libdir}/freeradius/rlm_sqlcounter-%{version}.so
 %{_libdir}/freeradius/rlm_sqlippool.so
@@ -359,23 +444,79 @@ fi
 %{_libdir}/freeradius/rlm_unix.so
 %{_libdir}/freeradius/rlm_unix-%{version}.so
 
+%files utils
+/usr/bin/*
+
+%files libs
+# RADIU shared libs
+%attr(755,root,root) %dir %{_libdir}/freeradius
+%attr(755,root,root) %{_libdir}/freeradius/lib*.so*
+
+%files dialupadmin
+%defattr(-,root,root)
+%dir %{_datadir}/dialup_admin/
+%{_datadir}/dialup_admin/Makefile
+%{_datadir}/dialup_admin/bin/
+%{_datadir}/dialup_admin/doc/
+%{_datadir}/dialup_admin/htdocs/
+%{_datadir}/dialup_admin/html/
+%{_datadir}/dialup_admin/lib/
+%{_datadir}/dialup_admin/sql/
+%dir %{_datadir}/dialup_admin/conf/
+%config(noreplace) %{_datadir}/dialup_admin/conf/*
+%config(noreplace) %{_sysconfdir}/httpd/conf.d/radius.conf
+%{_datadir}/dialup_admin/Changelog
+%{_datadir}/dialup_admin/README
+
+%files devel
+%defattr(-,root,root)
+#%attr(644,root,root) %{_libdir}/freeradius/*.a
+#%attr(644,root,root) %{_libdir}/freeradius/*.la
+%attr(644,root,root) /usr/include/freeradius/*.h
+
+%files ldap
+%defattr(-,root,root,-)
+%config(noreplace) /etc/raddb/ldap.attrmap
+%{_libdir}/freeradius/rlm_ldap.so
+%{_libdir}/freeradius/rlm_ldap-%{version}.so
+
+%files krb5
+%defattr(-,root,root,-)
+%{_libdir}/freeradius/rlm_krb5.so
+%{_libdir}/freeradius/rlm_krb5-%{version}.so
+
+%files perl
+%defattr(-,root,root,-)
+%{_libdir}/freeradius/rlm_perl.so
+%{_libdir}/freeradius/rlm_perl-%{version}.so
+
+%files python
+%defattr(-,root,root,-)
+%{_libdir}/freeradius/rlm_python.so
+%{_libdir}/freeradius/rlm_python-%{version}.so
+
 %files mysql
 %defattr(-,root,root,-)
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/sql.conf
-%{_libdir}/*_mysql*.so
+%attr(640,-,radiusd) %config(noreplace) /etc/raddb/sql/mysql/*
+%{_libdir}/freeradius/rlm_sql_mysql.so
+%{_libdir}/freeradius/rlm_sql_mysql-%{version}.so
 
 %files postgresql
 %defattr(-,root,root,-)
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/postgresql.conf
-%{_libdir}/*_postgresql*.so
+%attr(640,-,radiusd) %config(noreplace) /etc/raddb/sql/postgresql/*
+%{_libdir}/freeradius/rlm_sql_postgresql.so
+%{_libdir}/freeradius/rlm_sql_postgresql-%{version}.so
 
 %files unixODBC
 %defattr(-,root,root,-)
-%config(noreplace) %attr(0600,radiusd,radiusd) %{_sysconfdir}/raddb/mssql.conf
-%{_libdir}/*_unixodbc*.so
-
+%{_libdir}/freeradius/rlm_sql_unixodbc.so
+%{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Thu Feb 28 2008  <jdennis@redhat.com> - 2.0.2-1
+- upgrade to new 2.0 release
+- split into subpackages for more fine grained installation
+
 * Tue Feb 19 2008 Fedora Release Engineering <rel-eng@fedoraproject.org> - 1.1.7-4.4.ipa
 - Autorebuild for GCC 4.3
 

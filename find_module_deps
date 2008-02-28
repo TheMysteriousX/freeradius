@@ -29,6 +29,7 @@ exclude_rpms = ['glibc']
 
 build = '2.0.2-1.fc8'
 root_template = '/var/tmp/freeradius-%s-root-jdennis/usr/lib/freeradius'
+libdirs = ['/lib','/usr/lib']
 
 #------------------------------------------------------------------------------
 
@@ -141,16 +142,70 @@ class Command:
         buf = buf[start:]
         setattr(self, what, buf)
 
+
+#------------------------------------------------------------------------------
+
+def get_so_requires(path):
+    requires = {}
+    cmd = 'ldd %s' % (path)
+    so_re = re.compile(r'^\s*(\S+)\s+=>\s+(\S+)')
+
+    c = Command(cmd)
+    status = c.run()
+
+    for line in c.stdout_lines:
+        line = line.strip()
+        match = so_re.search(line)
+        if match:
+            so_name = match.group(1)
+            if match.group(2).startswith('/'):
+                so_path = match.group(2)
+            else:
+                so_path = None
+
+            requires[so_name] = so_path
+    return requires
+
+def get_so_needed(path):
+    needed = []
+    cmd = 'readelf -d %s' % (path)
+    so_re = re.compile(r'\(NEEDED\)\s+Shared library:\s+\[([^\]]+)\]')
+
+    c = Command(cmd)
+    status = c.run()
+
+    for line in c.stdout_lines:
+        line = line.strip()
+        match = so_re.search(line)
+        if match:
+            so_name = match.group(1)
+            needed.append(so_name)
+    return needed
+
+def format_size(size):
+    if size > 1000000000:
+        return '%.1f GB' % (size/1000000000.0)
+    if size > 1000000:
+        return '%.1f MB' % (size/1000000.0)
+    if size > 1000:
+        return '%.1f KB' % (size/1000.0)
+    return '%d' % (size)
 #------------------------------------------------------------------------------
 
 class RPM_Prop:
     def __init__(self, path=None, name=None):
         self.name = name
         self.paths = {}
+        self.rpm_hdr = None
+        self.used_by = {}
         if path:
             self.register_path(path)
-            if not self.name:
-                self.name = get_rpm_name_by_file_path(path)                
+            if not self.rpm_hdr:
+                self.rpm_hdr = get_rpm_hdr_by_file_path(path)
+            if self.rpm_hdr:
+                if not self.name:
+                    self.name = self.rpm_hdr[rpm.RPMTAG_NAME]
+                self.size = self.rpm_hdr[rpm.RPMTAG_SIZE]
 
     def __str__(self):
         return "name=%s paths=%s" % (self.name, ','.join(self.paths.keys()))
@@ -183,6 +238,9 @@ class RPM_Collection:
         names = self.names.keys()
         names.sort()
         return names
+
+    def get_name(self, name):
+        return self.names.get(name)
 
 class SO_File:
     def __init__(self, name=None, path=None):
@@ -230,7 +288,7 @@ class LoadableModule:
         self.path = path
         self.rpm_names = {}
         self.sos = SO_Collection()
-        self.get_so_libs()
+        self.get_so_requires()
 
     def __str__(self):
         text = '%s\n' % (self.name)
@@ -238,31 +296,23 @@ class LoadableModule:
         text += "    SO's: %s\n" % (','.join(self.sos.get_names()))
         return text
 
-    def get_so_libs(self):
-        cmd = 'ldd %s' % (self.path)
-        so_re = re.compile(r'^\s*(\S+)\s+=>\s+(\S+)')
+    def get_so_requires(self):
+        requires = get_so_requires(self.path)
+        needed = get_so_needed(self.path)
+        #print "%s requires=%s" % (self.name, requires)
+        #print "%s needed=%s" % (self.name, needed)
 
-        c = Command(cmd)
-        status = c.run()
-
-        for line in c.stdout_lines:
-            line = line.strip()
-            #print line
-            match = so_re.search(line)
-            if match:
-                so_name = match.group(1)
-                if match.group(2).startswith('/'):
-                    so_path = match.group(2)
-                else:
-                    so_path = None
-                if so_path:
-                    so_prop = self.sos.register_path(so_path, so_name)
-                    rpm_prop = rpms.register_path(so_prop.path)
-                    self.rpm_names.setdefault(rpm_prop.name, rpm_prop.name)
-                    so_prop.rpm = rpm_prop
-                else:
-                    so_prop = None
-                if verbose: print "found so='%s' %s" % (so_name, so_prop)
+        for so_name, so_path in requires.items():
+            if so_name not in needed: continue
+            if so_path:
+                so_prop = self.sos.register_path(so_path, so_name)
+                rpm_prop = rpms.register_path(so_prop.path)
+                rpm_prop.used_by[self.name] = 1
+                self.rpm_names.setdefault(rpm_prop.name, rpm_prop.name)
+                so_prop.rpm = rpm_prop
+            else:
+                so_prop = None
+            if verbose: print "found so='%s' %s" % (so_name, so_prop)
 
     def register_so(self, so):
         if debug: print "%s.register_so: so=%s" % (self.__class__.__name__, so)
@@ -312,6 +362,22 @@ for lm in lms:
     if rpm_names:
         print lm.name
         print '    %s' % (','.join(rpm_names))
+
+print "--------------"
+
+rpm_props = [x for x in rpms.names.values() if len(x.used_by) and x.name not in exclude_rpms]
+rpm_props.sort(lambda a,b: cmp(a.name, b.name))
+for rpm_prop in rpm_props:
+    used_by = rpm_prop.used_by.keys()
+    used_by.sort()
+    print "%s: %s" % (rpm_prop.name, ','.join(used_by))
+
+print "--------------"
+
+rpm_props.sort(lambda a,b: cmp(a.size, b.size))
+for rpm_prop in rpm_props:
+    print '%10s %s' % (format_size(rpm_prop.size), rpm_prop.name)
+
 
 print "--------------"
 
