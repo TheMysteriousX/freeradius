@@ -119,19 +119,16 @@ make
 %install
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/{logrotate.d,pam.d,rc.d/init.d}
-# create database directory
 mkdir -p $RPM_BUILD_ROOT/var/lib/radiusd
-
 # fix for bad libtool bug - can not rebuild dependent libs and bins
-export LD_LIBRARY_PATH=$RPM_BUILD_ROOT/%{_libdir}
+#FIXME export LD_LIBRARY_PATH=$RPM_BUILD_ROOT/%{_libdir}
 make install R=$RPM_BUILD_ROOT
-
-RADDB=$RPM_BUILD_ROOT/%{_sysconfdir}/raddb
-# set radiusd as default user/group
-perl -i -pe 's/^#user =.*$/user = radiusd/' $RADDB/radiusd.conf
+# modify default configuration
+RADDB=$RPM_BUILD_ROOT%{_sysconfdir}/raddb
+perl -i -pe 's/^#user =.*$/user = radiusd/'   $RADDB/radiusd.conf
 perl -i -pe 's/^#group =.*$/group = radiusd/' $RADDB/radiusd.conf
-# shadow password file MUST be defined on Linux
-perl -i -pe 's/#	shadow =/shadow =/' $RADDB/radiusd.conf
+perl -i -pe 's/^#user =.*$/user = radiusd/'   $RADDB/radrelay.conf
+perl -i -pe 's/^#group =.*$/group = radiusd/' $RADDB/radrelay.conf
 
 install -m 755 redhat/rc.radiusd-redhat $RPM_BUILD_ROOT/%{_initrddir}/radiusd
 install -m 644 redhat/radiusd-logrotate $RPM_BUILD_ROOT/%{_sysconfdir}/logrotate.d/radiusd
@@ -260,58 +257,107 @@ fi
 # RADIUS Loadable Modules
 %attr(755,root,root) %dir %{_libdir}/freeradius
 #%attr(755,root,root) %{_libdir}/freeradius/rlm_*.so*
-%{_libdir}/freeradius/libfreeradius-eap*.so
-%{_libdir}/freeradius/libfreeradius-radius*.so
-%{_libdir}/freeradius/rlm_acctlog*.so
-%{_libdir}/freeradius/rlm_acct_unique*.so
-%{_libdir}/freeradius/rlm_always*.so
-%{_libdir}/freeradius/rlm_attr_filter*.so
-%{_libdir}/freeradius/rlm_attr_rewrite*.so
-%{_libdir}/freeradius/rlm_chap*.so
-%{_libdir}/freeradius/rlm_checkval*.so
-%{_libdir}/freeradius/rlm_copy_packet*.so
-%{_libdir}/freeradius/rlm_counter*.so
-%{_libdir}/freeradius/rlm_dbm*.so
-%{_libdir}/freeradius/rlm_detail*.so
-%{_libdir}/freeradius/rlm_digest*.so
-%{_libdir}/freeradius/rlm_eap_gtc*.so
-%{_libdir}/freeradius/rlm_eap_leap*.so
-%{_libdir}/freeradius/rlm_eap_md5*.so
-%{_libdir}/freeradius/rlm_eap_mschapv2*.so
-%{_libdir}/freeradius/rlm_eap_peap*.so
-%{_libdir}/freeradius/rlm_eap_sim*.so
-%{_libdir}/freeradius/rlm_eap*.so
-%{_libdir}/freeradius/rlm_eap_tls*.so
-%{_libdir}/freeradius/rlm_eap_tnc*.so
-%{_libdir}/freeradius/rlm_eap_ttls*.so
-%{_libdir}/freeradius/rlm_exec*.so
-%{_libdir}/freeradius/rlm_expiration*.so
-%{_libdir}/freeradius/rlm_expr*.so
-%{_libdir}/freeradius/rlm_fastusers*.so
-%{_libdir}/freeradius/rlm_files*.so
-%{_libdir}/freeradius/rlm_ippool*.so
-%{_libdir}/freeradius/rlm_krb5*.so
-%{_libdir}/freeradius/rlm_ldap*.so
-%{_libdir}/freeradius/rlm_logintime*.so
-%{_libdir}/freeradius/rlm_mschap*.so
-%{_libdir}/freeradius/rlm_otp*.so
-%{_libdir}/freeradius/rlm_pam*.so
-%{_libdir}/freeradius/rlm_pap*.so
-%{_libdir}/freeradius/rlm_passwd*.so
-%{_libdir}/freeradius/rlm_perl*.so
-%{_libdir}/freeradius/rlm_policy*.so
-%{_libdir}/freeradius/rlm_preprocess*.so
-%{_libdir}/freeradius/rlm_python*.so
-%{_libdir}/freeradius/rlm_radutmp*.so
-%{_libdir}/freeradius/rlm_realm*.so
-%{_libdir}/freeradius/rlm_sqlcounter*.so
-%{_libdir}/freeradius/rlm_sqlippool*.so
-%{_libdir}/freeradius/rlm_sql_log*.so
-%{_libdir}/freeradius/rlm_sql_mysql*.so
-%{_libdir}/freeradius/rlm_sql_postgresql*.so
-%{_libdir}/freeradius/rlm_sql*.so
-%{_libdir}/freeradius/rlm_sql_unixodbc*.so
-%{_libdir}/freeradius/rlm_unix*.so
+#%{_libdir}/freeradius/rlm_acctlog*.so
+%{_libdir}/freeradius/rlm_acct_unique.so
+%{_libdir}/freeradius/rlm_acct_unique-%{version}.so
+%{_libdir}/freeradius/rlm_acctlog.so
+%{_libdir}/freeradius/rlm_acctlog-%{version}.so
+%{_libdir}/freeradius/rlm_always.so
+%{_libdir}/freeradius/rlm_always-%{version}.so
+%{_libdir}/freeradius/rlm_attr_filter.so
+%{_libdir}/freeradius/rlm_attr_filter-%{version}.so
+%{_libdir}/freeradius/rlm_attr_rewrite.so
+%{_libdir}/freeradius/rlm_attr_rewrite-%{version}.so
+%{_libdir}/freeradius/rlm_chap.so
+%{_libdir}/freeradius/rlm_chap-%{version}.so
+%{_libdir}/freeradius/rlm_checkval.so
+%{_libdir}/freeradius/rlm_checkval-%{version}.so
+%{_libdir}/freeradius/rlm_copy_packet.so
+%{_libdir}/freeradius/rlm_copy_packet-%{version}.so
+%{_libdir}/freeradius/rlm_counter.so
+%{_libdir}/freeradius/rlm_counter-%{version}.so
+%{_libdir}/freeradius/rlm_dbm.so
+%{_libdir}/freeradius/rlm_dbm-%{version}.so
+%{_libdir}/freeradius/rlm_detail.so
+%{_libdir}/freeradius/rlm_detail-%{version}.so
+%{_libdir}/freeradius/rlm_digest.so
+%{_libdir}/freeradius/rlm_digest-%{version}.so
+%{_libdir}/freeradius/rlm_eap.so
+%{_libdir}/freeradius/rlm_eap-%{version}.so
+%{_libdir}/freeradius/rlm_eap_gtc.so
+%{_libdir}/freeradius/rlm_eap_gtc-%{version}.so
+%{_libdir}/freeradius/rlm_eap_leap.so
+%{_libdir}/freeradius/rlm_eap_leap-%{version}.so
+%{_libdir}/freeradius/rlm_eap_md5.so
+%{_libdir}/freeradius/rlm_eap_md5-%{version}.so
+%{_libdir}/freeradius/rlm_eap_mschapv2.so
+%{_libdir}/freeradius/rlm_eap_mschapv2-%{version}.so
+%{_libdir}/freeradius/rlm_eap_peap.so
+%{_libdir}/freeradius/rlm_eap_peap-%{version}.so
+%{_libdir}/freeradius/rlm_eap_sim.so
+%{_libdir}/freeradius/rlm_eap_sim-%{version}.so
+%{_libdir}/freeradius/rlm_eap_tls.so
+%{_libdir}/freeradius/rlm_eap_tls-%{version}.so
+%{_libdir}/freeradius/rlm_eap_tnc.so
+%{_libdir}/freeradius/rlm_eap_tnc-%{version}.so
+%{_libdir}/freeradius/rlm_eap_ttls.so
+%{_libdir}/freeradius/rlm_eap_ttls-%{version}.so
+%{_libdir}/freeradius/rlm_exec.so
+%{_libdir}/freeradius/rlm_exec-%{version}.so
+%{_libdir}/freeradius/rlm_expiration.so
+%{_libdir}/freeradius/rlm_expiration-%{version}.so
+%{_libdir}/freeradius/rlm_expr.so
+%{_libdir}/freeradius/rlm_expr-%{version}.so
+%{_libdir}/freeradius/rlm_fastusers.so
+%{_libdir}/freeradius/rlm_fastusers-%{version}.so
+%{_libdir}/freeradius/rlm_files.so
+%{_libdir}/freeradius/rlm_files-%{version}.so
+%{_libdir}/freeradius/rlm_ippool.so
+%{_libdir}/freeradius/rlm_ippool-%{version}.so
+%{_libdir}/freeradius/rlm_krb5.so
+%{_libdir}/freeradius/rlm_krb5-%{version}.so
+%{_libdir}/freeradius/rlm_ldap.so
+%{_libdir}/freeradius/rlm_ldap-%{version}.so
+%{_libdir}/freeradius/rlm_logintime.so
+%{_libdir}/freeradius/rlm_logintime-%{version}.so
+%{_libdir}/freeradius/rlm_mschap.so
+%{_libdir}/freeradius/rlm_mschap-%{version}.so
+%{_libdir}/freeradius/rlm_otp.so
+%{_libdir}/freeradius/rlm_otp-%{version}.so
+%{_libdir}/freeradius/rlm_pam.so
+%{_libdir}/freeradius/rlm_pam-%{version}.so
+%{_libdir}/freeradius/rlm_pap.so
+%{_libdir}/freeradius/rlm_pap-%{version}.so
+%{_libdir}/freeradius/rlm_passwd.so
+%{_libdir}/freeradius/rlm_passwd-%{version}.so
+%{_libdir}/freeradius/rlm_perl.so
+%{_libdir}/freeradius/rlm_perl-%{version}.so
+%{_libdir}/freeradius/rlm_policy.so
+%{_libdir}/freeradius/rlm_policy-%{version}.so
+%{_libdir}/freeradius/rlm_preprocess.so
+%{_libdir}/freeradius/rlm_preprocess-%{version}.so
+%{_libdir}/freeradius/rlm_python.so
+%{_libdir}/freeradius/rlm_python-%{version}.so
+%{_libdir}/freeradius/rlm_radutmp.so
+%{_libdir}/freeradius/rlm_radutmp-%{version}.so
+%{_libdir}/freeradius/rlm_realm.so
+%{_libdir}/freeradius/rlm_realm-%{version}.so
+%{_libdir}/freeradius/rlm_sql.so
+%{_libdir}/freeradius/rlm_sql-%{version}.so
+%{_libdir}/freeradius/rlm_sql_log.so
+%{_libdir}/freeradius/rlm_sql_log-%{version}.so
+%{_libdir}/freeradius/rlm_sql_mysql.so
+%{_libdir}/freeradius/rlm_sql_mysql-%{version}.so
+%{_libdir}/freeradius/rlm_sql_postgresql.so
+%{_libdir}/freeradius/rlm_sql_postgresql-%{version}.so
+%{_libdir}/freeradius/rlm_sql_unixodbc.so
+%{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
+%{_libdir}/freeradius/rlm_sqlcounter.so
+%{_libdir}/freeradius/rlm_sqlcounter-%{version}.so
+%{_libdir}/freeradius/rlm_sqlippool.so
+%{_libdir}/freeradius/rlm_sqlippool-%{version}.so
+%{_libdir}/freeradius/rlm_unix.so
+%{_libdir}/freeradius/rlm_unix-%{version}.so
 
 %files mysql
 %defattr(-,root,root,-)
