@@ -12,10 +12,11 @@ Group: System Environment/Daemons
 URL: http://www.freeradius.org/
 
 Source0: ftp://ftp.freeradius.org/pub/radius/%{name}-server-%{version}.tar.bz2
-Source100: freeradius-radiusd.init
-Source101: freeradius-radrelay.init
+Source100: freeradius-radiusd-init
+Source101: freeradius-radrelay-init
 Source102: freeradius-logrotate
 Source103: freeradius-pam-conf
+Source104: freeradius-dialupadmin-httpd-conf
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -75,23 +76,11 @@ attributes Selecting a particular configuration Authentication methods
 %package dialupadmin
 Group:		Productivity/Networking/Radius/Servers
 Summary:	Web management for FreeRADIUS
-Requires:	http_daemon
-Requires:	perl-DateManip
-%if 0%{?suse_version} > 1000
-Requires:	apache2-mod_php5
-Requires:	php5
-Requires:	php5-ldap
-Requires:	php5-mysql
-Requires:	php5-pgsql
-%else
-Requires:	apache2-mod_php4
-Requires:	php4
-Requires:	php4-ldap
-Requires:	php4-mysql
-Requires:	php4-pgsql
-Requires:	php4-session
-%endif
-Autoreqprov:	off
+Requires:	httpd
+Requires:	php
+Requires:	php-ldap
+Requires:	php-mysql
+Requires:	php-pgsql
 
 %description dialupadmin
 Dialup Admin supports users either in SQL (MySQL or PostgreSQL are
@@ -102,7 +91,6 @@ number of scripts to make the administrator's life a lot easier.
 %package devel
 Group:        Development/Libraries/C and C++
 Summary:      FreeRADIUS Development Files (static libs)
-Autoreqprov:  off
 Requires:     %{name}-libs = %{version}
 
 %description devel
@@ -255,7 +243,7 @@ perl -i -pe 's/^#general_snmpwalk_command\:.*$/general_snmpwalk_command\: \/usr\
 perl -i -pe 's/^#general_snmpget_command\:.*$/general_snmpget_command\: \/usr\/bin\/snmpget/'   $DIALUPADMIN/conf/admin.conf
 # httpd config
 install -d -m 755 $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf.d
-install -m 644 suse/admin-httpd.conf $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf.d/radius.conf
+install -m 644 %{SOURCE104} $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf.d/radius.conf
 # remove unneeded stuff
 rm -rf doc/00-OLD
 rm -f $RPM_BUILD_ROOT/usr/sbin/rc.radiusd
