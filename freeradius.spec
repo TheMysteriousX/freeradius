@@ -2,6 +2,8 @@
 # FIXME: are the group names right?
 # FIXME: need to run rpmlint
 # FIXME: need radrelay init.d script
+# FIXME: check each of the files loaded from the redhat directory
+# FIXME: check each former patch, do we still need any?
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.0.2
