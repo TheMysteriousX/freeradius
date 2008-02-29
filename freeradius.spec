@@ -1,8 +1,7 @@
 # FIXME: should pki certs be moved to /etc/pki?
 # FIXME: are the group names right?
 # FIXME: need to run rpmlint
-# FIXME: need radrelay init.d script
-# FIXME: check each of the files loaded from the redhat directory
+# FIXME: edit radrelay init.d script, was copied from radiusd init
 # FIXME: check each former patch, do we still need any?
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
@@ -13,6 +12,10 @@ Group: System Environment/Daemons
 URL: http://www.freeradius.org/
 
 Source0: ftp://ftp.freeradius.org/pub/radius/%{name}-server-%{version}.tar.bz2
+Source100: freeradius-radiusd.init
+Source101: freeradius-radrelay.init
+Source102: freeradius-logrotate
+Source103: freeradius-pam-conf
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -236,9 +239,11 @@ perl -i -pe 's/^#group =.*$/group = radiusd/' $RADDB/radrelay.conf
 mkdir -p $RPM_BUILD_ROOT/var/log/radius/radacct
 touch $RPM_BUILD_ROOT/var/log/radius/{radutmp,radius.log}
 
-install -m 644 redhat/radiusd-pam $RPM_BUILD_ROOT/%{_sysconfdir}/pam.d/radiusd
-install -m 644 redhat/radiusd-logrotate $RPM_BUILD_ROOT/%{_sysconfdir}/logrotate.d/radiusd
-install -m 755 redhat/rc.radiusd-redhat $RPM_BUILD_ROOT/%{_initrddir}/radiusd
+install -m 755 %{SOURCE100} $RPM_BUILD_ROOT/%{_initrddir}/radiusd
+install -m 755 %{SOURCE101} $RPM_BUILD_ROOT/%{_initrddir}/radrelay
+install -m 644 %{SOURCE102} $RPM_BUILD_ROOT/%{_sysconfdir}/logrotate.d/radiusd
+install -m 644 %{SOURCE103} $RPM_BUILD_ROOT/%{_sysconfdir}/pam.d/radiusd
+
 (cd $RPM_BUILD_ROOT/usr/sbin && ln -sf ./radiusd radrelay)
 # install dialup_admin
 DIALUPADMIN=$RPM_BUILD_ROOT%{_datadir}/dialup_admin
@@ -297,6 +302,7 @@ fi
 %config(noreplace) %{_sysconfdir}/pam.d/radiusd
 %config(noreplace) %{_sysconfdir}/logrotate.d/radiusd
 %config(noreplace) %{_initrddir}/radiusd
+%config(noreplace) %{_initrddir}/radrelay
 %dir %attr(755,radiusd,radiusd) /var/lib/radiusd
 # configs
 %dir %attr(750,-,radiusd) /etc/raddb
