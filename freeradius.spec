@@ -1,6 +1,7 @@
 # FIXME: should pki certs be moved to /etc/pki?
 # FIXME: are the group names right?
 # FIXME: need to run rpmlint
+# FIXME: need radrelay init.d script
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.0.2
