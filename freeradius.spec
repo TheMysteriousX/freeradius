@@ -1,8 +1,8 @@
 # FIXME: should pki certs be moved to /etc/pki?
-# FIXME: are the group names right?
 # FIXME: need to run rpmlint
 # FIXME: edit radrelay init.d script, was copied from radiusd init
 # FIXME: check each former patch, do we still need any?
+# FIXME: mysql, pgsql, etc. should be factored out from dialupadmin and put in subpackage, subpackage should diaable auto fied requires
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.0.2
@@ -53,15 +53,15 @@ be centralized, and minimizes the amount of re-configuration which has to be
 done when adding or deleting new users.
 
 %package libs
-Group:        Productivity/Networking/Radius/Servers
-Summary:      FreeRADIUS share library
+Group: System Environment/Daemons
+Summary: FreeRADIUS shared libraries
 
 %description libs
 The FreeRADIUS shared library
 
 %package utils
-Group:        Productivity/Networking/Radius/Clients
-Summary:      FreeRADIUS Clients
+Group: System Environment/Daemons
+Summary:      FreeRADIUS utilities
 Requires:     %{name}-libs = %{version}
 
 %description utils
@@ -74,7 +74,7 @@ Support for RFC and VSA Attributes Additional server configuration
 attributes Selecting a particular configuration Authentication methods
 
 %package dialupadmin
-Group:		Productivity/Networking/Radius/Servers
+Group: System Environment/Daemons
 Summary:	Web management for FreeRADIUS
 Requires:	httpd
 Requires:	php
@@ -89,8 +89,8 @@ number of scripts to make the administrator's life a lot easier.
 
 
 %package devel
-Group:        Development/Libraries/C and C++
-Summary:      FreeRADIUS Development Files (static libs)
+Group:        Development/Libraries
+Summary:      FreeRADIUS Development Files
 Requires:     %{name}-libs = %{version}
 
 %description devel
@@ -98,74 +98,74 @@ These are the static libraries for the FreeRADIUS package.
 
 
 %package ldap
-Summary: LDAP bindings for freeradius
+Summary: LDAP support for freeradius
 Group: System Environment/Daemons
 Requires: %{name} = %{version}-%{release}
 Requires: openldap
 BuildRequires: openldap-devel
 
 %description ldap
-This plugin provides the LDAP bindings for the FreeRADIUS server project.
+This plugin provides the LDAP support for the FreeRADIUS server project.
 
 %package krb5
-Summary: Kerberos 5 bindings for freeradius
+Summary: Kerberos 5 support for freeradius
 Group: System Environment/Daemons
 Requires: %{name} = %{version}-%{release}
 Requires: krb5-libs
 BuildRequires: krb5-devel
 
 %description krb5
-This plugin provides the Kerberos 5 bindings for the FreeRADIUS server project.
+This plugin provides the Kerberos 5 support for the FreeRADIUS server project.
 
 %package perl
-Summary: Perl bindings for freeradius
+Summary: Perl support for freeradius
 Group: System Environment/Daemons
 Requires: %{name} = %{version}-%{release}
 Requires: perl-libs
 BuildRequires: perl-devel
 
 %description perl
-This plugin provides the Perl bindings for the FreeRADIUS server project.
+This plugin provides the Perl support for the FreeRADIUS server project.
 
 %package python
-Summary: Python bindings for freeradius
+Summary: Python support for freeradius
 Group: System Environment/Daemons
 Requires: %{name} = %{version}-%{release}
 Requires: python-libs
 BuildRequires: python-devel
 
 %description python
-This plugin provides the Python bindings for the FreeRADIUS server project.
+This plugin provides the Python support for the FreeRADIUS server project.
 
 %package mysql
-Summary: MySQL bindings for freeradius
+Summary: MySQL support for freeradius
 Group: System Environment/Daemons
 Requires: %{name} = %{version}-%{release}
 Requires: mysql
 BuildRequires: mysql-devel
 
 %description mysql
-This plugin provides the MySQL bindings for the FreeRADIUS server project.
+This plugin provides the MySQL support for the FreeRADIUS server project.
 
 %package postgresql
-Summary: postgresql bindings for freeradius
+Summary: postgresql support for freeradius
 Group: System Environment/Daemons
 Requires: %{name} = %{version}-%{release}
 Requires: postgresql
 BuildRequires: postgresql-devel
 
 %description postgresql
-This plugin provides the postgresql bindings for the FreeRADIUS server project.
+This plugin provides the postgresql support for the FreeRADIUS server project.
 
 %package unixODBC
-Summary: unixODBC bindings for freeradius
+Summary: unixODBC support for freeradius
 Group: System Environment/Daemons
 Requires: %{name} = %{version}-%{release}
 Requires: unixODBC
 BuildRequires: unixODBC-devel
 
 %description unixODBC
-This plugin provides the unixODBC bindings for the FreeRADIUS server project.
+This plugin provides the unixODBC support for the FreeRADIUS server project.
 
 
 %prep
@@ -250,6 +250,8 @@ rm -f $RPM_BUILD_ROOT/usr/sbin/rc.radiusd
 rm -rf $RPM_BUILD_ROOT/%{_libdir}/freeradius/*.a
 rm -rf $RPM_BUILD_ROOT/%{_libdir}/freeradius/*.la
 rm -rf $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/sql/oracle
+rm -rf $RPM_BUILD_ROOT/%{_datadir}/dialup_admin/sql/oracle
+
 
 # remove unsupported config files
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/experimental.conf
@@ -458,7 +460,7 @@ fi
 %{_datadir}/dialup_admin/htdocs/
 %{_datadir}/dialup_admin/html/
 %{_datadir}/dialup_admin/lib/
-%{_datadir}/dialup_admin/sql/
+%dir %{_datadir}/dialup_admin/sql/
 %dir %{_datadir}/dialup_admin/conf/
 %config(noreplace) %{_datadir}/dialup_admin/conf/*
 %config(noreplace) %{_sysconfdir}/httpd/conf.d/radius.conf
@@ -497,12 +499,14 @@ fi
 %attr(640,-,radiusd) %config(noreplace) /etc/raddb/sql/mysql/*
 %{_libdir}/freeradius/rlm_sql_mysql.so
 %{_libdir}/freeradius/rlm_sql_mysql-%{version}.so
+%{_datadir}/dialup_admin/sql/mysql
 
 %files postgresql
 %defattr(-,root,root,-)
 %attr(640,-,radiusd) %config(noreplace) /etc/raddb/sql/postgresql/*
 %{_libdir}/freeradius/rlm_sql_postgresql.so
 %{_libdir}/freeradius/rlm_sql_postgresql-%{version}.so
+%{_datadir}/dialup_admin/sql/postgresql
 
 %files unixODBC
 %defattr(-,root,root,-)
