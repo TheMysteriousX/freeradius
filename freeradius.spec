@@ -6,7 +6,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.0.2
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -122,7 +122,8 @@ Summary: Perl support for freeradius
 Group: System Environment/Daemons
 Requires: %{name} = %{version}-%{release}
 Requires: perl-libs
-BuildRequires: perl-devel
+Requires: perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
+BuildRequires: perl-devel, perl(ExtUtils::Embed)
 
 %description perl
 This plugin provides the Perl support for the FreeRADIUS server project.
@@ -514,6 +515,9 @@ fi
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Tue Mar 18 2008 Tom "spot" Callaway <tcallawa@redhat.com> - 2.0.2-2
+- add Requires for versioned perl (libperl.so)
+
 * Thu Feb 28 2008  <jdennis@redhat.com> - 2.0.2-1
 - upgrade to new 2.0 release
 - split into subpackages for more fine grained installation
