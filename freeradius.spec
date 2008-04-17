@@ -145,7 +145,7 @@ Summary: Perl support for freeradius
 Group: System Environment/Daemons
 Requires: %{name}-libs = %{version}-%{release}
 Requires: perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
-BuildRequires: /usr/bin/perlcc
+BuildRequires: perl-devel
 BuildRequires: perl(ExtUtils::Embed)
 
 %description perl
@@ -563,8 +563,6 @@ fi
   to further partition external dependencies.
 - Clean up some unnecessary requires dependencies
 - Add versioned requires between subpackages
-- Replace BuildRequires of perl-devel with /usr/bin/perlcc to accomodate building
-  on both Fedora and RHEL.
 
 * Tue Mar 18 2008 Tom "spot" Callaway <tcallawa@redhat.com> - 2.0.2-2
 - add Requires for versioned perl (libperl.so)
