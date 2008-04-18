@@ -1,21 +1,21 @@
 # FIXME: should pki certs be moved to /etc/pki?
 # FIXME: need to run rpmlint
-# FIXME: edit radrelay init.d script, was copied from radiusd init
 # FIXME: check each former patch, do we still need any?
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.0.3
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
 
 Source0: ftp://ftp.freeradius.org/pub/radius/%{name}-server-%{version}.tar.bz2
 Source100: freeradius-radiusd-init
-Source101: freeradius-radrelay-init
 Source102: freeradius-logrotate
 Source103: freeradius-pam-conf
 Source104: freeradius-dialupadmin-httpd-conf
+
+Patch0: freeradius-radiusd-conf.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -190,6 +190,7 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 
 %prep
 %setup -q -n %{name}-server-%{version}
+%patch0 -p1 -b .conf
 
 %build
 %ifarch s390 s390x
@@ -240,19 +241,15 @@ make install R=$RPM_BUILD_ROOT
 RADDB=$RPM_BUILD_ROOT%{_sysconfdir}/raddb
 perl -i -pe 's/^#user =.*$/user = radiusd/'   $RADDB/radiusd.conf
 perl -i -pe 's/^#group =.*$/group = radiusd/' $RADDB/radiusd.conf
-perl -i -pe 's/^#user =.*$/user = radiusd/'   $RADDB/radrelay.conf
-perl -i -pe 's/^#group =.*$/group = radiusd/' $RADDB/radrelay.conf
 #ldconfig -n $RPM_BUILD_ROOT/usr/lib/freeradius
 # logs
 mkdir -p $RPM_BUILD_ROOT/var/log/radius/radacct
 touch $RPM_BUILD_ROOT/var/log/radius/{radutmp,radius.log}
 
 install -m 755 %{SOURCE100} $RPM_BUILD_ROOT/%{_initrddir}/radiusd
-install -m 755 %{SOURCE101} $RPM_BUILD_ROOT/%{_initrddir}/radrelay
 install -m 644 %{SOURCE102} $RPM_BUILD_ROOT/%{_sysconfdir}/logrotate.d/radiusd
 install -m 644 %{SOURCE103} $RPM_BUILD_ROOT/%{_sysconfdir}/pam.d/radiusd
 
-(cd $RPM_BUILD_ROOT/usr/sbin && ln -sf ./radiusd radrelay)
 # install dialup_admin
 DIALUPADMIN=$RPM_BUILD_ROOT%{_datadir}/dialup_admin
 mkdir -p $DIALUPADMIN
@@ -269,6 +266,7 @@ rm -rf doc/00-OLD
 rm -f $RPM_BUILD_ROOT/usr/sbin/rc.radiusd
 rm -rf $RPM_BUILD_ROOT/%{_libdir}/freeradius/*.a
 rm -rf $RPM_BUILD_ROOT/%{_libdir}/freeradius/*.la
+rm -rf $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/sql/mssql
 rm -rf $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/sql/oracle
 rm -rf $RPM_BUILD_ROOT/%{_datadir}/dialup_admin/sql/oracle
 rm -rf $RPM_BUILD_ROOT/%{_datadir}/dialup_admin/lib/sql/oracle
@@ -314,7 +312,6 @@ fi
 %config(noreplace) %{_sysconfdir}/pam.d/radiusd
 %config(noreplace) %{_sysconfdir}/logrotate.d/radiusd
 %config(noreplace) %{_initrddir}/radiusd
-%config(noreplace) %{_initrddir}/radrelay
 %dir %attr(755,radiusd,radiusd) /var/lib/radiusd
 # configs
 %dir %attr(750,root,radiusd) /etc/raddb
@@ -334,10 +331,7 @@ fi
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/radiusd.conf
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/snmp.conf
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sql.conf
-#%attr(640,root,radiusd) %config(noreplace) /etc/raddb/radrelay.conf
-#%attr(640,root,radiusd) %config(noreplace) /etc/raddb/vmpsd.conf
 %dir %attr(640,root,radiusd) /etc/raddb/sql
-%attr(640,root,radiusd) %config(noreplace) /etc/raddb/sql/mssql/*
 #%attr(640,root,radiusd) %config(noreplace) /etc/raddb/sql/oracle/*
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/users
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/otp.conf
@@ -360,7 +354,6 @@ fi
 /usr/sbin/check-radiusd-config
 /usr/sbin/checkrad
 /usr/sbin/radiusd
-/usr/sbin/radrelay
 /usr/sbin/radwatch
 # man-pages
 %doc %{_mandir}/man1/*
@@ -555,6 +548,12 @@ fi
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Fri Apr 18 2008 John Dennis <jdennis@redhat.com> - 2.0.3-2
+- remove support for radrelay, it's different now
+- turn off default inclusion of SQL config files in radiusd.conf since SQL
+  is an optional RPM install
+- remove mssql config files
+
 * Thu Apr 17 2008 John Dennis <jdennis@redhat.com> - 2.0.3-1
 - Upgrade to current upstream 2.0.3 release
 - Many thanks to Enrico Scholz for his spec file suggestions incorporated here

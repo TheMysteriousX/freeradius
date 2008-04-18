@@ -1,0 +1,20 @@
+--- freeradius-server-2.0.3/raddb/radiusd.conf.in.orig	2008-04-18 12:41:36.217230000 -0400
++++ freeradius-server-2.0.3/raddb/radiusd.conf.in	2008-04-18 12:44:00.735486000 -0400
+@@ -1294,7 +1294,7 @@
+ 	#  Include another file that has the SQL-related configuration.
+ 	#  This is another file only because it tends to be big.
+ 	#
+-	$INCLUDE sql.conf
++	#$INCLUDE sql.conf
+ 
+ 
+ 	#  For Cisco VoIP specific accounting with Postgresql,
+@@ -1488,7 +1488,7 @@
+ 	#  totally dependent on the SQL module to process Accounting
+ 	#  packets.
+ 	#
+-	$INCLUDE sql/mysql/counter.conf
++	#$INCLUDE sql/mysql/counter.conf
+ 	#$INCLUDE sql/postgresql/counter.conf
+ 
+ 	#
