@@ -4,7 +4,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.0.3
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -202,6 +202,11 @@ export CFLAGS="$RPM_OPT_FLAGS -fpic"
 # bad fix for libtool: clear buildroot early, set LDFLAGS to buildroot libdir
 rm -rf $RPM_BUILD_ROOT
 export LDFLAGS="-L${RPM_BUILD_ROOT}%{_libdir}"
+
+# Temporary fix for bug #446864, turn off optimization
+export CFLAGS="$RPM_OPT_FLAGS -O0"
+export CXXFLAGS="$RPM_OPT_FLAGS -O0"
+export FFLAGS="$RPM_OPT_FLAGS -O0"
 
 %configure \
 	--libdir=%{_libdir}/freeradius \
@@ -548,6 +553,9 @@ fi
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Fri May 16 2008  <jdennis@redhat.com> - 2.0.3-3
+- # Temporary fix for bug #446864, turn off optimization
+
 * Fri Apr 18 2008 John Dennis <jdennis@redhat.com> - 2.0.3-2
 - remove support for radrelay, it's different now
 - turn off default inclusion of SQL config files in radiusd.conf since SQL
