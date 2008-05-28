@@ -3,8 +3,8 @@
 # FIXME: check each former patch, do we still need any?
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 2.0.3
-Release: 3%{?dist}
+Version: 2.0.4
+Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -356,7 +356,6 @@ fi
 %attr(700,radiusd,radiusd) %dir /var/run/radiusd/
 # binaries
 %defattr(-,root,root)
-/usr/sbin/check-radiusd-config
 /usr/sbin/checkrad
 /usr/sbin/radiusd
 /usr/sbin/radwatch
@@ -416,8 +415,6 @@ fi
 %{_libdir}/freeradius/rlm_eap_sim-%{version}.so
 %{_libdir}/freeradius/rlm_eap_tls.so
 %{_libdir}/freeradius/rlm_eap_tls-%{version}.so
-%{_libdir}/freeradius/rlm_eap_tnc.so
-%{_libdir}/freeradius/rlm_eap_tnc-%{version}.so
 %{_libdir}/freeradius/rlm_eap_ttls.so
 %{_libdir}/freeradius/rlm_eap_ttls-%{version}.so
 %{_libdir}/freeradius/rlm_exec.so
@@ -553,6 +550,10 @@ fi
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Wed May 28 2008 John Dennis <jdennis@redhat.com> - 2.0.4-1
+- upgrade to latest upstream, see Changelog for details
+- resolves: bug #447545: freeradius missing /etc/raddb/sites-available/inner-tunnel
+
 * Fri May 16 2008  <jdennis@redhat.com> - 2.0.3-3
 - # Temporary fix for bug #446864, turn off optimization
 
