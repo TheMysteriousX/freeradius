@@ -3,7 +3,7 @@
 # FIXME: check each former patch, do we still need any?
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 2.0.4
+Version: 2.0.5
 Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
@@ -203,11 +203,6 @@ export CFLAGS="$RPM_OPT_FLAGS -fpic"
 rm -rf $RPM_BUILD_ROOT
 export LDFLAGS="-L${RPM_BUILD_ROOT}%{_libdir}"
 
-# Temporary fix for bug #446864, turn off optimization
-export CFLAGS="$RPM_OPT_FLAGS -O0"
-export CXXFLAGS="$RPM_OPT_FLAGS -O0"
-export FFLAGS="$RPM_OPT_FLAGS -O0"
-
 %configure \
 	--libdir=%{_libdir}/freeradius \
 	--with-gnu-ld \
@@ -353,6 +348,38 @@ fi
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/policy.conf
 /etc/raddb/policy.txt
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/templates.conf
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/acct_unique
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/always
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/attr_filter
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/attr_rewrite
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/chap
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/checkval
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/counter
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/detail
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/detail.log
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/digest
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/echo
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/etc_group
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/exec
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/expiration
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/expr
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/files
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/ippool
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/logintime
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/mac2ip
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/mac2vlan
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/mschap
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/pam
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/pap
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/passwd
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/policy
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/preprocess
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/radutmp
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/realm
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/smbpasswd
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/sql_log
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/sradutmp
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/unix
 %attr(700,radiusd,radiusd) %dir /var/run/radiusd/
 # binaries
 %defattr(-,root,root)
@@ -504,6 +531,7 @@ fi
 %files dialupadmin-ldap
 %defattr(-,root,root)
 %{_datadir}/dialup_admin/lib/ldap
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/ldap
 
 %files devel
 %defattr(-,root,root)
@@ -515,6 +543,7 @@ fi
 %defattr(-,root,root)
 %{_libdir}/freeradius/rlm_krb5.so
 %{_libdir}/freeradius/rlm_krb5-%{version}.so
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/krb5
 
 %files perl
 %defattr(-,root,root)
@@ -550,6 +579,10 @@ fi
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Mon Jun  9 2008 John Dennis <jdennis@redhat.com> - 2.0.5-1
+- upgrade to latest upstream, see Changelog for details,
+  upstream now has more complete fix for bug #447545, local patch removed
+
 * Wed May 28 2008 John Dennis <jdennis@redhat.com> - 2.0.4-1
 - upgrade to latest upstream, see Changelog for details
 - resolves: bug #447545: freeradius missing /etc/raddb/sites-available/inner-tunnel
