@@ -4,7 +4,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.0.5
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -199,29 +199,25 @@ export CFLAGS="$RPM_OPT_FLAGS -fPIC"
 export CFLAGS="$RPM_OPT_FLAGS -fpic"
 %endif
 
-# bad fix for libtool: clear buildroot early, set LDFLAGS to buildroot libdir
-rm -rf $RPM_BUILD_ROOT
-export LDFLAGS="-L${RPM_BUILD_ROOT}%{_libdir}"
-
 %configure \
-	--libdir=%{_libdir}/freeradius \
-	--with-gnu-ld \
-	--with-threads \
-	--with-thread-pool \
- 	--disable-ltdl-install \
-	--with-docdir=%{_docdir}/freeradius-%{version} \
-	--with-rlm-sql_postgresql-include-dir=/usr/include/pgsql \
-	--with-rlm-sql-postgresql-lib-dir=%{_libdir} \
-	--with-rlm-sql_mysql-include-dir=/usr/include/mysql \
-	--with-mysql-lib-dir=%{_libdir}/mysql \
-	--with-unixodbc-lib-dir=%{_libdir} \
-	--with-rlm-dbm-lib-dir=%{_libdir} \
-	--with-rlm-krb5-include-dir=/usr/kerberos/include \
-	--without-rlm_eap_ikev2 \
-	--without-rlm_sql_iodbc \
-	--without-rlm_sql_firebird \
-	--without-rlm_sql_db2 \
-	--without-rlm_sql_oracle
+        --libdir=%{_libdir}/freeradius \
+        --with-gnu-ld \
+        --with-threads \
+        --with-thread-pool \
+        --disable-ltdl-install \
+        --with-docdir=%{_docdir}/freeradius-%{version} \
+        --with-rlm-sql_postgresql-include-dir=/usr/include/pgsql \
+        --with-rlm-sql-postgresql-lib-dir=%{_libdir} \
+        --with-rlm-sql_mysql-include-dir=/usr/include/mysql \
+        --with-mysql-lib-dir=%{_libdir}/mysql \
+        --with-unixodbc-lib-dir=%{_libdir} \
+        --with-rlm-dbm-lib-dir=%{_libdir} \
+        --with-rlm-krb5-include-dir=/usr/kerberos/include \
+        --without-rlm_eap_ikev2 \
+        --without-rlm_sql_iodbc \
+        --without-rlm_sql_firebird \
+        --without-rlm_sql_db2 \
+        --without-rlm_sql_oracle
 
 %if "%{_lib}" == "lib64"
 perl -pi -e 's:sys_lib_search_path_spec=.*:sys_lib_search_path_spec="/lib64 /usr/lib64 /usr/local/lib64":' libtool
@@ -286,7 +282,6 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %post
-/bin/chown -R radiusd.radiusd %{_sysconfdir}/raddb
 /sbin/ldconfig
 if [ $1 = 1 ]; then
   /sbin/chkconfig --add radiusd
@@ -569,7 +564,7 @@ fi
 
 %files ldap
 %defattr(-,root,root)
-%config(noreplace) /etc/raddb/ldap.attrmap
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/ldap.attrmap
 %{_libdir}/freeradius/rlm_ldap.so
 %{_libdir}/freeradius/rlm_ldap-%{version}.so
 
@@ -579,6 +574,11 @@ fi
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Wed Jul 30 2008 John Dennis <jdennis@redhat.com> - 2.0.5-2
+- Resolves: bug #453761: FreeRADIUS %%post should not include chown -R
+  specify file attributes for /etc/raddb/ldap.attrmap
+  fix consistent use of tabs/spaces (rpmlint warning)
+
 * Mon Jun  9 2008 John Dennis <jdennis@redhat.com> - 2.0.5-1
 - upgrade to latest upstream, see Changelog for details,
   upstream now has more complete fix for bug #447545, local patch removed
