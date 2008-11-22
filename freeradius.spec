@@ -1,10 +1,7 @@
-# FIXME: should pki certs be moved to /etc/pki?
-# FIXME: need to run rpmlint
-# FIXME: check each former patch, do we still need any?
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 2.0.5
-Release: 2%{?dist}
+Version: 2.1.1
+Release: 4%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -13,7 +10,6 @@ Source0: ftp://ftp.freeradius.org/pub/radius/%{name}-server-%{version}.tar.bz2
 Source100: freeradius-radiusd-init
 Source102: freeradius-logrotate
 Source103: freeradius-pam-conf
-Source104: freeradius-dialupadmin-httpd-conf
 
 Patch0: freeradius-radiusd-conf.patch
 
@@ -70,49 +66,6 @@ of the server, and let you decide if they satisfy your needs.
 Support for RFC and VSA Attributes Additional server configuration
 attributes Selecting a particular configuration Authentication methods
 
-%package dialupadmin
-Group: System Environment/Daemons
-Summary: Web management for FreeRADIUS
-Requires: httpd
-Requires: php
-
-%description dialupadmin
-Dialup Admin provides administration tools for FreeRadius, primarily
-via a web interface but other administration scripts are provided as
-well. SQL and LDAP support is available when the appropriate
-dialupadmin subpackage is also installed.
-
-
-%package dialupadmin-mysql
-Group: System Environment/Daemons
-Summary: MySQL component of the dialupadmin FreeRADIUS Web management tool
-Requires: %{name}-dialupadmin = %{version}-%{release}
-Requires: %{name}-mysql = %{version}-%{release}
-Requires: php-mysql
-
-%description dialupadmin-mysql
-MySQL component of the dialupadmin FreeRADIUS Web management tool
-
-%package dialupadmin-postgresql
-Group: System Environment/Daemons
-Summary: Postgresql component of the dialupadmin FreeRADIUS Web management tool
-Requires: %{name}-dialupadmin = %{version}-%{release}
-Requires: %{name}-postgresql = %{version}-%{release}
-Requires: php-pgsql
-
-%description dialupadmin-postgresql
-Postgresql component of the dialupadmin FreeRADIUS Web management tool
-
-%package dialupadmin-ldap
-Group: System Environment/Daemons
-Summary: LDAP component of the dialupadmin FreeRADIUS Web management tool
-Requires: %{name}-dialupadmin = %{version}-%{release}
-Requires: %{name}-ldap = %{version}-%{release}
-Requires: php-ldap
-
-%description dialupadmin-ldap
-LDAP component of the dialupadmin FreeRADIUS Web management tool
-
 %package devel
 Group: Development/Libraries
 Summary: FreeRADIUS Development Files
@@ -145,7 +98,9 @@ Summary: Perl support for freeradius
 Group: System Environment/Daemons
 Requires: %{name}-libs = %{version}-%{release}
 Requires: perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
+%if 0%{?fedora}
 BuildRequires: perl-devel
+%endif
 BuildRequires: perl(ExtUtils::Embed)
 
 %description perl
@@ -246,17 +201,6 @@ install -m 755 %{SOURCE100} $RPM_BUILD_ROOT/%{_initrddir}/radiusd
 install -m 644 %{SOURCE102} $RPM_BUILD_ROOT/%{_sysconfdir}/logrotate.d/radiusd
 install -m 644 %{SOURCE103} $RPM_BUILD_ROOT/%{_sysconfdir}/pam.d/radiusd
 
-# install dialup_admin
-DIALUPADMIN=$RPM_BUILD_ROOT%{_datadir}/dialup_admin
-mkdir -p $DIALUPADMIN
-cp -r dialup_admin/* $RPM_BUILD_ROOT%{_datadir}/dialup_admin
-perl -i -pe 's/^#general_base_dir\:.*$/general_base_dir\: \/usr\/share\/freeradius-dialupadmin/'   $DIALUPADMIN/conf/admin.conf
-perl -i -pe 's/^#general_radiusd_base_dir\:.*$/general_radiusd_base_dir\: \//'   $DIALUPADMIN/conf/admin.conf
-perl -i -pe 's/^#general_snmpwalk_command\:.*$/general_snmpwalk_command\: \/usr\/bin\/snmpwalk/'   $DIALUPADMIN/conf/admin.conf
-perl -i -pe 's/^#general_snmpget_command\:.*$/general_snmpget_command\: \/usr\/bin\/snmpget/'   $DIALUPADMIN/conf/admin.conf
-# httpd config
-install -d -m 755 $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf.d
-install -m 644 %{SOURCE104} $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf.d/radius.conf
 # remove unneeded stuff
 rm -rf doc/00-OLD
 rm -f $RPM_BUILD_ROOT/usr/sbin/rc.radiusd
@@ -268,6 +212,8 @@ rm -rf $RPM_BUILD_ROOT/%{_datadir}/dialup_admin/sql/oracle
 rm -rf $RPM_BUILD_ROOT/%{_datadir}/dialup_admin/lib/sql/oracle
 rm -rf $RPM_BUILD_ROOT/%{_datadir}/dialup_admin/lib/sql/drivers/oracle
 
+# create links in /etc/raddb/sites-enabled to /etc/raddb/sites-available
+ln -s ../sites-available/control-socket $RADDB/sites-enabled/control-socket
 
 # remove unsupported config files
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/experimental.conf
@@ -278,8 +224,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %pre
-/usr/sbin/useradd -M -o -r -d / -u 95 -c "radiusd user" -s /bin/false radiusd > /dev/null 2>&1 || :
-
+getent group  radiusd >/dev/null || /usr/sbin/groupadd -r -g 95 radiusd
+getent passwd radiusd >/dev/null || /usr/sbin/useradd  -r -g radiusd -u 95 -c "radiusd user" -s /sbin/nologin radiusd > /dev/null 2>&1
+exit 0
 
 %post
 /sbin/ldconfig
@@ -324,13 +271,12 @@ fi
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/preproxy_users
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/proxy.conf
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/radiusd.conf
-%attr(640,root,radiusd) %config(noreplace) /etc/raddb/snmp.conf
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sql.conf
 %dir %attr(640,root,radiusd) /etc/raddb/sql
 #%attr(640,root,radiusd) %config(noreplace) /etc/raddb/sql/oracle/*
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/users
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/otp.conf
-%dir %attr(750,root,radiusd) /etc/raddb/certs
+%dir %attr(770,root,radiusd) /etc/raddb/certs
 /etc/raddb/certs/Makefile
 /etc/raddb/certs/README
 /etc/raddb/certs/xpextensions
@@ -351,6 +297,7 @@ fi
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/checkval
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/counter
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/detail
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/detail.example.com
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/detail.log
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/digest
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/echo
@@ -359,8 +306,10 @@ fi
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/expiration
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/expr
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/files
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/inner-eap
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/ippool
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/logintime
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/linelog
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/mac2ip
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/mac2vlan
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/mschap
@@ -375,12 +324,14 @@ fi
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/sql_log
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/sradutmp
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/unix
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/wimax
 %attr(700,radiusd,radiusd) %dir /var/run/radiusd/
 # binaries
 %defattr(-,root,root)
 /usr/sbin/checkrad
 /usr/sbin/radiusd
 /usr/sbin/radwatch
+/usr/sbin/radmin
 # man-pages
 %doc %{_mandir}/man1/*
 %doc %{_mandir}/man5/*
@@ -421,6 +372,8 @@ fi
 %{_libdir}/freeradius/rlm_detail-%{version}.so
 %{_libdir}/freeradius/rlm_digest.so
 %{_libdir}/freeradius/rlm_digest-%{version}.so
+%{_libdir}/freeradius/rlm_dynamic_clients.so
+%{_libdir}/freeradius/rlm_dynamic_clients-%{version}.so
 %{_libdir}/freeradius/rlm_eap.so
 %{_libdir}/freeradius/rlm_eap-%{version}.so
 %{_libdir}/freeradius/rlm_eap_gtc.so
@@ -451,6 +404,8 @@ fi
 %{_libdir}/freeradius/rlm_files-%{version}.so
 %{_libdir}/freeradius/rlm_ippool.so
 %{_libdir}/freeradius/rlm_ippool-%{version}.so
+%{_libdir}/freeradius/rlm_linelog.so
+%{_libdir}/freeradius/rlm_linelog-%{version}.so
 %{_libdir}/freeradius/rlm_logintime.so
 %{_libdir}/freeradius/rlm_logintime-%{version}.so
 %{_libdir}/freeradius/rlm_mschap.so
@@ -492,42 +447,6 @@ fi
 %attr(755,root,root) %dir %{_libdir}/freeradius
 %attr(755,root,root) %{_libdir}/freeradius/lib*.so*
 
-%files dialupadmin
-%defattr(-,root,root)
-%dir %{_datadir}/dialup_admin/
-%{_datadir}/dialup_admin/Makefile
-%{_datadir}/dialup_admin/bin
-%{_datadir}/dialup_admin/doc
-%{_datadir}/dialup_admin/htdocs
-%{_datadir}/dialup_admin/html
-%{_datadir}/dialup_admin/lib/*.php3
-%{_datadir}/dialup_admin/lib/crypt
-%{_datadir}/dialup_admin/lib/lang
-%{_datadir}/dialup_admin/lib/sql/*.php3
-%dir %{_datadir}/dialup_admin/lib/sql/drivers
-%{_datadir}/dialup_admin/lib/sql/drivers/dbx
-%{_datadir}/dialup_admin/lib/sql/drivers/sqlrelay
-%dir %{_datadir}/dialup_admin/sql
-%config(noreplace) %{_datadir}/dialup_admin/conf/*
-%config(noreplace) %{_sysconfdir}/httpd/conf.d/radius.conf
-%{_datadir}/dialup_admin/Changelog
-%{_datadir}/dialup_admin/README
-
-%files dialupadmin-mysql
-%defattr(-,root,root)
-%{_datadir}/dialup_admin/sql/mysql
-%{_datadir}/dialup_admin/lib/sql/drivers/mysql
-
-%files dialupadmin-postgresql
-%defattr(-,root,root)
-%{_datadir}/dialup_admin/sql/postgresql
-%{_datadir}/dialup_admin/lib/sql/drivers/pg
-
-%files dialupadmin-ldap
-%defattr(-,root,root)
-%{_datadir}/dialup_admin/lib/ldap
-%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/ldap
-
 %files devel
 %defattr(-,root,root)
 #%attr(644,root,root) %{_libdir}/freeradius/*.a
@@ -567,6 +486,7 @@ fi
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/ldap.attrmap
 %{_libdir}/freeradius/rlm_ldap.so
 %{_libdir}/freeradius/rlm_ldap-%{version}.so
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/ldap
 
 %files unixODBC
 %defattr(-,root,root)
@@ -574,6 +494,17 @@ fi
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Fri Nov 21 2008 John Dennis <jdennis@redhat.com> - 2.1.1-3
+- make spec file buildable on RHEL5.2 by making perl-devel a fedora only dependency.
+- remove diaupadmin packages, it's not well supported and there are problems with it.
+
+* Fri Sep 26 2008 John Dennis <jdennis@redhat.com> - 2.1.1-1
+- Resolves: bug #464119 bootstrap code could not create initial certs in /etc/raddb/certs because
+  permissions were 750, radiusd running as euid radiusd could not write there, permissions now 770
+
+* Thu Sep 25 2008 John Dennis <jdennis@redhat.com> - 2.1.1-1
+- upgrade to new upstream 2.1.1 release
+
 * Wed Jul 30 2008 John Dennis <jdennis@redhat.com> - 2.0.5-2
 - Resolves: bug #453761: FreeRADIUS %%post should not include chown -R
   specify file attributes for /etc/raddb/ldap.attrmap
