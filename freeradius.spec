@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.1.1
-Release: 4%{?dist}
+Release: 6%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -24,6 +24,7 @@ BuildRequires: pam-devel
 BuildRequires: zlib-devel
 BuildRequires: net-snmp-devel
 BuildRequires: net-snmp-utils
+BuildRequires: readline-devel
 
 Requires(pre): shadow-utils
 Requires(post): /sbin/ldconfig /sbin/chkconfig
@@ -494,6 +495,9 @@ fi
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Mon Nov 24 2008 John Dennis <jdennis@redhat.com> - 2.1.1-6
+- add readline-devel BuildRequires
+
 * Fri Nov 21 2008 John Dennis <jdennis@redhat.com> - 2.1.1-3
 - make spec file buildable on RHEL5.2 by making perl-devel a fedora only dependency.
 - remove diaupadmin packages, it's not well supported and there are problems with it.
