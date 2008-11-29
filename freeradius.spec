@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.1.1
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -12,6 +12,8 @@ Source102: freeradius-logrotate
 Source103: freeradius-pam-conf
 
 Patch0: freeradius-radiusd-conf.patch
+
+Obsoletes: freeradius-dialupadmin freeradius-dialupadmin-ldap freeradius-dialupadmin-mysql freeradius-dialupadmin-postgresql
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -495,6 +497,9 @@ fi
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Sat Nov 29 2008 John Dennis <jdennis@redhat.com> - 2.1.1-7
+- add obsoletes tag for dialupadmin subpackages which were removed
+
 * Mon Nov 24 2008 John Dennis <jdennis@redhat.com> - 2.1.1-6
 - add readline-devel BuildRequires
 
