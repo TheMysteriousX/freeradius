@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 2.1.1
-Release: 7%{?dist}
+Version: 2.1.3
+Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -103,6 +103,8 @@ Requires: %{name}-libs = %{version}-%{release}
 Requires: perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
 %if 0%{?fedora}
 BuildRequires: perl-devel
+%else
+BuildRequires: perl
 %endif
 BuildRequires: perl(ExtUtils::Embed)
 
@@ -159,10 +161,11 @@ export CFLAGS="$RPM_OPT_FLAGS -fpic"
 
 %configure \
         --libdir=%{_libdir}/freeradius \
+        --with-system-libtool \
+        --disable-ltdl-install \
         --with-gnu-ld \
         --with-threads \
         --with-thread-pool \
-        --disable-ltdl-install \
         --with-docdir=%{_docdir}/freeradius-%{version} \
         --with-rlm-sql_postgresql-include-dir=/usr/include/pgsql \
         --with-rlm-sql-postgresql-lib-dir=%{_libdir} \
@@ -285,13 +288,16 @@ fi
 /etc/raddb/certs/xpextensions
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/certs/*.cnf
 %attr(750,root,radiusd) /etc/raddb/certs/bootstrap
+%dir %attr(640,root,radiusd) /etc/raddb/sites-available
 %attr(640,root,radiusd) /etc/raddb/sites-available/*
+%dir %attr(640,root,radiusd) /etc/raddb/sites-enabled
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-enabled/*
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/eap.conf
 %attr(640,root,radiusd) /etc/raddb/example.pl
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/policy.conf
 /etc/raddb/policy.txt
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/templates.conf
+%dir %attr(640,root,radiusd) /etc/raddb/modules
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/acct_unique
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/always
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/attr_filter
@@ -318,6 +324,7 @@ fi
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/mschap
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/pam
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/pap
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/perl
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/passwd
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/policy
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/preprocess
@@ -325,10 +332,11 @@ fi
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/realm
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/smbpasswd
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/sql_log
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/sqlcounter_expire_on_login
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/sradutmp
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/unix
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/wimax
-%attr(700,radiusd,radiusd) %dir /var/run/radiusd/
+%dir %attr(700,radiusd,radiusd) /var/run/radiusd/
 # binaries
 %defattr(-,root,root)
 /usr/sbin/checkrad
@@ -340,15 +348,15 @@ fi
 %doc %{_mandir}/man5/*
 %doc %{_mandir}/man8/*
 # dictionaries
-%attr(755,root,root) %dir /usr/share/freeradius
+%dir %attr(755,root,root) /usr/share/freeradius
 /usr/share/freeradius/*
 # logs
-%attr(700,radiusd,radiusd) %dir /var/log/radius/
-%attr(700,radiusd,radiusd) %dir /var/log/radius/radacct/
+%dir %attr(700,radiusd,radiusd) /var/log/radius/
+%dir %attr(700,radiusd,radiusd) /var/log/radius/radacct/
 %attr(644,radiusd,radiusd) /var/log/radius/radutmp
 %config(noreplace) %attr(600,radiusd,radiusd) /var/log/radius/radius.log
 # RADIUS Loadable Modules
-%attr(755,root,root) %dir %{_libdir}/freeradius
+%dir %attr(755,root,root) %{_libdir}/freeradius
 #%attr(755,root,root) %{_libdir}/freeradius/rlm_*.so*
 #%{_libdir}/freeradius/rlm_acctlog*.so
 %{_libdir}/freeradius/rlm_acct_unique.so
@@ -447,13 +455,13 @@ fi
 %files libs
 # RADIU shared libs
 %defattr(-,root,root)
-%attr(755,root,root) %dir %{_libdir}/freeradius
 %attr(755,root,root) %{_libdir}/freeradius/lib*.so*
 
 %files devel
 %defattr(-,root,root)
 #%attr(644,root,root) %{_libdir}/freeradius/*.a
 #%attr(644,root,root) %{_libdir}/freeradius/*.la
+%dir %attr(755,radiusd,radiusd) /usr/include/freeradius
 %attr(644,root,root) /usr/include/freeradius/*.h
 
 %files krb5
@@ -474,12 +482,14 @@ fi
 
 %files mysql
 %defattr(-,root,root)
+%dir %attr(640,root,radiusd) /etc/raddb/sql/mysql
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sql/mysql/*
 %{_libdir}/freeradius/rlm_sql_mysql.so
 %{_libdir}/freeradius/rlm_sql_mysql-%{version}.so
 
 %files postgresql
 %defattr(-,root,root)
+%dir %attr(640,root,radiusd) /etc/raddb/sql/postgresql
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sql/postgresql/*
 %{_libdir}/freeradius/rlm_sql_postgresql.so
 %{_libdir}/freeradius/rlm_sql_postgresql-%{version}.so
@@ -497,10 +507,48 @@ fi
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
-* Sat Nov 29 2008 John Dennis <jdennis@redhat.com> - 2.1.1-7
+* Thu Dec  4 2008 John Dennis <jdennis@redhat.com> - 2.1.3-1
+- upgrade to latest upstream release, upstream summary follows:
+  The focus of this release is stability.
+  Feature Improvements:
+    * Allow running with "user=radiusd" and binding to secure sockets.
+    * Start sending Status-Server "are you alive" messages earlier, which
+      helps with proxying multiple realms to a home server.
+    * Removed thread pool code from rlm_perl.  It's not necessary.
+    * Added example Perl configuration to raddb/modules/perl
+    * Force OpenSSL to support certificates with SHA256. This seems to be
+      necessary for WiMAX certs.
+  Bug fixes:
+    * Fix Debian patch to allow it to build.
+    * Fix potential NULL dereference in debugging mode on certain
+      platforms for TTLS and PEAP inner tunnels.
+    * Fix uninitialized memory in handling of vendor definitions
+    * Fix parsing of quoted (but non-string) attributes in the "users" file.
+    * Initialize uknown NAS IP to 255.255.255.255, rather than 0.0.0.0
+    * use SUN_LEN in control socket, to avoid truncation on some platforms.
+    * Correct internal handling of "debug condition" to prevent it from
+      being over-written.
+    * Check return code of regcomp in "unlang", so that invalid regular
+      expressions are caught rather than mishandled.
+    * Make rlm_sql use <ltdl.h>.  Addresses bug #610.
+    * Document list "type = status" better.  Closes bug #580.
+    * Set "default days" for certificates, because OpenSSL won't do it.
+      This closes bug #615.
+    * Reference correct list in example raddb/modules/ldap. Closes #596.
+    * Increase default schema size for Acct-Session-Id to 64. Closes #540.
+    * Fix use of temporary files in dialup-admin.  Closes #605 and
+      addresses CVE-2008-4474.
+    * Addressed a number of minor issues found by Coverity.
+    * Added DHCP option 150 to the dictionary.  Closes #618.
+
+* Wed Dec  3 2008 John Dennis <jdennis@redhat.com> - 2.1.1-8
+- add --with-system-libtool to configure as a workaround for
+undefined reference to lt__PROGRAM__LTX_preloaded_symbols
+
+* Mon Dec  1 2008 John Dennis <jdennis@redhat.com> - 2.1.1-7
 - add obsoletes tag for dialupadmin subpackages which were removed
 
-* Mon Nov 24 2008 John Dennis <jdennis@redhat.com> - 2.1.1-5
+* Mon Dec  1 2008 John Dennis <jdennis@redhat.com> - 2.1.1-5
 - add readline-devel BuildRequires
 
 * Fri Nov 21 2008 John Dennis <jdennis@redhat.com> - 2.1.1-3
