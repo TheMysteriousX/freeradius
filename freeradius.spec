@@ -1,19 +1,20 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 2.1.3
+Version: 2.1.6
 Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
 
-Source0: ftp://ftp.freeradius.org/pub/radius/%{name}-server-%{version}.tar.bz2
+Source0: ftp://ftp.freeradius.org/pub/radius/freeradius-server-%{version}.tar.bz2
 Source100: freeradius-radiusd-init
 Source102: freeradius-logrotate
 Source103: freeradius-pam-conf
 
-Patch0: freeradius-radiusd-conf.patch
+Obsoletes: freeradius-dialupadmin >= 2.0 freeradius-dialupadmin-ldap >= 2.0
+Obsoletes: freeradius-dialupadmin-mysql >= 2.0 freeradius-dialupadmin-postgresql >= 2.0
 
-Obsoletes: freeradius-dialupadmin freeradius-dialupadmin-ldap freeradius-dialupadmin-mysql freeradius-dialupadmin-postgresql
+%define docdir %{_docdir}/freeradius-%{version}
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -149,8 +150,7 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 
 
 %prep
-%setup -q -n %{name}-server-%{version}
-%patch0 -p1 -b .conf
+%setup -q -n freeradius-server-%{version}
 
 %build
 %ifarch s390 s390x
@@ -166,7 +166,7 @@ export CFLAGS="$RPM_OPT_FLAGS -fpic"
         --with-gnu-ld \
         --with-threads \
         --with-thread-pool \
-        --with-docdir=%{_docdir}/freeradius-%{version} \
+        --with-docdir=%{docdir} \
         --with-rlm-sql_postgresql-include-dir=/usr/include/pgsql \
         --with-rlm-sql-postgresql-lib-dir=%{_libdir} \
         --with-rlm-sql_mysql-include-dir=/usr/include/mysql \
@@ -218,12 +218,20 @@ rm -rf $RPM_BUILD_ROOT/%{_datadir}/dialup_admin/sql/oracle
 rm -rf $RPM_BUILD_ROOT/%{_datadir}/dialup_admin/lib/sql/oracle
 rm -rf $RPM_BUILD_ROOT/%{_datadir}/dialup_admin/lib/sql/drivers/oracle
 
-# create links in /etc/raddb/sites-enabled to /etc/raddb/sites-available
-ln -s ../sites-available/control-socket $RADDB/sites-enabled/control-socket
-
 # remove unsupported config files
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/experimental.conf
 
+# add Red Hat specific documentation
+cat >> $RPM_BUILD_ROOT/%{docdir}/REDHAT << EOF
+
+Red Hat, RHEL, Fedora, and CentOS specific information can be found on the
+FreeRADIUS Wiki in the Red Hat FAQ.
+
+http://wiki.freeradius.org/Red_Hat_FAQ
+
+Please reference that document.
+
+EOF
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -256,15 +264,15 @@ fi
 
 %files
 %defattr(-,root,root)
-%doc %{_docdir}/freeradius-%{version}/
+%doc %{docdir}/
 %config(noreplace) %{_sysconfdir}/pam.d/radiusd
 %config(noreplace) %{_sysconfdir}/logrotate.d/radiusd
 %config(noreplace) %{_initrddir}/radiusd
 %dir %attr(755,radiusd,radiusd) /var/lib/radiusd
 # configs
-%dir %attr(750,root,radiusd) /etc/raddb
+%dir %attr(755,root,radiusd) /etc/raddb
 %defattr(-,root,radiusd)
-%config(noreplace) /etc/raddb/dictionary
+%attr(644,root,radiusd) %config(noreplace) /etc/raddb/dictionary
 %config(noreplace) /etc/raddb/acct_users
 %config(noreplace) /etc/raddb/attrs
 %config(noreplace) /etc/raddb/attrs.access_reject
@@ -278,26 +286,25 @@ fi
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/proxy.conf
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/radiusd.conf
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sql.conf
-%dir %attr(640,root,radiusd) /etc/raddb/sql
+%dir %attr(750,root,radiusd) /etc/raddb/sql
 #%attr(640,root,radiusd) %config(noreplace) /etc/raddb/sql/oracle/*
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/users
-%attr(640,root,radiusd) %config(noreplace) /etc/raddb/otp.conf
 %dir %attr(770,root,radiusd) /etc/raddb/certs
 /etc/raddb/certs/Makefile
 /etc/raddb/certs/README
 /etc/raddb/certs/xpextensions
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/certs/*.cnf
 %attr(750,root,radiusd) /etc/raddb/certs/bootstrap
-%dir %attr(640,root,radiusd) /etc/raddb/sites-available
+%dir %attr(750,root,radiusd) /etc/raddb/sites-available
 %attr(640,root,radiusd) /etc/raddb/sites-available/*
-%dir %attr(640,root,radiusd) /etc/raddb/sites-enabled
+%dir %attr(750,root,radiusd) /etc/raddb/sites-enabled
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-enabled/*
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/eap.conf
 %attr(640,root,radiusd) /etc/raddb/example.pl
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/policy.conf
 /etc/raddb/policy.txt
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/templates.conf
-%dir %attr(640,root,radiusd) /etc/raddb/modules
+%dir %attr(750,root,radiusd) /etc/raddb/modules
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/acct_unique
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/always
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/attr_filter
@@ -322,6 +329,7 @@ fi
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/mac2ip
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/mac2vlan
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/mschap
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/otp
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/pam
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/pap
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/perl
@@ -331,6 +339,7 @@ fi
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/radutmp
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/realm
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/smbpasswd
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/smsotp
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/sql_log
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/sqlcounter_expire_on_login
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/sradutmp
@@ -340,6 +349,7 @@ fi
 # binaries
 %defattr(-,root,root)
 /usr/sbin/checkrad
+/usr/sbin/raddebug
 /usr/sbin/radiusd
 /usr/sbin/radwatch
 /usr/sbin/radmin
@@ -482,14 +492,14 @@ fi
 
 %files mysql
 %defattr(-,root,root)
-%dir %attr(640,root,radiusd) /etc/raddb/sql/mysql
+%dir %attr(750,root,radiusd) /etc/raddb/sql/mysql
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sql/mysql/*
 %{_libdir}/freeradius/rlm_sql_mysql.so
 %{_libdir}/freeradius/rlm_sql_mysql-%{version}.so
 
 %files postgresql
 %defattr(-,root,root)
-%dir %attr(640,root,radiusd) /etc/raddb/sql/postgresql
+%dir %attr(750,root,radiusd) /etc/raddb/sql/postgresql
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sql/postgresql/*
 %{_libdir}/freeradius/rlm_sql_postgresql.so
 %{_libdir}/freeradius/rlm_sql_postgresql-%{version}.so
@@ -507,6 +517,110 @@ fi
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Mon May 18 2009 John Dennis <jdennis@redhat.com> - 2.1.6-1
+  - update to latest upstream release, from upstream Changelog:
+    Feature improvements
+      * radclient exits with 0 on successful (accept / ack), and 1
+        otherwise (no response / reject)
+      * Added support for %%{sql:UPDATE ..}, and insert/delete
+        Patch from Arran Cudbard-Bell
+      * Added sample "do not respond" policy.  See raddb/policy.conf
+        and raddb/sites-available/do_not_respond
+      * Cleanups to Suse spec file from Norbert Wegener
+      * New VSAs for Juniper from Bjorn Mork
+      * Include more RFC dictionaries in the default install
+      * More documentation for the WiMAX module
+      * Added "chase_referrals" and "rebind" configuration to rlm_ldap.
+        This helps with Active Directory.  See raddb/modules/ldap
+      * Don't load pre/post-proxy if proxying is disabled.
+      * Added %%{md5:...}, which returns MD5 hash in hex.
+      * Added configurable "retry_interval" and "poll_interval"
+        for "detail" listeners.
+      * Added "delete_mppe_keys" configuration option to rlm_wimax.
+        Apparently some WiMAX clients misbehave when they see those keys.
+      * Added experimental rlm_ruby from
+        http://github.com/Antti/freeradius-server/tree/master
+      * Add Tunnel attributes to ldap.attrmap
+      * Enable virtual servers to be reloaded on HUP.  For now, only
+        the "authorize", "authenticate", etc. processing sections are
+        reloaded.  Clients and "listen" sections are NOT reloaded.
+      * Updated "radwatch" script to be more robust.  See scripts/radwatch
+      * Added certificate compatibility notes in raddb/certs/README,
+        for compatibility with different operating systems. (i.e. Windows)
+      * Permit multiple "-e" in radmin.
+      * Add support for originating CoA-Request and Disconnect-Request.
+        See raddb/sites-available/originate-coa.
+      * Added "lifetime" and "max_queries" to raddb/sql.conf.
+        This helps address the problem of hung SQL sockets.
+      * Allow packets to be injected via radmin.  See "inject help"
+        in radmin.
+      * Answer VMPS reconfirmation request.  Patch from Hermann Lauer.
+      * Sample logrotate script in scripts/logrotate.freeradius
+      * Add configurable poll interval for "detail" listeners
+      * New "raddebug" command.  This prints debugging information from
+        a running server.  See "man raddebug.
+      * Add "require_message_authenticator" configuration to home_server
+        configuration.  This makes the server add Message-Authenticator
+        to all outgoing Access-Request packets.
+      * Added smsotp module, as contributed by Siemens.
+      * Enabled the administration socket in the default install.
+        See raddb/sites-available/control-socket, and "man radmin"
+      * Handle duplicate clients, such as with replicated or
+        load-balanced SQL servers and "readclients = yes"
+
+    Bug fixes
+      * Minor changes to allow building without VQP.
+      * Minor fixes from John Center
+      * Fixed raddebug example
+      * Don't crash when deleting attributes via unlang
+      * Be friendlier to very fast clients
+      * Updated the "detail" listener so that it only polls once,
+        and not many times in a row, leaking memory each time...
+      * Update comparison for Packet-Src-IP-Address (etc.) so that
+        the operators other than '==' work.
+      * Did autoconf magic to work around weird libtool bug
+      * Make rlm_perl keep tags for tagged attributes in more situations
+      * Update UID checking for radmin
+      * Added "include_length" field for TTLS.  It's needed for RFC
+        compliance, but not (apparently) for interoperability.
+      * Clean up control sockets when they are closed, so that we don't
+        leak memory.
+      * Define SUN_LEN for systems that don't have it.
+      * Correct some boundary conditions in the conditional checker ("if")
+        in "unlang".  Bug noted by Arran Cudbard-Bell.
+      * Work around minor building issues in gmake.  This should only
+        have affected developers.
+      * Change how we manage unprivileged user/group, so that we do not
+        create control sockets owned by root.
+      * Fixed more minor issues found by Coverity.
+      * Allow raddb/certs/bootstrap to run when there is no "make"
+        command installed.
+      * In radiusd.conf, run_dir depends on the name of the program,
+        and isn't hard-coded to "..../radiusd"
+      * Check for EOF in more places in the "detail" file reader.
+      * Added Freeswitch dictionary.
+      * Chop ethernet frames in VMPS, rather than droppping packets.
+      * Fix EAP-TLS bug.  Patch from Arnaud Ebalard
+      * Don't lose string for regex-compares in the "users" file.
+      * Expose more functions in rlm_sql to rlm_sqlippool, which 
+        helps on systems where RTLD_GLOBAL is off.
+      * Fix typos in MySQL schemas for ippools.
+      * Remove macro that was causing build issues on some platforms.
+      * Fixed issues with dead home servers.  Bug noted by Chris Moules.
+      * Fixed "access after free" with some dynamic clients.
+
+- fix packaging bug, some directories missing execute permission
+  /etc/raddb/dictionary now readable by all.
+
+* Tue Feb 24 2009 John Dennis <jdennis@redhat.com> - 2.1.3-4
+- fix type usage in unixodbc to match new type usage in unixodbc API
+
+* Thu Feb 19 2009 John Dennis <jdennis@redhat.com> - 2.1.3-3
+- add pointer to Red Hat documentation in docdir
+
+* Sat Jan 24 2009 Caolán McNamara <caolanm@redhat.com> - 2.1.3-2
+- rebuild for dependencies
+
 * Thu Dec  4 2008 John Dennis <jdennis@redhat.com> - 2.1.3-1
 - upgrade to latest upstream release, upstream summary follows:
   The focus of this release is stability.
