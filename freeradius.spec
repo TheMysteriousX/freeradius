@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.1.6
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -296,7 +296,7 @@ fi
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/certs/*.cnf
 %attr(750,root,radiusd) /etc/raddb/certs/bootstrap
 %dir %attr(750,root,radiusd) /etc/raddb/sites-available
-%attr(640,root,radiusd) /etc/raddb/sites-available/*
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-available/*
 %dir %attr(750,root,radiusd) /etc/raddb/sites-enabled
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-enabled/*
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/eap.conf
@@ -517,6 +517,9 @@ fi
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Tue Jun  2 2009 John Dennis <jdennis@redhat.com> - 2.1.6-2
+- make /etc/raddb/sites-available/* be config(noreplace)
+
 * Mon May 18 2009 John Dennis <jdennis@redhat.com> - 2.1.6-1
   - update to latest upstream release, from upstream Changelog:
     Feature improvements
