@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.1.7
-Release: 2%{?dist}
+Release: 7%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -11,10 +11,11 @@ Source100: freeradius-radiusd-init
 Source102: freeradius-logrotate
 Source103: freeradius-pam-conf
 
-Obsoletes: freeradius-dialupadmin >= 2.0 freeradius-dialupadmin-ldap >= 2.0
-Obsoletes: freeradius-dialupadmin-mysql >= 2.0 freeradius-dialupadmin-postgresql >= 2.0
+Obsoletes: freeradius-devel
+Obsoletes: freeradius-libs
 
 %define docdir %{_docdir}/freeradius-%{version}
+%define initddir %{?_initddir:%{_initddir}}%{!?_initddir:%{_initrddir}}
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -31,8 +32,7 @@ BuildRequires: readline-devel
 BuildRequires: libpcap-devel
 
 Requires(pre): shadow-utils glibc-common
-Requires(post): /sbin/ldconfig /sbin/chkconfig
-Requires(postun): /sbin/ldconfig
+Requires(post): /sbin/chkconfig
 Requires(preun): /sbin/chkconfig
 
 %description
@@ -50,17 +50,10 @@ more.  Using RADIUS allows authentication and authorization for a network to
 be centralized, and minimizes the amount of re-configuration which has to be
 done when adding or deleting new users.
 
-%package libs
-Group: System Environment/Daemons
-Summary: FreeRADIUS shared libraries
-
-%description libs
-The FreeRADIUS shared library
-
 %package utils
 Group: System Environment/Daemons
 Summary: FreeRADIUS utilities
-Requires: %{name}-libs = %{version}-%{release}
+Requires: %{name} = %{version}-%{release}
 Requires: libpcap >= 0.9.4
 
 %description utils
@@ -72,19 +65,10 @@ of the server, and let you decide if they satisfy your needs.
 Support for RFC and VSA Attributes Additional server configuration
 attributes Selecting a particular configuration Authentication methods
 
-%package devel
-Group: Development/Libraries
-Summary: FreeRADIUS Development Files
-Requires: %{name}-libs = %{version}-%{release}
-
-%description devel
-These are the static libraries for the FreeRADIUS package.
-
-
 %package ldap
 Summary: LDAP support for freeradius
 Group: System Environment/Daemons
-Requires: %{name}-libs = %{version}-%{release}
+Requires: %{name} = %{version}-%{release}
 BuildRequires: openldap-devel
 
 %description ldap
@@ -93,7 +77,7 @@ This plugin provides the LDAP support for the FreeRADIUS server project.
 %package krb5
 Summary: Kerberos 5 support for freeradius
 Group: System Environment/Daemons
-Requires: %{name}-libs = %{version}-%{release}
+Requires: %{name} = %{version}-%{release}
 BuildRequires: krb5-devel
 
 %description krb5
@@ -102,12 +86,14 @@ This plugin provides the Kerberos 5 support for the FreeRADIUS server project.
 %package perl
 Summary: Perl support for freeradius
 Group: System Environment/Daemons
-Requires: %{name}-libs = %{version}-%{release}
+Requires: %{name} = %{version}-%{release}
 Requires: perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
-%if 0%{?fedora}
-BuildRequires: perl-devel
-%else
+%{?fedora:BuildRequires: perl-devel}
+%if 0%{?rhel} <= 5
 BuildRequires: perl
+%endif
+%if 0%{?rhel} >= 6
+BuildRequires: perl-devel
 %endif
 BuildRequires: perl(ExtUtils::Embed)
 
@@ -117,7 +103,7 @@ This plugin provides the Perl support for the FreeRADIUS server project.
 %package python
 Summary: Python support for freeradius
 Group: System Environment/Daemons
-Requires: %{name}-libs = %{version}-%{release}
+Requires: %{name} = %{version}-%{release}
 BuildRequires: python-devel
 
 %description python
@@ -126,25 +112,25 @@ This plugin provides the Python support for the FreeRADIUS server project.
 %package mysql
 Summary: MySQL support for freeradius
 Group: System Environment/Daemons
-Requires: %{name}-libs = %{version}-%{release}
+Requires: %{name} = %{version}-%{release}
 BuildRequires: mysql-devel
 
 %description mysql
 This plugin provides the MySQL support for the FreeRADIUS server project.
 
 %package postgresql
-Summary: postgresql support for freeradius
+Summary: Postgresql support for freeradius
 Group: System Environment/Daemons
-Requires: %{name}-libs = %{version}-%{release}
+Requires: %{name} = %{version}-%{release}
 BuildRequires: postgresql-devel
 
 %description postgresql
 This plugin provides the postgresql support for the FreeRADIUS server project.
 
 %package unixODBC
-Summary: unixODBC support for freeradius
+Summary: Unix ODBC support for freeradius
 Group: System Environment/Daemons
-Requires: %{name}-libs = %{version}-%{release}
+Requires: %{name} = %{version}-%{release}
 BuildRequires: unixODBC-devel
 
 %description unixODBC
@@ -153,6 +139,8 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 
 %prep
 %setup -q -n freeradius-server-%{version}
+# Some source files mistakenly have execute permissions set
+find $RPM_BUILD_DIR/freeradius-server-%{version} \( -name '*.c' -o -name '*.h' \) -a -perm /0111 -exec chmod a-x {} +
 
 %build
 %ifarch s390 s390x
@@ -192,7 +180,6 @@ make
 %install
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/var/run/radiusd
-mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/{logrotate.d,pam.d,rc.d/init.d}
 mkdir -p $RPM_BUILD_ROOT/var/lib/radiusd
 # fix for bad libtool bug - can not rebuild dependent libs and bins
 #FIXME export LD_LIBRARY_PATH=$RPM_BUILD_ROOT/%{_libdir}
@@ -201,14 +188,13 @@ make install R=$RPM_BUILD_ROOT
 RADDB=$RPM_BUILD_ROOT%{_sysconfdir}/raddb
 perl -i -pe 's/^#user =.*$/user = radiusd/'   $RADDB/radiusd.conf
 perl -i -pe 's/^#group =.*$/group = radiusd/' $RADDB/radiusd.conf
-#ldconfig -n $RPM_BUILD_ROOT/usr/lib/freeradius
 # logs
 mkdir -p $RPM_BUILD_ROOT/var/log/radius/radacct
 touch $RPM_BUILD_ROOT/var/log/radius/{radutmp,radius.log}
 
-install -m 755 %{SOURCE100} $RPM_BUILD_ROOT/%{_initrddir}/radiusd
-install -m 644 %{SOURCE102} $RPM_BUILD_ROOT/%{_sysconfdir}/logrotate.d/radiusd
-install -m 644 %{SOURCE103} $RPM_BUILD_ROOT/%{_sysconfdir}/pam.d/radiusd
+install -D -m 755 %{SOURCE100} $RPM_BUILD_ROOT/%{initddir}/radiusd
+install -D -m 644 %{SOURCE102} $RPM_BUILD_ROOT/%{_sysconfdir}/logrotate.d/radiusd
+install -D -m 644 %{SOURCE103} $RPM_BUILD_ROOT/%{_sysconfdir}/pam.d/radiusd
 
 # remove unneeded stuff
 rm -rf doc/00-OLD
@@ -221,13 +207,19 @@ rm -rf $RPM_BUILD_ROOT/%{_datadir}/dialup_admin/sql/oracle
 rm -rf $RPM_BUILD_ROOT/%{_datadir}/dialup_admin/lib/sql/oracle
 rm -rf $RPM_BUILD_ROOT/%{_datadir}/dialup_admin/lib/sql/drivers/oracle
 
+# remove header files, we don't ship a devel package and the 
+# headers have multilib conflicts
+rm -rf $RPM_BUILD_ROOT/%{_includedir}
+
 # remove unsupported config files
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/experimental.conf
 
 # install doc files omitted by standard install
-for f in COPYRIGHT CREDITS INSTALL LICENSE README; do
+for f in COPYRIGHT CREDITS INSTALL README; do
     cp $f $RPM_BUILD_ROOT/%{docdir}
 done
+cp LICENSE $RPM_BUILD_ROOT/%{docdir}/LICENSE.gpl
+cp src/lib/LICENSE $RPM_BUILD_ROOT/%{docdir}/LICENSE.lgpl
 
 # add Red Hat specific documentation
 cat >> $RPM_BUILD_ROOT/%{docdir}/REDHAT << EOF
@@ -252,61 +244,7 @@ getent group  radiusd >/dev/null || /usr/sbin/groupadd -r -g 95 radiusd
 getent passwd radiusd >/dev/null || /usr/sbin/useradd  -r -g radiusd -u 95 -c "radiusd user" -s /sbin/nologin radiusd > /dev/null 2>&1
 exit 0
 
-%pre devel
-getent group  radiusd >/dev/null || /usr/sbin/groupadd -r -g 95 radiusd
-getent passwd radiusd >/dev/null || /usr/sbin/useradd  -r -g radiusd -u 95 -c "radiusd user" -s /sbin/nologin radiusd > /dev/null 2>&1
-exit 0
-
-%pre krb5
-getent group  radiusd >/dev/null || /usr/sbin/groupadd -r -g 95 radiusd
-getent passwd radiusd >/dev/null || /usr/sbin/useradd  -r -g radiusd -u 95 -c "radiusd user" -s /sbin/nologin radiusd > /dev/null 2>&1
-exit 0
-
-%pre ldap
-getent group  radiusd >/dev/null || /usr/sbin/groupadd -r -g 95 radiusd
-getent passwd radiusd >/dev/null || /usr/sbin/useradd  -r -g radiusd -u 95 -c "radiusd user" -s /sbin/nologin radiusd > /dev/null 2>&1
-exit 0
-
-%pre libs
-getent group  radiusd >/dev/null || /usr/sbin/groupadd -r -g 95 radiusd
-getent passwd radiusd >/dev/null || /usr/sbin/useradd  -r -g radiusd -u 95 -c "radiusd user" -s /sbin/nologin radiusd > /dev/null 2>&1
-exit 0
-
-%pre mysql
-getent group  radiusd >/dev/null || /usr/sbin/groupadd -r -g 95 radiusd
-getent passwd radiusd >/dev/null || /usr/sbin/useradd  -r -g radiusd -u 95 -c "radiusd user" -s /sbin/nologin radiusd > /dev/null 2>&1
-exit 0
-
-%pre perl
-getent group  radiusd >/dev/null || /usr/sbin/groupadd -r -g 95 radiusd
-getent passwd radiusd >/dev/null || /usr/sbin/useradd  -r -g radiusd -u 95 -c "radiusd user" -s /sbin/nologin radiusd > /dev/null 2>&1
-exit 0
-
-%pre postgresql
-getent group  radiusd >/dev/null || /usr/sbin/groupadd -r -g 95 radiusd
-getent passwd radiusd >/dev/null || /usr/sbin/useradd  -r -g radiusd -u 95 -c "radiusd user" -s /sbin/nologin radiusd > /dev/null 2>&1
-exit 0
-
-%pre python
-getent group  radiusd >/dev/null || /usr/sbin/groupadd -r -g 95 radiusd
-getent passwd radiusd >/dev/null || /usr/sbin/useradd  -r -g radiusd -u 95 -c "radiusd user" -s /sbin/nologin radiusd > /dev/null 2>&1
-exit 0
-
-%pre unixODBC
-getent group  radiusd >/dev/null || /usr/sbin/groupadd -r -g 95 radiusd
-getent passwd radiusd >/dev/null || /usr/sbin/useradd  -r -g radiusd -u 95 -c "radiusd user" -s /sbin/nologin radiusd > /dev/null 2>&1
-exit 0
-
-%pre utils
-getent group  radiusd >/dev/null || /usr/sbin/groupadd -r -g 95 radiusd
-getent passwd radiusd >/dev/null || /usr/sbin/useradd  -r -g radiusd -u 95 -c "radiusd user" -s /sbin/nologin radiusd > /dev/null 2>&1
-exit 0
-
-
-
-
 %post
-/sbin/ldconfig
 if [ $1 = 1 ]; then
   /sbin/chkconfig --add radiusd
 fi
@@ -322,7 +260,6 @@ fi
 if [ $1 -ge 1 ]; then
   /sbin/service radiusd condrestart >/dev/null 2>&1 || :
 fi
-/sbin/ldconfig
 
 
 %files
@@ -330,7 +267,7 @@ fi
 %doc %{docdir}/
 %config(noreplace) %{_sysconfdir}/pam.d/radiusd
 %config(noreplace) %{_sysconfdir}/logrotate.d/radiusd
-%config(noreplace) %{_initrddir}/radiusd
+%{initddir}/radiusd
 %dir %attr(755,radiusd,radiusd) /var/lib/radiusd
 # configs
 %dir %attr(755,root,radiusd) /etc/raddb
@@ -353,9 +290,9 @@ fi
 #%attr(640,root,radiusd) %config(noreplace) /etc/raddb/sql/oracle/*
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/users
 %dir %attr(770,root,radiusd) /etc/raddb/certs
-/etc/raddb/certs/Makefile
-/etc/raddb/certs/README
-/etc/raddb/certs/xpextensions
+%config(noreplace) /etc/raddb/certs/Makefile
+%config(noreplace) /etc/raddb/certs/README
+%config(noreplace) /etc/raddb/certs/xpextensions
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/certs/*.cnf
 %attr(750,root,radiusd) /etc/raddb/certs/bootstrap
 %dir %attr(750,root,radiusd) /etc/raddb/sites-available
@@ -363,9 +300,9 @@ fi
 %dir %attr(750,root,radiusd) /etc/raddb/sites-enabled
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-enabled/*
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/eap.conf
-%attr(640,root,radiusd) /etc/raddb/example.pl
+%config(noreplace) %attr(640,root,radiusd) /etc/raddb/example.pl
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/policy.conf
-/etc/raddb/policy.txt
+%config(noreplace) /etc/raddb/policy.txt
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/templates.conf
 %dir %attr(750,root,radiusd) /etc/raddb/modules
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/acct_unique
@@ -409,7 +346,7 @@ fi
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/sradutmp
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/unix
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/wimax
-%dir %attr(700,radiusd,radiusd) /var/run/radiusd/
+%dir %attr(755,radiusd,radiusd) /var/run/radiusd/
 # binaries
 %defattr(-,root,root)
 /usr/sbin/checkrad
@@ -454,8 +391,10 @@ fi
 # logs
 %dir %attr(700,radiusd,radiusd) /var/log/radius/
 %dir %attr(700,radiusd,radiusd) /var/log/radius/radacct/
-%attr(644,radiusd,radiusd) /var/log/radius/radutmp
-%config(noreplace) %attr(600,radiusd,radiusd) /var/log/radius/radius.log
+%ghost %attr(644,radiusd,radiusd) /var/log/radius/radutmp
+%ghost %attr(600,radiusd,radiusd) /var/log/radius/radius.log
+# RADIUS shared libs
+%attr(755,root,root) %{_libdir}/freeradius/lib*.so*
 # RADIUS Loadable Modules
 %dir %attr(755,root,root) %{_libdir}/freeradius
 #%attr(755,root,root) %{_libdir}/freeradius/rlm_*.so*
@@ -564,18 +503,6 @@ fi
 %doc %{_mandir}/man8/radsqlrelay.8.gz
 %doc %{_mandir}/man8/rlm_ippool_tool.8.gz
 
-%files libs
-# RADIU shared libs
-%defattr(-,root,root)
-%attr(755,root,root) %{_libdir}/freeradius/lib*.so*
-
-%files devel
-%defattr(-,root,root)
-#%attr(644,root,root) %{_libdir}/freeradius/*.a
-#%attr(644,root,root) %{_libdir}/freeradius/*.la
-%dir %attr(755,radiusd,radiusd) /usr/include/freeradius
-%attr(644,root,root) /usr/include/freeradius/*.h
-
 %files krb5
 %defattr(-,root,root)
 %{_libdir}/freeradius/rlm_krb5.so
@@ -621,6 +548,33 @@ fi
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Wed Dec 30 2009 John Dennis <jdennis@redhat.com> - 2.1.7-7
+- Remove devel subpackage. It doesn't make much sense to have a devel package since
+  we don't ship libraries and it produces multilib conflicts.
+
+* Mon Dec 21 2009 John Dennis <jdennis@redhat.com> - 2.1.7-6
+- more spec file clean up from review comments
+- remove freeradius-libs subpackage, move libfreeradius-eap and
+  libfreeradius-radius into the main package
+- fix subpackage requires, change from freeradius-libs to main package
+- fix description of the devel subpackage, remove referene to non-shipped libs
+- remove execute permissions on src files included in debuginfo
+- remove unnecessary use of ldconfig
+- since all sub-packages now require main package remove user creation for sub-packages
+- also include the LGPL library license file in addition to the GPL license file
+- fix BuildRequires for perl so it's compatible with both Fedora, RHEL5 and RHEL6
+
+* Mon Dec 21 2009 John Dennis <jdennis@redhat.com> - 2.1.7-5
+- fix various rpmlint issues.
+
+* Fri Dec  4 2009 Stepan Kasal <skasal@redhat.com> - 2.1.7-4
+- rebuild against perl 5.10.1
+
+* Thu Dec  3 2009 John Dennis <jdennis@redhat.com> - 2.1.7-3
+- resolves: bug #522111 non-conformant initscript
+  also change permission of /var/run/radiusd from 0700 to 0755
+  so that "service radiusd status" can be run as non-root
+
 * Wed Sep 16 2009 Tomas Mraz <tmraz@redhat.com> - 2.1.7-2
 - use password-auth common PAM configuration instead of system-auth
 
