@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 2.1.7
-Release: 7%{?dist}
+Version: 2.1.8
+Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -220,6 +220,7 @@ for f in COPYRIGHT CREDITS INSTALL README; do
 done
 cp LICENSE $RPM_BUILD_ROOT/%{docdir}/LICENSE.gpl
 cp src/lib/LICENSE $RPM_BUILD_ROOT/%{docdir}/LICENSE.lgpl
+cp src/LICENSE.openssl $RPM_BUILD_ROOT/%{docdir}/LICENSE.openssl
 
 # add Red Hat specific documentation
 cat >> $RPM_BUILD_ROOT/%{docdir}/REDHAT << EOF
@@ -275,6 +276,7 @@ fi
 %attr(644,root,radiusd) %config(noreplace) /etc/raddb/dictionary
 %config(noreplace) /etc/raddb/acct_users
 %config(noreplace) /etc/raddb/attrs
+%config(noreplace) /etc/raddb/attrs.access_challenge
 %config(noreplace) /etc/raddb/attrs.access_reject
 %config(noreplace) /etc/raddb/attrs.accounting_response
 %config(noreplace) /etc/raddb/attrs.pre-proxy
@@ -330,6 +332,7 @@ fi
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/mac2ip
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/mac2vlan
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/mschap
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/ntlm_auth
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/otp
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/pam
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/pap
@@ -548,6 +551,52 @@ fi
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Wed Dec 30 2009 John Dennis <jdennis@redhat.com> - 2.1.8-1
+- update to latest upstream
+  Feature improvements
+  * Print more descriptive error message for too many EAP sessions.
+    This gives hints on what to do when "failed to store handler"
+  * Commands received from radmin are now printed on stdout when
+    in debugging mode.
+  * Allow accounting packets to be written to a detail file, even
+    if they were read from a different detail file.
+  * Added OpenSSL license exception (src/LICENSE.openssl)
+
+  Bug fixes
+  * DHCP sockets can now set the broadcast flag before binding to a
+    socket.  You need to set "broadcast = yes" in the DHCP listener.
+  * Be more restrictive on string parsing in the config files
+  * Fix password length in scripts/create-users.pl
+  * Be more flexible about parsing the detail file.  This allows
+    it to read files where the attributes have been edited.
+  * Ensure that requests read from the detail file are cleaned up
+    (i.e. don't leak) if they are proxied without a response.
+  * Write the PID file after opening sockets, not before
+    (closes bug #29)
+  * Proxying large numbers of packets no longer gives error
+    "unable to open proxy socket".
+  * Avoid mutex locks in libc after fork
+  * Retry packet from detail file if there was no response.
+  * Allow old-style dictionary formats, where the vendor name is the
+    last field in an ATTRIBUTE definition.
+  * Removed all recursive use of mutexes.  Some systems just don't
+    support this.
+  * Allow !* to work as documented.
+  * make templates work (see templates.conf)
+  * Enabled "allow_core_dumps" to work again
+  * Print better errors when reading invalid dictionaries
+  * Sign client certificates with CA, rather than server certs.
+  * Fix potential crash in rlm_passwd when file was closed
+  * Fixed corner cases in conditional dynamic expansion.
+  * Use InnoDB for MySQL IP Pools, to gain transactional support
+  * Apply patch to libltdl for CVE-2009-3736.
+  * Fixed a few issues found by LLVM's static checker
+  * Keep track of "bad authenticators" for accounting packets
+  * Keep track of "dropped packets" for auth/acct packets
+  * Synced the "debian" directory with upstream
+  * Made "unlang" use unsigned 32-bit integers, to match the
+    dictionaries.
+
 * Wed Dec 30 2009 John Dennis <jdennis@redhat.com> - 2.1.7-7
 - Remove devel subpackage. It doesn't make much sense to have a devel package since
   we don't ship libraries and it produces multilib conflicts.
