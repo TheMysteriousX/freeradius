@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.1.8
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -10,6 +10,8 @@ Source0: ftp://ftp.freeradius.org/pub/radius/freeradius-server-%{version}.tar.bz
 Source100: freeradius-radiusd-init
 Source102: freeradius-logrotate
 Source103: freeradius-pam-conf
+
+Patch1: freeradius-cert-config.patch
 
 Obsoletes: freeradius-devel
 Obsoletes: freeradius-libs
@@ -139,6 +141,7 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 
 %prep
 %setup -q -n freeradius-server-%{version}
+%patch1 -p1 -b .cert-config
 # Some source files mistakenly have execute permissions set
 find $RPM_BUILD_DIR/freeradius-server-%{version} \( -name '*.c' -o -name '*.h' \) -a -perm /0111 -exec chmod a-x {} +
 
@@ -248,6 +251,9 @@ exit 0
 %post
 if [ $1 = 1 ]; then
   /sbin/chkconfig --add radiusd
+  if [ ! -e /etc/raddb/certs/server.pem ]; then
+    /sbin/runuser -g radiusd -c 'umask 007; /etc/raddb/certs/bootstrap' > /dev/null 2>&1 || :
+  fi
 fi
 
 %preun
@@ -551,6 +557,15 @@ fi
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Thu Jan  7 2010 John Dennis <jdennis@redhat.com> - 2.1.8-2
+- resolves: bug #526559 initial install should run bootstrap to create certificates
+  running radiusd in debug mode to generate inital temporary certificates
+  is no longer necessary, the /etc/raddb/certs/bootstrap is invoked on initial
+  rpm install (not upgrade) if there is no existing /etc/raddb/certs/server.pem file
+- resolves: bug #528493 use sha1 algorithm instead of md5 during cert generation
+  the certificate configuration (/etc/raddb/certs/{ca,server,client}.cnf) files
+  were modifed to use sha1 instead of md5 and the validity reduced from 1 year to 2 months
+
 * Wed Dec 30 2009 John Dennis <jdennis@redhat.com> - 2.1.8-1
 - update to latest upstream
   Feature improvements
