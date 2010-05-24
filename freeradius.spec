@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 2.1.8
-Release: 2%{?dist}
+Version: 2.1.9
+Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -557,6 +557,81 @@ fi
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Mon May 24 2010 John Dennis <jdennis@redhat.com> - 2.1.9-1
+- update to latest upstream, mainly bug fix release
+  Feature improvements
+  * Add radmin command "stats detail <file>" to see what
+    is going on inside of a detail file reader.
+  * Added documentation for CoA.  See raddb/sites-available/coa
+  * Add sub-option support for Option 82.  See dictionary.dhcp
+  * Add "server" field to default SQL NAS table, and documented it.
+
+  Bug fixes
+  * Reset "received ping" counter for Status-Server checks.  In some
+    corner cases it was not getting reset.
+  * Handle large VMPS attributes.
+  * Count accounting responses from a home server in SNMP / statistics
+    code.
+  * Set EAP-Session-Resumed = Yes, not "No" when session is resumed.
+  * radmin packet counter statistics are now unsigned, for numbers
+    2^31..2^32.  After that they roll over to zero.
+  * Be more careful about expanding data in PAP and MS-CHAP modules.
+    This prevents login failures when passwords contain '{'.
+  * Clean up zombie children if there were many "exec" modules being
+    run for one packet, all with "wait = no".
+  * re-open log file after HUP.  Closes bug #63.
+  * Fix "no response to proxied packet" complaint for Coa / Disconnect
+    packets.  It shouldn't ignore replies to packets it sent.
+  * Calculate IPv6 netmasks correctly.  Closes bug #69.
+  * Fix SQL module to re-open sockets if they unexpectedly close.
+  * Track scope for IPv6 addresses.  This lets us use link-local
+    addresses properly.  Closes bug #70.
+  * Updated Makefiles to no longer use the shell for recursing into
+    subdirs.  "make -j 2" should now work.
+  * Updated raddb/sql/mysql/ippool.conf to use "= NULL".  Closes
+    bug #75.
+  * Updated Makefiles so that "make reconfig" no longer uses the shell
+    for recursing into subdirs, and re-builds all "configure" files.
+  * Used above method to regenerate all configure scripts.
+    Closes bug #34.
+  * Updated SQL module to allow "server" field of "nas" table
+    to be blank: "".  This means the same as it being NULL.
+  * Fixed regex realm example.  Create Realm attribute with value
+    of realm from User-Name, not from regex.  Closes bug #40.
+  * If processing a DHCP Discover returns "fail / reject", ignore
+    the packet rather than sending a NAK.
+  * Allow '%' to be escaped in sqlcounter module.
+  * Fix typo internal hash table.
+  * For PEAP and TTLS, the tunneled reply is added to the reply,
+    rather than integrated via the operators.  This allows multiple
+    VSAs to be added, where they would previously be discarded.
+  * Make request number unsigned.  This changes nothing other than
+    the debug output when the server receives more than 2^31 packets.
+  * Don't block when reading child output in 'exec wait'.  This means
+    that blocked children get killed, instead of blocking the server.
+  * Enabled building without any proxy functionality
+  * radclient now prefers IPv4, to match the default server config.
+  * Print useful error when a realm regex is invalid
+  * relaxed rules for preprocess module "with_cisco_vsa_hack".  The
+    attributes can now be integer, ipaddr, etc.  (i.e. non-string)
+  * Allow rlm_ldap to build if ldap_set_rebind_proc() has only
+    2 arguments.
+  * Update configure script for rlm_python to avoid dynamic linking
+    problems on some platforms.
+  * Work-around for bug #35
+  * Do suid to "user" when running in debug mode as root
+  * Make "allow_core_dumps" work in more situations.
+  * In detail file reader, treat bad records as EOF.
+    This allows it to continue working when the disk is full.
+  * Fix Oracle default accounting queries to work when there are no
+    gigawords attributes.  Other databases already had the fix.
+  * Fix rlm_sql to show when it opens and closes sockets.  It already
+    says when it cannot connect, so it should say when it can connect.
+  * "chmod -x" for a few C source files.
+  * Pull update spec files, etc. from RedHat into the redhat/ directory.
+  * Allow spaces when parsing integer values.  This helps people who
+    put "too much" into an SQL value field.
+
 * Thu Jan  7 2010 John Dennis <jdennis@redhat.com> - 2.1.8-2
 - resolves: bug #526559 initial install should run bootstrap to create certificates
   running radiusd in debug mode to generate inital temporary certificates
