@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.1.10
-Release: 1%{?dist}
+Release: 3%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -244,30 +244,36 @@ rm -rf $RPM_BUILD_ROOT
 
 # Make sure our user/group is present prior to any package or subpackage installation
 %pre
-getent group  radiusd >/dev/null || /usr/sbin/groupadd -r -g 95 radiusd
+getent group  radiusd >/dev/null || /usr/sbin/groupadd -r -g 95 radiusd > /dev/null 2>&1
 getent passwd radiusd >/dev/null || /usr/sbin/useradd  -r -g radiusd -u 95 -c "radiusd user" -s /sbin/nologin radiusd > /dev/null 2>&1
 exit 0
 
 %post
-if [ $1 = 1 ]; then
+if [ $1 -eq 1 ]; then           # install
   /sbin/chkconfig --add radiusd
   if [ ! -e /etc/raddb/certs/server.pem ]; then
-    /sbin/runuser -g radiusd -c 'umask 007; /etc/raddb/certs/bootstrap' > /dev/null 2>&1 || :
+    /sbin/runuser -g radiusd -c 'umask 007; /etc/raddb/certs/bootstrap' > /dev/null 2>&1
   fi
 fi
+exit 0
 
 %preun
-if [ $1 = 0 ]; then
+if [ $1 -eq 0 ]; then           # uninstall
   /sbin/service radiusd stop > /dev/null 2>&1
   /sbin/chkconfig --del radiusd
 fi
+exit 0
 
 
 %postun
-if [ $1 -ge 1 ]; then
-  /sbin/service radiusd condrestart >/dev/null 2>&1 || :
+if [ $1 -ge 1 ]; then           # upgrade
+  /sbin/service radiusd condrestart >/dev/null 2>&1
 fi
-
+if [ $1 -eq 0 ]; then           # uninstall
+  getent passwd radiusd >/dev/null && /usr/sbin/userdel  radiusd > /dev/null 2>&1
+  getent group  radiusd >/dev/null && /usr/sbin/groupdel radiusd > /dev/null 2>&1
+fi
+exit 0
 
 %files
 %defattr(-,root,root)
@@ -559,6 +565,10 @@ fi
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Sat Jan  1 2011 John Dennis <jdennis@redhat.com> - 2.1.10-3
+- bug 666589 - removing freeradius from system does not delete the user "radiusd"
+  fix scriptlet argument testing, simplify always exiting with zero
+
 * Tue Oct 19 2010 John Dennis <jdennis@redhat.com> - 2.1.10-1
   Feature improvements
   * Install the "radcrypt" program.
