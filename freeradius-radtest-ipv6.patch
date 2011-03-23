@@ -1,0 +1,61 @@
+--- freeradius-server-2.1.10/src/main/radtest.in.orig	2011-02-14 16:19:05.000000000 -0500
++++ freeradius-server-2.1.10/src/main/radtest.in	2011-02-14 16:24:18.000000000 -0500
+@@ -16,6 +16,8 @@
+ 	echo "        -t <type>           Set authentication method" >&2
+ 	echo "                            type can be pap, chap, mschap, or eap-md5" >&2
+ 	echo "        -x                  Enable debug output" >&2
++	echo "        -4                  Use IPv4 address family for the NAS (default)" >&2
++	echo "        -6                  Use IPv6 address family for the NAS" >&2
+ 	exit 1
+ }
+ 
+@@ -30,6 +32,7 @@
+ 
+ OPTIONS=
+ PASSWORD="User-Password"
++family="IPv4"
+ 
+ #  We need at LEAST these many options
+ if [ $# -lt 5 ]
+@@ -41,6 +44,14 @@
+ while [ `echo "$1" | cut -c 1` = "-" ]
+ do
+    case "$1" in
++	-4) 
++		family="IPv4"
++		shift
++		;;
++	-6) 
++		family="IPv6"
++		shift
++		;;
+ 	-d) 
+ 		OPTIONS="$OPTIONS -d $2"
+     		shift;shift
+@@ -97,10 +108,25 @@
+ 	nas=`hostname`
+ fi
+ 
++# Set the address family
++case "$family" in
++	IPv4)
++		OPTIONS="$OPTIONS -4"
++		NAS_ADDR_ATTR="NAS-IP-Address"
++		;;
++	IPv6)
++		OPTIONS="$OPTIONS -6"
++		NAS_ADDR_ATTR="NAS-IPv6-Address"
++		;;
++	*)
++		echo "ERROR: unknown address family ($family)" >&2
++		usage
++esac
++
+ (
+ 	echo "User-Name = \"$1\""
+ 	echo "$PASSWORD = \"$2\""
+-	echo "NAS-IP-Address = $nas"
++	echo "$NAS_ADDR_ATTR = $nas"
+ 	echo "NAS-Port = $4"
+ 	if [ "$radclient" = "$radeapclient" ]
+ 	then

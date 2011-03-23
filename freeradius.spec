@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.1.10
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -12,6 +12,7 @@ Source102: freeradius-logrotate
 Source103: freeradius-pam-conf
 
 Patch1: freeradius-cert-config.patch
+Patch2: freeradius-radtest-ipv6.patch
 
 Obsoletes: freeradius-devel
 Obsoletes: freeradius-libs
@@ -142,6 +143,7 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 %prep
 %setup -q -n freeradius-server-%{version}
 %patch1 -p1 -b .cert-config
+%patch2 -p1 -b .radtest-ipv6
 # Some source files mistakenly have execute permissions set
 find $RPM_BUILD_DIR/freeradius-server-%{version} \( -name '*.c' -o -name '*.h' \) -a -perm /0111 -exec chmod a-x {} +
 
@@ -565,6 +567,10 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+=======
+* Wed Mar 23 2011 John Dennis <jdennis@redhat.com> - 2.1.10-6
+- Resolves: #599528 - make radtest IPv6 compatible
+
 * Wed Mar 23 2011 Dan Horák <dan@danny.cz> - 2.1.10-5
 - rebuilt for mysql 5.5.10 (soname bump in libmysqlclient)
 
