@@ -1,0 +1,38 @@
+diff -r -u freeradius-server-2.1.10.orig/autogen.sh freeradius-server-2.1.10/autogen.sh
+--- freeradius-server-2.1.10.orig/autogen.sh	2010-09-28 07:03:56.000000000 -0400
++++ freeradius-server-2.1.10/autogen.sh	2011-03-24 10:36:26.000000000 -0400
+@@ -16,6 +16,6 @@
+ for F in $mysubdirs
+ do
+ 	echo "Configuring in $F..."
+-	(cd $F && grep "^AC_CONFIG_HEADER" configure.in > /dev/null && autoheader -I$parentdir)
++	(cd $F && grep "^AC_CONFIG_HEADER" configure.in > /dev/null || exit 0; autoheader -I$parentdir)
+ 	(cd $F && autoconf -I$parentdir)
+ done
+Only in freeradius-server-2.1.10: autogen.sh~
+diff -r -u freeradius-server-2.1.10.orig/configure freeradius-server-2.1.10/configure
+--- freeradius-server-2.1.10.orig/configure	2010-09-28 07:03:56.000000000 -0400
++++ freeradius-server-2.1.10/configure	2011-03-23 18:09:45.000000000 -0400
+@@ -25121,7 +25121,7 @@
+ if test $ac_cv_func_lt_dladvise_init = yes; then
+ 
+ cat >>confdefs.h <<\_ACEOF
+-#define HAVE_HAVE_LT_DLADVISE_INIT
++#define HAVE_LT_DLADVISE_INIT
+ _ACEOF
+ 
+ fi
+Only in freeradius-server-2.1.10: configure~
+diff -r -u freeradius-server-2.1.10.orig/configure.in freeradius-server-2.1.10/configure.in
+--- freeradius-server-2.1.10.orig/configure.in	2010-09-28 07:03:56.000000000 -0400
++++ freeradius-server-2.1.10/configure.in	2011-03-23 18:09:33.000000000 -0400
+@@ -936,7 +936,7 @@
+ 
+ old_LIBS="$LIBS"
+ LIBS="$LIBS $LIBLTDL"
+-AC_CHECK_FUNC(lt_dladvise_init, AC_DEFINE(HAVE_HAVE_LT_DLADVISE_INIT, [], [Do we have the lt_dladvise_init function]))
++AC_CHECK_FUNC(lt_dladvise_init, AC_DEFINE(HAVE_LT_DLADVISE_INIT, [], [Do we have the lt_dladvise_init function]))
+ LIBS="$old_LIBS"
+ 
+ dnl Check for libcrypt
+Only in freeradius-server-2.1.10: configure.in~

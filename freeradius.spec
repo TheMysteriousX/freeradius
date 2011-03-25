@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.1.10
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -13,6 +13,13 @@ Source103: freeradius-pam-conf
 
 Patch1: freeradius-cert-config.patch
 Patch2: freeradius-radtest-ipv6.patch
+# WARNING, when the lt-dladvise patch is removed the autogen.sh in the
+# prep section should be removed as well, it's only necessary because
+# upstream did not regenerate headers via autoheader which caused the
+# newly added HAVE_LT_DLADVISE_INIT conditional to be omitted which is
+# necessary to turn on the lt_dladvise* functions which is necessary
+# to address bz #689045, (unresolved link errors for perl & python)
+Patch3: freeradius-lt-dladvise.patch
 
 Obsoletes: freeradius-devel
 Obsoletes: freeradius-libs
@@ -144,8 +151,10 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 %setup -q -n freeradius-server-%{version}
 %patch1 -p1 -b .cert-config
 %patch2 -p1 -b .radtest-ipv6
+%patch3 -p1 -b .lt-dladvise
 # Some source files mistakenly have execute permissions set
 find $RPM_BUILD_DIR/freeradius-server-%{version} \( -name '*.c' -o -name '*.h' \) -a -perm /0111 -exec chmod a-x {} +
+./autogen.sh
 
 %build
 %ifarch s390 s390x
@@ -567,7 +576,12 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
-=======
+* Wed Mar 23 2011 John Dennis <jdennis@redhat.com> - 2.1.10-7
+- Resolves: #689045 Using rlm_perl cause radiusd failed to start
+  Fix configure typo which caused lt_dladvise_* functions to be skipped.
+  run autogen.sh because HAVE_LT_DLADVISE_INIT isn't in src/main/autogen.h
+  Implemented by: freeradius-lt-dladvise.patch
+
 * Wed Mar 23 2011 John Dennis <jdennis@redhat.com> - 2.1.10-6
 - Resolves: #599528 - make radtest IPv6 compatible
 
