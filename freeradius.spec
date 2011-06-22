@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 2.1.10
-Release: 7%{?dist}
+Version: 2.1.11
+Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -12,14 +12,6 @@ Source102: freeradius-logrotate
 Source103: freeradius-pam-conf
 
 Patch1: freeradius-cert-config.patch
-Patch2: freeradius-radtest-ipv6.patch
-# WARNING, when the lt-dladvise patch is removed the autogen.sh in the
-# prep section should be removed as well, it's only necessary because
-# upstream did not regenerate headers via autoheader which caused the
-# newly added HAVE_LT_DLADVISE_INIT conditional to be omitted which is
-# necessary to turn on the lt_dladvise* functions which is necessary
-# to address bz #689045, (unresolved link errors for perl & python)
-Patch3: freeradius-lt-dladvise.patch
 
 Obsoletes: freeradius-devel
 Obsoletes: freeradius-libs
@@ -150,11 +142,8 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 %prep
 %setup -q -n freeradius-server-%{version}
 %patch1 -p1 -b .cert-config
-%patch2 -p1 -b .radtest-ipv6
-%patch3 -p1 -b .lt-dladvise
 # Some source files mistakenly have execute permissions set
 find $RPM_BUILD_DIR/freeradius-server-%{version} \( -name '*.c' -o -name '*.h' \) -a -perm /0111 -exec chmod a-x {} +
-./autogen.sh
 
 %build
 %ifarch s390 s390x
@@ -367,8 +356,12 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/preprocess
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/radutmp
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/realm
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/redis
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/rediswho
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/replicate
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/smbpasswd
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/smsotp
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/soh
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/sql_log
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/sqlcounter_expire_on_login
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/sradutmp
@@ -505,6 +498,10 @@ exit 0
 %{_libdir}/freeradius/rlm_radutmp-%{version}.so
 %{_libdir}/freeradius/rlm_realm.so
 %{_libdir}/freeradius/rlm_realm-%{version}.so
+%{_libdir}/freeradius/rlm_replicate.so
+%{_libdir}/freeradius/rlm_replicate-%{version}.so
+%{_libdir}/freeradius/rlm_soh.so
+%{_libdir}/freeradius/rlm_soh-%{version}.so
 %{_libdir}/freeradius/rlm_sql.so
 %{_libdir}/freeradius/rlm_sql-%{version}.so
 %{_libdir}/freeradius/rlm_sql_log.so
@@ -576,6 +573,129 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Wed Jun 22 2011 John Dennis <jdennis@redhat.com> - 2.1.11-1
+- Upgrade to latest upstream release: 2.1.11
+- Remove the following two patches as upstream has incorporated them:
+    freeradius-radtest-ipv6.patch
+    freeradius-lt-dladvise.patch
+- Upstream changelog for 2.1.11:
+  Feature improvements
+  * Added doc/rfc/rfc6158.txt: RADIUS Design Guidelines.
+    All vendors need to read it and follow its directions.
+  * Microsoft SoH support for PEAP from Phil Mayers.
+    See doc/SoH.txt
+  * Certificate "bootstrap" script now checks for certificate expiry.
+    See comments in raddb/eap.conf, and then "make_cert_command".
+  * Support for dynamic expansion of EAP-GTC challenges.
+    Patch from Alexander Clouter.
+  * OCSP support from Alex Bergmann.  See raddb/eap.conf, "ocsp"
+    section.
+  * Updated dictionary.huawei, dictionary.3gpp, dictionary.3gpp3.
+  * Added dictionary.eltex, dictionary.motorola, and dictionary.ukerna.
+  * Experimental redis support from Gabriel Blanchard.
+    See raddb/modules/redis and raddb/modules/rediswho
+  * Add "key" to rlm_fastusers.  Closes bug #126.
+  * Added scripts/radtee from original software at
+    http://horde.net/~jwm/software/misc/comparison-tee
+  * Updated radmin "man" page for new commands.
+  * radsniff now prints the hex decoding of the packet (-x -x -x)
+  * mschap module now reloads its configuration on HUP
+  * Added experimental "replicate" module.  See raddb/modules/replicate
+  * Policy "foo" can now refer to module "foo".  This lets you
+    over-ride the behavior of a module.
+  * Policy "foo.authorize" can now over-ride the behavior of module
+    "foo", "authorize" method.
+  * Produce errors in more situations when the configuration files
+    have invalid syntax.
+
+  Bug fixes
+  * Ignore pre/post-proxy sections if proxying is disabled
+  * Add configure checks for pcap_fopen*.
+  * Fix call to otp_write in rlm_otp
+  * Fix issue with Access-Challenge checking from 2.1.10, when the
+    debug flag was set after server startup.  Closes #116 and #117.
+  * Fix typo in zombie period start time.
+  * Fix leak in src/main/valuepair.c.  Patch from James Ballantine.
+  * Allow radtest to use spaces in shared secret.
+    Patch from Cedric Carree.
+  * Remove extra calls to HMAC_CTX_init() in rlm_wimax, fixing leak.
+    Patch from James Ballantine.
+  * Remove MN-FA key generation.  The NAS does this, not AAA.
+    Patch from Ben Weichman.
+  * Include dictionary.mikrotik by default.  Closes bug #121.
+  * Add group membership query to MS-SQL examples.  Closes bug #120.
+  * Don't cast NAS-Port to integer in Postgresql queries.
+    Closes bug #112.
+  * Fixes for libtool and autoconf from Sam Hartman.
+  * radsniff should read the dictionaries in more situations.
+  * Use fnmatch to check for detail file reader==writer.
+    Closes bug #128.
+  * Check for short writes (i.e. disk full) in rlm_detail.
+    Closes bug #130.  Patches and testing from John Morrissey.
+  * Fix typo in src/lib/token.c.  Closes bug #124
+  * Allow workstation trust accounts to use MS-CHAP.
+    Closes bug #123.
+  * Assigning foo=`/bin/echo hello` now produces a syntax error
+    if it is done outside of an "update" section.
+  * Fix "too many open file descriptors" problem when using
+    "verify client" in eap.conf.
+  * Many fixes to dialup_admin for PHP5, by Stefan Winter.
+  * Allow preprocess module to have "hints = " and "huntgroups =",
+    which allows them to be empty or non-existent.
+  * Renamed "php3" files to "php" in dialup_admin/
+  * Produce error when sub-TLVs are used in a dictionary.  They are
+    supported only in the "master" branch, and not in 2.1.x.
+  * Minor fix in dictionary.redback.  Closes bug #138.
+  * Fixed MySQL "NULL" issues in ippool.conf.  Closes bug #129.
+  * Fix to Access-Challenge warning from Ken-ichirou Matsuzawa.
+    Closes bug #118.
+  * DHCP fixes to send unicast packets in more situations.
+  * Fix to udpfromto, to enable it to work on IPv6 networks.
+  * Fixes to the Oracle accounting_onoff_query.
+  * When using both IPv4 and IPv6 home servers, ensure that we use the
+    correct local socket for proxying.  Closes bug #143.
+  * Suppress messages when thread pool is nearly full, all threads
+    are busy, and we can't create new threads.
+  * IPv6 is now enabled for udpfromto.  Closes bug #141
+  * Make sqlippool query buffer the same size as sql module.
+    Closes bug #139.
+  * Make Coa / Disconnect proxying work again.
+  * Configure scripts for rlm_caching from Nathaniel McCallum
+  * src/lib/dhcp.c and src/include/libradius.h are LGPL, not GPL.
+  * Updated password routines to use time-insensitive comparisons.
+    This prevents timing attacks (though none are known).
+  * Allow sqlite module to do normal SELECT queries.
+  * rlm_wimax now has a configure script
+  * Moved Ascend, USR, and Motorola "illegal" dictionaries to separate
+    files.  See share/dictionary for explanations.
+  * Check for duplicate module definitions in the modules{} section,
+    and refuse to start if duplicates are found.
+  * Check for duplicate virtual servers, and refuse to start if
+    duplicates are found.
+  * Don't use udpfromto if source is INADDR_ANY.  Closes bug #148.
+  * Check pre-conditions before running radmin "inject file".
+  * Don't over-ride "no match" with "match" for regexes.
+    Closes bug #152.
+  * Make retry and error message configurable in mschap.
+    See raddb/modules/mschap
+  * Allow EAP-MSCHAPv2 to send error message to client.  This change
+    allows some clients to prompt the user for a new password.
+    See raddb/eap.conf, mschapv2 section, "send_error".
+  * Load the default virtual server before any others.
+    This matches what users expect, and reduces confusion.
+  * Fix configure checks for udpfromto.  Fixes Debian bug #606866
+  * Definitive fix for bug #35, where the server could crash under
+    certain loads.  Changes src/lib/packet.c to use RB trees.
+  * Updated "configure" checks to allow IPv6 udpfromto on Linux.
+  * SQL module now returns NOOP if the accounting start/interim/stop
+    queries don't do anything.
+  * Allow %%{outer.control: ... } in string expansions
+  * home_server coa config now matches raddb/proxy.conf
+  * Never send a reply to a DHCP Release.
+
+* Thu Jun 16 2011 Marcela Mašláňová <mmaslano@redhat.com> - 2.1.10-8
+- Perl mass rebuild
+
 * Wed Mar 23 2011 John Dennis <jdennis@redhat.com> - 2.1.10-7
 - Resolves: #689045 Using rlm_perl cause radiusd failed to start
   Fix configure typo which caused lt_dladvise_* functions to be skipped.
