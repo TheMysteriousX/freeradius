@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.1.11
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -573,6 +573,9 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Thu Jun 23 2011 John Dennis <jdennis@redhat.com> - 2.1.11-2
+- reload the server (i.e. HUP) after logrotate
+
 * Wed Jun 22 2011 John Dennis <jdennis@redhat.com> - 2.1.11-1
 - Upgrade to latest upstream release: 2.1.11
 - Remove the following two patches as upstream has incorporated them:
