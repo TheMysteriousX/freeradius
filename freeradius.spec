@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.1.11
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -35,6 +35,9 @@ BuildRequires: systemd-units
 
 Requires(pre): shadow-utils glibc-common
 Requires(post): systemd-sysv
+Requires(post): systemd-units
+Requires(preun): systemd-units
+Requires(postun): systemd-units
 
 %description
 The FreeRADIUS Server Project is a high performance and highly configurable
@@ -249,14 +252,27 @@ exit 0
 
 %post
 if [ $1 -eq 1 ]; then           # install
+  # Initial installation 
+  /bin/systemctl daemon-reload >/dev/null 2>&1 || :
   if [ ! -e /etc/raddb/certs/server.pem ]; then
     /sbin/runuser -g radiusd -c 'umask 007; /etc/raddb/certs/bootstrap' > /dev/null 2>&1
   fi
 fi
 exit 0
 
+%preun
+if [ $1 -eq 0 ] ; then
+    # Package removal, not upgrade
+    /bin/systemctl --no-reload disable radiusd.service > /dev/null 2>&1 || :
+    /bin/systemctl stop radiusd.service > /dev/null 2>&1 || :
+fi
+
 %postun
-if [ $1 -eq 0 ]; then           # uninstall
+/bin/systemctl daemon-reload >/dev/null 2>&1 || :
+if [ $1 -ge 1 ] ; then
+    # Package upgrade, not uninstall
+    /bin/systemctl try-restart radiusd.service >/dev/null 2>&1 || :
+elif [ $1 -eq 0 ]; then           # uninstall
   getent passwd radiusd >/dev/null && /usr/sbin/userdel  radiusd > /dev/null 2>&1
   getent group  radiusd >/dev/null && /usr/sbin/groupdel radiusd > /dev/null 2>&1
 fi
@@ -562,6 +578,9 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Fri Sep  9 2011 Tom Callaway <spot@fedoraproject.org> - 2.1.11-6
+- add missing systemd scriptlets
+
 * Thu Sep  8 2011 Tom Callaway <spot@fedoraproject.org> - 2.1.11-5
 - convert to systemd
 
