@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.1.11
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -290,6 +290,7 @@ exit 0
 
 
 %files
+%defattr(-,root,root)
 %doc %{docdir}/
 %config(noreplace) %{_sysconfdir}/pam.d/radiusd
 %config(noreplace) %{_sysconfdir}/logrotate.d/radiusd
@@ -299,6 +300,7 @@ exit 0
 %dir %attr(755,radiusd,radiusd) /var/lib/radiusd
 # configs
 %dir %attr(755,root,radiusd) /etc/raddb
+%defattr(-,root,radiusd)
 %attr(644,root,radiusd) %config(noreplace) /etc/raddb/dictionary
 %config(noreplace) /etc/raddb/acct_users
 %config(noreplace) /etc/raddb/attrs
@@ -383,6 +385,7 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/wimax
 %dir %attr(755,radiusd,radiusd) /var/run/radiusd/
 # binaries
+%defattr(-,root,root)
 /usr/sbin/checkrad
 /usr/sbin/raddebug
 /usr/sbin/radiusd
@@ -578,6 +581,9 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Wed Sep 21 2011 Tom Callaway <spot@fedoraproject.org> - 2.1.11-7
+- restore defattr customization in the main package
+
 * Fri Sep  9 2011 Tom Callaway <spot@fedoraproject.org> - 2.1.11-6
 - add missing systemd scriptlets
 
