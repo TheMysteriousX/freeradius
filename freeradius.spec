@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 2.1.11
-Release: 7%{?dist}
+Version: 2.1.12
+Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -216,7 +216,7 @@ rm -rf $RPM_BUILD_ROOT/%{_datadir}/dialup_admin/sql/oracle
 rm -rf $RPM_BUILD_ROOT/%{_datadir}/dialup_admin/lib/sql/oracle
 rm -rf $RPM_BUILD_ROOT/%{_datadir}/dialup_admin/lib/sql/drivers/oracle
 
-# remove header files, we don't ship a devel package and the 
+# remove header files, we don't ship a devel package and the
 # headers have multilib conflicts
 rm -rf $RPM_BUILD_ROOT/%{_includedir}
 
@@ -252,7 +252,7 @@ exit 0
 
 %post
 if [ $1 -eq 1 ]; then           # install
-  # Initial installation 
+  # Initial installation
   /bin/systemctl daemon-reload >/dev/null 2>&1 || :
   if [ ! -e /etc/raddb/certs/server.pem ]; then
     /sbin/runuser -g radiusd -c 'umask 007; /etc/raddb/certs/bootstrap' > /dev/null 2>&1
@@ -540,7 +540,14 @@ exit 0
 %doc %{_mandir}/man1/radtest.1.gz
 %doc %{_mandir}/man1/radwho.1.gz
 %doc %{_mandir}/man1/radzap.1.gz
+%doc %{_mandir}/man1/smbencrypt.1.gz
+%doc %{_mandir}/man5/checkrad.5.gz
+%doc %{_mandir}/man8/radconf2xml.8.gz
+%doc %{_mandir}/man8/radcrypt.8.gz
+%doc %{_mandir}/man8/radsniff.8.gz
 %doc %{_mandir}/man8/radsqlrelay.8.gz
+%doc %{_mandir}/man8/rlm_dbm_cat.8.gz
+%doc %{_mandir}/man8/rlm_dbm_parse.8.gz
 %doc %{_mandir}/man8/rlm_ippool_tool.8.gz
 
 %files krb5
@@ -581,6 +588,53 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Mon Oct  3 2011 John Dennis <jdennis@redhat.com> - 2.1.12-1
+- Upgrade to latest upstream release: 2.1.12
+- Upstream changelog for 2.1.12:
+  Feature improvements
+  * Updates to dictionary.erx, dictionary.siemens, dictionary.starent,
+    dictionary.starent.vsa1, dictionary.zyxel, added dictionary.symbol
+  * Added support for PCRE from Phil Mayers
+  * Configurable file permission in rlm_linelog
+  * Added "relaxed" option to rlm_attr_filter.  This copies attributes
+    if at least one match occurred.
+  * Added documentation on dynamic clients.
+    See raddb/modules/dynamic_clients.
+  * Added support for elliptical curve cryptography.
+    See ecdh_curve in raddb/eap.conf.
+  * Added support for 802.1X MIBs in checkrad
+  * Added support for %{rand:...}, which generates a uniformly
+    distributed number between 0 and the number you specify.
+  * Created "man" pages for all installed commands, and documented
+    options for all commands.  Patch from John Dennis.
+  * Allow radsniff to decode encrypted VSAs and CoA packets.
+    Patch from Bjorn Mork.
+  * Always send Message-Authenticator in radtest. Patch from John Dennis.
+    radclient continues to be more flexible.
+  * Updated Oracle schema and queries
+  * Added SecurID module.  See src/modules/rlm_securid/README
+
+  Bug fixes
+  * Fix memory leak in rlm_detail
+  * Fix "failed to insert event"
+  * Allow virtual servers to be reloaded on HUP.
+    It no longer complains about duplicate virtual servers.
+  * Fix %{string:...} expansion
+  * Fix "server closed socket" loop in radmin
+  * Set ownership of control socket when starting up
+  * Always allow root to connect to control socket, even if
+    "uid" is set.  They're root.  They can already do anything.
+  * Save all attributes in Access-Accept when proxying inner-tunnel
+    EAP-MSCHAPv2
+  * Fixes for DHCP relaying.
+  * Check certificate validity when using OCSP.
+  * Updated Oracle "configure" script
+  * Fixed typos in dictionary.alvarion
+  * WARNING on potential proxy loop.
+  * Be more aggressive about clearing old requests from the
+    internal queue
+  * Don't open network sockets when using -C
+
 * Wed Sep 21 2011 Tom Callaway <spot@fedoraproject.org> - 2.1.11-7
 - restore defattr customization in the main package
 
