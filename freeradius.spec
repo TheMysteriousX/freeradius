@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.1.12
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -10,6 +10,7 @@ Source0: ftp://ftp.freeradius.org/pub/radius/freeradius-server-%{version}.tar.bz
 Source100: freeradius-radiusd-init
 Source102: freeradius-logrotate
 Source103: freeradius-pam-conf
+Source104: %{name}-tmpfiles.conf
 
 Patch1: freeradius-cert-config.patch
 
@@ -182,7 +183,6 @@ make LINK_MODE=-pie
 
 %install
 rm -rf $RPM_BUILD_ROOT
-mkdir -p $RPM_BUILD_ROOT/var/run/radiusd
 mkdir -p $RPM_BUILD_ROOT/var/lib/radiusd
 # fix for bad libtool bug - can not rebuild dependent libs and bins
 #FIXME export LD_LIBRARY_PATH=$RPM_BUILD_ROOT/%{_libdir}
@@ -198,6 +198,11 @@ touch $RPM_BUILD_ROOT/var/log/radius/{radutmp,radius.log}
 install -D -m 755 %{SOURCE100} $RPM_BUILD_ROOT/%{initddir}/radiusd
 install -D -m 644 %{SOURCE102} $RPM_BUILD_ROOT/%{_sysconfdir}/logrotate.d/radiusd
 install -D -m 644 %{SOURCE103} $RPM_BUILD_ROOT/%{_sysconfdir}/pam.d/radiusd
+
+mkdir -p %{buildroot}%{_sysconfdir}/tmpfiles.d
+mkdir -p %{buildroot}%{_localstatedir}/run/
+install -d -m 0755 %{buildroot}%{_localstatedir}/run/radiusd/
+install -m 0644 %{SOURCE104} %{buildroot}%{_sysconfdir}/tmpfiles.d/radiusd.conf
 
 # remove unneeded stuff
 rm -rf doc/00-OLD
@@ -282,6 +287,7 @@ exit 0
 %config(noreplace) %{_sysconfdir}/logrotate.d/radiusd
 %{initddir}/radiusd
 %dir %attr(755,radiusd,radiusd) /var/lib/radiusd
+%config %{_sysconfdir}/tmpfiles.d/radiusd.conf
 # configs
 %dir %attr(755,root,radiusd) /etc/raddb
 %defattr(-,root,radiusd)
@@ -367,7 +373,7 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/sradutmp
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/unix
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/wimax
-%dir %attr(755,radiusd,radiusd) /var/run/radiusd/
+%dir %attr(755,radiusd,radiusd) %{_localstatedir}/run/radiusd
 # binaries
 %defattr(-,root,root)
 /usr/sbin/checkrad
@@ -580,6 +586,11 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Mon Oct 31 2011 John Dennis <jdennis@redhat.com> - 2.1.12-2
+- Resolves: #745334 - Fails to start due to missing /var/run/radiusd
+  F15 mounted /var/run as tmpfs which is wiped clean on a reboot
+  thus /var/run/radiusd which is created by the RPM install is absent.
+  Add /etc/tmpfiles.d/radiusd.conf to recreate directory on boot.
 * Mon Oct  3 2011 John Dennis <jdennis@redhat.com> - 2.1.12-1
 - Upgrade to latest upstream release: 2.1.12
 - Upstream changelog for 2.1.12:
