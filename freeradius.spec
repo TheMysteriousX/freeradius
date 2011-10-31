@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.1.12
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -183,8 +183,7 @@ perl -pi -e 's:sys_lib_search_path_spec=.*:sys_lib_search_path_spec="/lib64 /usr
 make LINK_MODE=-pie
 
 %install
-mkdir -p %{buildroot}%{_sysconfdir}/tmpfiles.d
-mkdir -p $RPM_BUILD_ROOT/var/lib/radiusd
+mkdir -p $RPM_BUILD_ROOT/%{_localstatedir}/lib/radiusd
 # fix for bad libtool bug - can not rebuild dependent libs and bins
 #FIXME export LD_LIBRARY_PATH=$RPM_BUILD_ROOT/%{_libdir}
 make install R=$RPM_BUILD_ROOT
@@ -203,7 +202,7 @@ install -D -m 644 %{SOURCE103} $RPM_BUILD_ROOT/%{_sysconfdir}/pam.d/radiusd
 mkdir -p %{buildroot}%{_sysconfdir}/tmpfiles.d
 mkdir -p %{buildroot}%{_localstatedir}/run/
 install -d -m 0710 %{buildroot}%{_localstatedir}/run/radiusd/
-install -m 0644 %{SOURCE104} %{buildroot}%{_sysconfdir}/tmpfiles.d/%{name}.conf
+install -m 0644 %{SOURCE104} %{buildroot}%{_sysconfdir}/tmpfiles.d/radiusd.conf
 
 # remove unneeded stuff
 rm -rf doc/00-OLD
@@ -295,9 +294,9 @@ exit 0
 %config(noreplace) %{_sysconfdir}/pam.d/radiusd
 %config(noreplace) %{_sysconfdir}/logrotate.d/radiusd
 %{_unitdir}/radiusd.service
-%dir %{_localstatedir}/run/radiusd/
-%config(noreplace) %{_sysconfdir}/tmpfiles.d/%{name}.conf
-%dir %attr(755,radiusd,radiusd) /var/lib/radiusd
+%config %{_sysconfdir}/tmpfiles.d/radiusd.conf
+%dir %attr(710,radiusd,radiusd) %{_localstatedir}/run/radiusd
+%dir %attr(755,radiusd,radiusd) %{_localstatedir}/lib/radiusd
 # configs
 %dir %attr(755,root,radiusd) /etc/raddb
 %defattr(-,root,radiusd)
@@ -383,7 +382,6 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/sradutmp
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/unix
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/wimax
-%dir %attr(755,radiusd,radiusd) /var/run/radiusd/
 # binaries
 %defattr(-,root,root)
 /usr/sbin/checkrad
@@ -588,6 +586,11 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Mon Oct 31 2011 John Dennis <jdennis@redhat.com> - 2.1.12-2
+- rename /etc/tmpfiles.d/freeradius.conf to /etc/tmpfiles.d/radiusd.conf
+  remove config(noreplace) because it must match files section and
+  permissions differ between versions.
+
 * Mon Oct  3 2011 John Dennis <jdennis@redhat.com> - 2.1.12-1
 - Upgrade to latest upstream release: 2.1.12
 - Upstream changelog for 2.1.12:
