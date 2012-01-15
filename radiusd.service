@@ -4,7 +4,7 @@ After=syslog.target network.target
 
 [Service]
 Type=forking
-PIDFile=/var/run/radiusd/radiusd
+PIDFile=/var/run/radiusd/radiusd.pid
 ExecStartPre=-/bin/chown -R radiusd.radiusd /var/run/radiusd
 ExecStartPre=/usr/sbin/radiusd -C
 ExecStart=/usr/sbin/radiusd -d /etc/raddb
