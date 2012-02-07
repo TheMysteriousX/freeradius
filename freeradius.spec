@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.1.12
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -13,6 +13,8 @@ Source103: freeradius-pam-conf
 Source104: %{name}-tmpfiles.conf
 
 Patch1: freeradius-cert-config.patch
+Patch2: freeradius-radtest.patch
+Patch3: freeradius-man.patch
 
 Obsoletes: freeradius-devel
 Obsoletes: freeradius-libs
@@ -144,6 +146,8 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 %prep
 %setup -q -n freeradius-server-%{version}
 %patch1 -p1 -b .cert-config
+%patch2 -p1 -b .radtest
+%patch3 -p1 -b .man
 # Some source files mistakenly have execute permissions set
 find $RPM_BUILD_DIR/freeradius-server-%{version} \( -name '*.c' -o -name '*.h' \) -a -perm /0111 -exec chmod a-x {} +
 
@@ -545,7 +549,7 @@ exit 0
 %doc %{_mandir}/man8/radsniff.8.gz
 %doc %{_mandir}/man8/radsqlrelay.8.gz
 %doc %{_mandir}/man8/rlm_dbm_cat.8.gz
-%doc %{_mandir}/man8/rlm_dbm_parse.8.gz
+%doc %{_mandir}/man8/rlm_dbm_parser.8.gz
 %doc %{_mandir}/man8/rlm_ippool_tool.8.gz
 
 %files krb5
@@ -586,6 +590,10 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Tue Feb  7 2012 John Dennis <jdennis@redhat.com> - 2.1.12-4
+- resolves: bug#781877 (from RHEL5) rlm_dbm_parse man page misspelled
+- resolves: bug#760193 (from RHEL5) radtest PPPhint option is not parsed properly
+
 * Sun Jan 15 2012 John Dennis <jdennis@redhat.com> - 2.1.12-3
 - resolves: bug#781744
   systemd service file incorrectly listed pid file as
