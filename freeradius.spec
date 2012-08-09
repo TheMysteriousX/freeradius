@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.1.12
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -590,6 +590,9 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Thu Aug  9 2012 John Dennis <jdennis@redhat.com> - 2.1.12-6
+- rebuilding, hopefully will resolve bug#827858
+
 * Tue Feb  7 2012 John Dennis <jdennis@redhat.com> - 2.1.12-5
 - resolves: bug#781877 (from RHEL5) rlm_dbm_parse man page misspelled
 - resolves: bug#760193 (from RHEL5) radtest PPPhint option is not parsed properly
