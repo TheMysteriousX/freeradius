@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 2.1.12
-Release: 6%{?dist}
+Version: 2.2.0
+Release: 0%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -14,7 +14,8 @@ Source104: %{name}-tmpfiles.conf
 
 Patch1: freeradius-cert-config.patch
 Patch2: freeradius-radtest.patch
-Patch3: freeradius-man.patch
+Patch3: freeradius-radeapclient-ipv6.patch
+Patch4: freeradius-exclude-config-file.patch
 
 Obsoletes: freeradius-devel
 Obsoletes: freeradius-libs
@@ -147,7 +148,9 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 %setup -q -n freeradius-server-%{version}
 %patch1 -p1 -b .cert-config
 %patch2 -p1 -b .radtest
-%patch3 -p1 -b .man
+%patch3 -p1 -b radeapclient-ipv6
+%patch4 -p1 -b exclude-config-file
+
 # Some source files mistakenly have execute permissions set
 find $RPM_BUILD_DIR/freeradius-server-%{version} \( -name '*.c' -o -name '*.h' \) -a -perm /0111 -exec chmod a-x {} +
 
@@ -161,7 +164,9 @@ export CFLAGS="$RPM_OPT_FLAGS -fpic"
 %configure \
         --libdir=%{_libdir}/freeradius \
         --with-system-libtool \
+        --with-system-libltdl \
         --disable-ltdl-install \
+        --with-udpfromto \
         --with-gnu-ld \
         --with-threads \
         --with-thread-pool \
@@ -342,6 +347,7 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/always
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/attr_filter
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/attr_rewrite
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/cache
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/chap
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/checkval
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/counter
@@ -349,6 +355,7 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/detail
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/detail.example.com
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/detail.log
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/dhcp_sqlippool
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/digest
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/dynamic_clients
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/echo
@@ -373,6 +380,7 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/passwd
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/policy
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/preprocess
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/radrelay
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/radutmp
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/realm
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/modules/redis
@@ -448,6 +456,8 @@ exit 0
 %{_libdir}/freeradius/rlm_attr_filter-%{version}.so
 %{_libdir}/freeradius/rlm_attr_rewrite.so
 %{_libdir}/freeradius/rlm_attr_rewrite-%{version}.so
+%{_libdir}/freeradius/rlm_cache.so
+%{_libdir}/freeradius/rlm_cache-%{version}.so
 %{_libdir}/freeradius/rlm_chap.so
 %{_libdir}/freeradius/rlm_chap-%{version}.so
 %{_libdir}/freeradius/rlm_checkval.so
@@ -590,6 +600,99 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Wed Oct  3 2012 John Dennis <jdennis@redhat.com> - 2.2.0-0
+- fix CVE-2012-3547 freeradius: Stack-based buffer overflow by processing
+- Add new patch to avoid reading .rpmnew, .rpmsave and other invalid
+  files when loading config files
+- Upgrade to new 2.2.0 upstream release
+- Upstream changelog for 2.1.12:
+  Feature improvements
+  * 100% configuration file compatible with 2.1.x.
+    The only fix needed is to disallow "hashsize=0" for rlm_passwd
+  * Update Aruba, Alcatel Lucent, APC, BT, PaloAlto, Pureware,
+    Redback, and Mikrotik dictionaries
+  * Switch to using SHA1 for certificate digests instead of MD5.
+    See raddb/certs/*.cnf
+  * Added copyright statements to the dictionaries, so that we know
+    when people are using them.
+  * Better documentation for radrelay and detail file writer.
+    See raddb/modules/radrelay and raddb/radrelay.conf
+  * Added TLS-Cert-Subject-Alt-Name-Email from patch by Luke Howard
+  * Added -F <file> to radwho
+  * Added query timeouts to MySQL driver.  Patch from Brian De Wolf.
+  * Add /etc/default/freeradius to debian package.
+    Patch from Matthew Newton
+  * Finalize DHCP and DHCP relay code.  It should now work everywhere.
+    See raddb/sites-available/dhcp, src_ipaddr and src_interface.
+  * DHCP capabilitiies are now compiled in by default.
+    It runs as a DHCP server ONLY when manually enabled.
+  * Added one letter expansions: %G - request minute and %I request
+    ID.
+  * Added script to convert ISC DHCP lease files to SQL pools.
+    See scripts/isc2ippool.pl
+  * Added rlm_cache to cache arbitrary attributes.
+  * Added max_use to rlm_ldap to force connection to be re-established
+    after a given number of queries.
+  * Added configtest option to Debian init scripts, and automatic
+    config test on restart.
+  * Added cache config item to rlm_krb5. When set to "no" ticket
+    caching is disabled which may increase performance.
+
+  Bug fixes
+  * Fix CVE-2012-3547.  All users of 2.1.10, 2.1.11, 2.1.12,
+    and 802.1X should upgrade immediately.
+  * Fix typo in detail file writer, to skip writing if the packet
+    was read from this detail file.
+  * Free cached replies when closing resumed SSL sessions.
+  * Fix a number of issues found by Coverity.
+  * Fix memory leak and race condition in the EAP-TLS session cache.
+    Thanks to Phil Mayers for tracking down OpenSSL APIs.
+  * Restrict ATTRIBUTE names to character sets that make sense.
+  * Fix EAP-TLS session Id length so that OpenSSL doesn't get
+    excited.
+  * Fix SQL IPPool logic for non-timer attributes.  Closes bug #181
+  * Change some informational messages to DEBUG rather than error.
+  * Portability fixes for FreeBSD.  Closes bug #177
+  * A much better fix for the _lt__PROGRAM__LTX_preloaded_symbols
+    nonsense.
+  * Safely handle extremely long lines in conf file variable expansion
+  * Fix for Debian bug #606450
+  * Mutex lock around rlm_perl Clone routines. Patch from Eike Dehling
+  * The passwd module no longer permits "hashsize = 0".  Setting that
+    is pointless for a host of reasons.  It will also break the server.
+  * Fix proxied inner-tunnel packets sometimes having zero authentication
+    vector.  Found by Brian Julin.
+  * Added $(EXEEXT) to Makefiles for portability.  Closes bug #188.
+  * Fix minor build issue which would cause rlm_eap to be built twice.
+  * When using "status_check=request" for a home server, the username
+    and password must be specified, or the server will not start.
+  * EAP-SIM now calculates keys from the SIM identity, not from the
+    EAP-Identity.  Changing the EAP type via NAK may result in
+    identities changing.  Bug reported by Microsoft EAP team.
+  * Use home server src_ipaddr when sending Status-Server packets
+  * Decrypt encrypted ERX attributes in CoA packets.
+  * Fix registration of internal xlat's so %{mschap:...} doesn't
+    disappear after a HUP.
+  * Can now reference tagged attributes in expansions.
+    e.g. %{Tunnel-Type:1} and %{Tunnel-Type:1[0]} now work.
+  * Correct calculation of Message-Authenticator for CoA and Disconnect
+    replies.  Patch from Jouni Malinen
+  * Install rad_counter, for managing rlm_counter files.
+  * Add unique index constraint to all SQL flavours so that alternate
+    queries work correctly.
+  * The TTLS diameter decoder is now more lenient.  It ignores
+    unknown attributes, instead of rejecting the TTLS session.
+  * Use "globfree" in detail file reader.  Prevents very slow leak.
+    Closes bug #207.
+  * Operator =~ shouldn't copy the attribute, like :=.  It should
+    instead behave more like ==.
+  * Build main Debian package without SQL dependencies
+  * Use max_queue_size in threading code
+  * Update permissions in raddb/sql/postgresql/admin.sql
+  * Added OpenSSL_add_all_algorithms() to fix issues where OpenSSL
+    wouldn't use methods it knew about.
+  * Add more sanity checks in dynamic_clients code so the server won't
+    crash if it attempts to load a badly formated client definition.
 * Thu Aug  9 2012 John Dennis <jdennis@redhat.com> - 2.1.12-6
 - rebuilding, hopefully will resolve bug#827858
 
