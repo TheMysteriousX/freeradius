@@ -1,6 +1,6 @@
-diff -u -r freeradius-server-2.2.0.orig/src/include/libradius.h freeradius-server-2.2.0.configfile/src/include/libradius.h
+diff -r -u freeradius-server-2.2.0.orig/src/include/libradius.h freeradius-server-2.2.0.configfile/src/include/libradius.h
 --- freeradius-server-2.2.0.orig/src/include/libradius.h	2012-09-10 07:51:34.000000000 -0400
-+++ freeradius-server-2.2.0.configfile/src/include/libradius.h	2012-10-03 15:45:13.002106110 -0400
++++ freeradius-server-2.2.0.configfile/src/include/libradius.h	2012-10-10 08:17:35.675130685 -0400
 @@ -416,6 +416,17 @@
  int fr_sockaddr2ipaddr(const struct sockaddr_storage *sa, socklen_t salen,
  		       fr_ipaddr_t *ipaddr, int * port);
@@ -19,9 +19,9 @@ diff -u -r freeradius-server-2.2.0.orig/src/include/libradius.h freeradius-serve
  
  #ifdef ASCEND_BINARY
  /* filters.c */
-diff -u -r freeradius-server-2.2.0.orig/src/lib/misc.c freeradius-server-2.2.0.configfile/src/lib/misc.c
+diff -r -u freeradius-server-2.2.0.orig/src/lib/misc.c freeradius-server-2.2.0.configfile/src/lib/misc.c
 --- freeradius-server-2.2.0.orig/src/lib/misc.c	2012-09-10 07:51:34.000000000 -0400
-+++ freeradius-server-2.2.0.configfile/src/lib/misc.c	2012-10-03 15:50:27.717357782 -0400
++++ freeradius-server-2.2.0.configfile/src/lib/misc.c	2012-10-10 08:32:15.770958389 -0400
 @@ -28,6 +28,7 @@
  #include	<ctype.h>
  #include	<sys/file.h>
@@ -30,7 +30,7 @@ diff -u -r freeradius-server-2.2.0.orig/src/lib/misc.c freeradius-server-2.2.0.c
  
  int		fr_dns_lookups = 0;
  int		fr_debug_flag = 0;
-@@ -650,3 +651,162 @@
+@@ -650,3 +651,169 @@
  
  	return 1;
  }
@@ -131,7 +131,12 @@ diff -u -r freeradius-server-2.2.0.orig/src/lib/misc.c freeradius-server-2.2.0.c
 + * Any basename ending with a tilde (~)
 + * Any basename ending with the substring ".rpmsave"
 + * Any basename ending with the substring ".rpmnew"
++ * Any basename ending with the substring ".dpkg-new"
++ * Any basename ending with the substring ".dpkg-dist"
++ * Any basename ending with the substring ".dpkg-old"
 + * Any basename ending with the substring ".bak"
++
++
 + */
 +
 +#ifdef HAVE_REGEX_H
@@ -145,8 +150,7 @@ diff -u -r freeradius-server-2.2.0.orig/src/lib/misc.c freeradius-server-2.2.0.c
 +int
 +fr_exclude_config_file(const char *basename)
 +{
-+    char *pattern = "^\\.|^#|~$|\\.rpmsave$|\\.rpmnew$|\\.bak$";
-+    //char *pattern = "*";
++    char *pattern = "^\\.|^#|~$|\\.rpmsave$|\\.rpmnew$|\\.dpkg-new$|\\.dpkg-dist$|\\.dpkg-old$|\\.bak$";
 +    int status;
 +    static regex_t re;
 +    static int compiled = 0;
@@ -187,15 +191,18 @@ diff -u -r freeradius-server-2.2.0.orig/src/lib/misc.c freeradius-server-2.2.0.c
 +    if (str_ends_with(basename, "~")) return 1;
 +    if (str_ends_with(basename, ".rpmsave")) return 1;
 +    if (str_ends_with(basename, ".rpmnew")) return 1;
++    if (str_ends_with(basename, ".dpkg-new")) return 1;
++    if (str_ends_with(basename, ".dpkg-dist")) return 1;
++    if (str_ends_with(basename, ".dpkg-old")) return 1;
 +    if (str_ends_with(basename, ".bak")) return 1;
 +
 +    return 0;
 +}
 +
 +#endif
-diff -u -r freeradius-server-2.2.0.orig/src/main/client.c freeradius-server-2.2.0.configfile/src/main/client.c
+diff -r -u freeradius-server-2.2.0.orig/src/main/client.c freeradius-server-2.2.0.configfile/src/main/client.c
 --- freeradius-server-2.2.0.orig/src/main/client.c	2012-09-10 07:51:34.000000000 -0400
-+++ freeradius-server-2.2.0.configfile/src/main/client.c	2012-10-03 15:52:35.351241760 -0400
++++ freeradius-server-2.2.0.configfile/src/main/client.c	2012-10-10 08:17:35.676130675 -0400
 @@ -845,13 +845,24 @@
  			}
  			
@@ -237,9 +244,9 @@ diff -u -r freeradius-server-2.2.0.orig/src/main/client.c freeradius-server-2.2.
  
  				snprintf(buf2, sizeof(buf2), "%s/%s",
  					 value, dp->d_name);
-diff -u -r freeradius-server-2.2.0.orig/src/main/conffile.c freeradius-server-2.2.0.configfile/src/main/conffile.c
+diff -r -u freeradius-server-2.2.0.orig/src/main/conffile.c freeradius-server-2.2.0.configfile/src/main/conffile.c
 --- freeradius-server-2.2.0.orig/src/main/conffile.c	2012-09-10 07:51:34.000000000 -0400
-+++ freeradius-server-2.2.0.configfile/src/main/conffile.c	2012-10-03 15:54:17.465348844 -0400
++++ freeradius-server-2.2.0.configfile/src/main/conffile.c	2012-10-10 08:17:35.677130665 -0400
 @@ -1512,12 +1512,23 @@
  				}
  
@@ -279,9 +286,9 @@ diff -u -r freeradius-server-2.2.0.orig/src/main/conffile.c freeradius-server-2.
  
  					snprintf(buf2, sizeof(buf2), "%s%s",
  						 value, dp->d_name);
-diff -u -r freeradius-server-2.2.0.orig/src/modules/rlm_policy/parse.c freeradius-server-2.2.0.configfile/src/modules/rlm_policy/parse.c
+diff -r -u freeradius-server-2.2.0.orig/src/modules/rlm_policy/parse.c freeradius-server-2.2.0.configfile/src/modules/rlm_policy/parse.c
 --- freeradius-server-2.2.0.orig/src/modules/rlm_policy/parse.c	2012-09-10 07:51:34.000000000 -0400
-+++ freeradius-server-2.2.0.configfile/src/modules/rlm_policy/parse.c	2012-10-03 15:55:29.736715648 -0400
++++ freeradius-server-2.2.0.configfile/src/modules/rlm_policy/parse.c	2012-10-10 08:17:35.678130655 -0400
 @@ -1584,13 +1584,22 @@
  			}
  
