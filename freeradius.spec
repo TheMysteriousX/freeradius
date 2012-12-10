@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.2.0
-Release: 0%{?dist}
+Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -16,6 +16,7 @@ Patch1: freeradius-cert-config.patch
 Patch2: freeradius-radtest.patch
 Patch3: freeradius-radeapclient-ipv6.patch
 Patch4: freeradius-exclude-config-file.patch
+Patch5: freeradius-dhcp_sqlippool.patch
 
 Obsoletes: freeradius-devel
 Obsoletes: freeradius-libs
@@ -151,6 +152,8 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 %patch2 -p1 -b .radtest
 %patch3 -p1 -b radeapclient-ipv6
 %patch4 -p1 -b exclude-config-file
+# do not make backup file for module configs, the backup will be installed
+%patch5 -p1
 
 # Some source files mistakenly have execute permissions set
 find $RPM_BUILD_DIR/freeradius-server-%{version} \( -name '*.c' -o -name '*.h' \) -a -perm /0111 -exec chmod a-x {} +
@@ -601,6 +604,10 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Mon Dec 10 2012 John Dennis <jdennis@redhat.com> - 2.2.0-1
+- resolves: bug#876564 - fails to start without freeradius-mysql
+- use upstream version of freeradius-exclude-config-file.patch
+
 * Wed Oct  3 2012 John Dennis <jdennis@redhat.com> - 2.2.0-0
 - fix CVE-2012-3547 freeradius: Stack-based buffer overflow by processing
 - Add new patch to avoid reading .rpmnew, .rpmsave and other invalid

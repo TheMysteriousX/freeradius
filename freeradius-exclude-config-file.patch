@@ -1,317 +1,103 @@
-diff -r -u freeradius-server-2.2.0.orig/src/include/libradius.h freeradius-server-2.2.0.configfile/src/include/libradius.h
---- freeradius-server-2.2.0.orig/src/include/libradius.h	2012-09-10 07:51:34.000000000 -0400
-+++ freeradius-server-2.2.0.configfile/src/include/libradius.h	2012-10-10 08:17:35.675130685 -0400
-@@ -416,6 +416,17 @@
- int fr_sockaddr2ipaddr(const struct sockaddr_storage *sa, socklen_t salen,
- 		       fr_ipaddr_t *ipaddr, int * port);
+a53a18e Be more careful about which config files we load
+
+diff --git a/src/include/conffile.h b/src/include/conffile.h
+index bc7f90a..21fc2cd 100644
+--- a/src/include/conffile.h
++++ b/src/include/conffile.h
+@@ -58,6 +58,7 @@ int		cf_section_parse(CONF_SECTION *, void *base,
+ 				 const CONF_PARSER *variables);
+ void		cf_section_parse_free(CONF_SECTION *cs, void *base);
+ const CONF_PARSER *cf_section_parse_table(CONF_SECTION *cs);
++int cf_exclude_file(const char *filename);
+ CONF_SECTION	*cf_file_read(const char *file);
+ int		cf_file_include(const char *file, CONF_SECTION *cs);
  
-+int
-+str_starts_with(const char *subject, const char *pattern);
-+int
-+strn_starts_with(const char *subject, const char *pattern, size_t sbj_len, size_t pat_len);
-+int
-+str_ends_with(const char *subject, const char *pattern);
-+int
-+strn_ends_with(const char *subject, const char *pattern, size_t sbj_len, size_t pat_len);
-+int
-+fr_exclude_config_file(const char *basename);
-+
- 
- #ifdef ASCEND_BINARY
- /* filters.c */
-diff -r -u freeradius-server-2.2.0.orig/src/lib/misc.c freeradius-server-2.2.0.configfile/src/lib/misc.c
---- freeradius-server-2.2.0.orig/src/lib/misc.c	2012-09-10 07:51:34.000000000 -0400
-+++ freeradius-server-2.2.0.configfile/src/lib/misc.c	2012-10-10 08:32:15.770958389 -0400
-@@ -28,6 +28,7 @@
- #include	<ctype.h>
- #include	<sys/file.h>
- #include	<fcntl.h>
-+#include	<string.h>
- 
- int		fr_dns_lookups = 0;
- int		fr_debug_flag = 0;
-@@ -650,3 +651,169 @@
- 
- 	return 1;
+diff --git a/src/main/conffile.c b/src/main/conffile.c
+index ff76e2c..38b6aec 100644
+--- a/src/main/conffile.c
++++ b/src/main/conffile.c
+@@ -1276,6 +1276,41 @@ static int condition_looks_ok(const char **ptr)
+ 	return 0;
  }
-+
-+
-+/*
-+ * Return true if subject starts with pattern, false otherwise.
-+ * subject and pattern are NULL terminated strings.
-+ */
-+int
-+str_starts_with(const char *subject, const char *pattern)
-+{
-+    size_t sbj_len;
-+    size_t pat_len;
-+
-+    pat_len = strlen(pattern);
-+    sbj_len = strlen(subject);
-+
-+    return strn_starts_with(subject, pattern, sbj_len, pat_len);
-+}
-+
-+/*
-+ * Return true if subject starts with pattern, false otherwise.
-+ * subject and pattern are terminated by their respective length parameters.
-+ */
-+int
-+strn_starts_with(const char *subject, const char *pattern, size_t sbj_len, size_t pat_len)
-+{
-+    const char *s = NULL;
-+    const char *p = NULL;
-+    const char *pat_end = NULL;
-+
-+    if (subject == NULL || pattern == NULL) return 0;
-+
-+    if (pat_len > sbj_len) return 0;
-+
-+    pat_end = pattern + pat_len;
-+
-+    for (p = pattern, s = subject; p < pat_end; p++, s++) {
-+        if (*p != *s) return 0;
-+    }
-+    return 1;
-+
-+}
-+
-+/*
-+ * Return true if subject starts with pattern, false otherwise.
-+ * subject and pattern are NULL terminated strings.
-+ */
-+int
-+str_ends_with(const char *subject, const char *pattern)
-+{
-+    size_t sbj_len;
-+    size_t pat_len;
-+
-+    pat_len = strlen(pattern);
-+    sbj_len = strlen(subject);
-+
-+    return strn_ends_with(subject, pattern, sbj_len, pat_len);
-+}
-+
-+/*
-+ * Return true if subject ends with pattern, false otherwise.
-+ * subject and pattern are terminated by their respective length parameters.
-+ */
-+int
-+strn_ends_with(const char *subject, const char *pattern, size_t sbj_len, size_t pat_len)
-+{
-+    const char *s = NULL;
-+    const char *sbj_end = NULL;
-+    const char *p = NULL;
-+    const char *pat_end = NULL;
-+
-+    if (subject == NULL || pattern == NULL) return 0;
-+
-+    if (pat_len > sbj_len) return 0;
-+
-+    pat_end = pattern + pat_len - 1;
-+    sbj_end = subject + sbj_len - 1;
-+
-+    for (p = pat_end, s = sbj_end; p >= pattern; p--, s--) {
-+        if (*p != *s) return 0;
-+    }
-+    return 1;
-+
-+}
-+
-+/*
-+ * Tests to see if the basename of a file found in a config directory
-+ * should be excluded from being read because it is not a valid config
-+ * file. The function returns true if the file basename should be
-+ * excluded.
-+ *
-+ * The following basename's are excluded:
-+ *
-+ * Any basename beginning with a dot (.)
-+ * Any basename beginning with a hash (i.e. pound sign, octothorp) (#)
-+ * Any basename ending with a tilde (~)
-+ * Any basename ending with the substring ".rpmsave"
-+ * Any basename ending with the substring ".rpmnew"
-+ * Any basename ending with the substring ".dpkg-new"
-+ * Any basename ending with the substring ".dpkg-dist"
-+ * Any basename ending with the substring ".dpkg-old"
-+ * Any basename ending with the substring ".bak"
-+
-+
-+ */
-+
-+#ifdef HAVE_REGEX_H
-+#include <regex.h>
-+
-+/*
-+ * Performs test with a regular expression.  The regexp is compiled on
-+ * first use and then saved in a static variable for future use.
-+ */
-+
-+int
-+fr_exclude_config_file(const char *basename)
-+{
-+    char *pattern = "^\\.|^#|~$|\\.rpmsave$|\\.rpmnew$|\\.dpkg-new$|\\.dpkg-dist$|\\.dpkg-old$|\\.bak$";
-+    int status;
-+    static regex_t re;
-+    static int compiled = 0;
-+
-+    if (!compiled) {
-+        if ((status = regcomp(&re, pattern, REG_NOSUB | REG_EXTENDED)) != 0) {
-+            char error_buf[256];
-+
-+            regerror(status, &re, error_buf, sizeof(error_buf));
-+            fprintf(stderr, "fr_exclude_config_file: failed to compile regular expression \"%s\": %s",
-+                    pattern, error_buf);
-+
-+            return(0);      /* Since we can't perform test, accept all files */
-+        }
-+        compiled = 1;
-+    }
-+    status = regexec(&re, basename, (size_t) 0, NULL, 0);
-+
-+    if (status == 0) {
-+        return 1;
-+    } else {
-+        return 0;
-+    }
-+}
-+
-+#else
-+
-+/*
-+ * Performs the test with starts_with and ends_with string utilities.
-+ */
-+
-+int
-+fr_exclude_config_file(const char *basename)
-+{
-+    if (str_starts_with(basename, ".")) return 1;
-+    if (str_starts_with(basename, "#")) return 1;
-+
-+    if (str_ends_with(basename, "~")) return 1;
-+    if (str_ends_with(basename, ".rpmsave")) return 1;
-+    if (str_ends_with(basename, ".rpmnew")) return 1;
-+    if (str_ends_with(basename, ".dpkg-new")) return 1;
-+    if (str_ends_with(basename, ".dpkg-dist")) return 1;
-+    if (str_ends_with(basename, ".dpkg-old")) return 1;
-+    if (str_ends_with(basename, ".bak")) return 1;
-+
-+    return 0;
-+}
-+
-+#endif
-diff -r -u freeradius-server-2.2.0.orig/src/main/client.c freeradius-server-2.2.0.configfile/src/main/client.c
---- freeradius-server-2.2.0.orig/src/main/client.c	2012-09-10 07:51:34.000000000 -0400
-+++ freeradius-server-2.2.0.configfile/src/main/client.c	2012-10-10 08:17:35.676130675 -0400
-@@ -845,13 +845,24 @@
- 			}
- 			
- 			/*
--			 *	Read the directory, ignoring "." files.
-+			 *	Read the directory, ignoring invalid files.
- 			 */
- 			while ((dp = readdir(dir)) != NULL) {
- 				const char *p;
- 				RADCLIENT *dc;
  
--				if (dp->d_name[0] == '.') continue;
-+				/*
-+				 *	Check for invalid file names
-+				 */
-+				if (fr_exclude_config_file(dp->d_name)) {
-+					if (!(strcmp(dp->d_name, ".")  == 0 ||
-+					      strcmp(dp->d_name, "..") == 0)) {
-+						cf_log_info(cs,
-+						"skipping client file, invalid name \"%s/%s\"",
-+						value, dp->d_name);
-+					}
-+					continue;
-+				}
++int cf_exclude_file(const char *filename)
++{
++	int i;
++	size_t len;
++	const char *p = filename;
++
++	/*
++	 *	FIXME: Maybe later make this a globally set configuration
++	 *	variable.  But that's low priority.
++	 */
++	static const char *excluded[] = {
++		"rpmsave", "rpmnew", "dpkg-new", "dpkg-dist", "dpkg-old",
++		"bak", NULL
++	};
++
++	if (!p || !*p) return TRUE; /* coding error */
++
++	if (*p == '.') return TRUE; /* ".", "..", ".foo", ... */
++
++	if (*p == '#') return TRUE; /* #foo# */
++
++	len = strlen(p);
++	if (p[len - 1] == '~') return TRUE; /* foo~ */
++
++	p = strrchr(p, '.');
++	if (!p) return FALSE;	/* just "foo", it's OK */
++
++	p++;
++	for (i = 0; excluded[i] != NULL; i++) {
++		if (strcmp(p, excluded[i]) == 0) return TRUE;
++	}
++
++	return FALSE;
++}
++
  
- 				/*
- 				 *	Check for valid characters
-@@ -863,7 +874,12 @@
- 					    (*p == '.')) continue;
- 						break;
- 				}
--				if (*p != '\0') continue;
-+				if (*p != '\0') {
-+					cf_log_info(cs,
-+					"skipping client file, invalid characters in name \"%s/%s\"",
-+					value, dp->d_name);
-+					continue;
-+                                }
- 
- 				snprintf(buf2, sizeof(buf2), "%s/%s",
- 					 value, dp->d_name);
-diff -r -u freeradius-server-2.2.0.orig/src/main/conffile.c freeradius-server-2.2.0.configfile/src/main/conffile.c
---- freeradius-server-2.2.0.orig/src/main/conffile.c	2012-09-10 07:51:34.000000000 -0400
-+++ freeradius-server-2.2.0.configfile/src/main/conffile.c	2012-10-10 08:17:35.677130665 -0400
-@@ -1512,12 +1512,23 @@
+ static const char *cf_local_file(CONF_SECTION *cs, const char *local,
+ 				 char *buffer, size_t bufsize)
+@@ -1512,25 +1547,11 @@ static int cf_section_read(const char *filename, int *lineno, FILE *fp,
  				}
  
  				/*
 -				 *	Read the directory, ignoring "." files.
-+				 *	Read the directory, ignoring invalid files.
++				 *	Read the directory, ignoring some files.
  				 */
  				while ((dp = readdir(dir)) != NULL) {
- 					const char *p;
- 
+-					const char *p;
+-
 -					if (dp->d_name[0] == '.') continue;
-+					/*
-+					 *	Check for invalid file names
-+					 */
-+					if (fr_exclude_config_file(dp->d_name)) {
-+						if (!(strcmp(dp->d_name, ".")  == 0 ||
-+						      strcmp(dp->d_name, "..") == 0)) {
-+							radlog(L_INFO, "skipping config file, invalid name \"%s%s\"",
-+							value, dp->d_name);
-+						}
-+						continue;
-+					}
-+
- 
- 					/*
- 					 *	Check for valid characters
-@@ -1530,7 +1541,11 @@
- 						    (*p == '.')) continue;
- 						break;
- 					}
+-
+-					/*
+-					 *	Check for valid characters
+-					 */
+-					for (p = dp->d_name; *p != '\0'; p++) {
+-						if (isalpha((int)*p) ||
+-						    isdigit((int)*p) ||
+-						    (*p == '-') ||
+-						    (*p == '_') ||
+-						    (*p == '.')) continue;
+-						break;
+-					}
 -					if (*p != '\0') continue;
-+					if (*p != '\0') {
-+                                            radlog(L_INFO, "skipping config file, invalid characters in name \"%s%s\"",
-+                                                   value, dp->d_name);
-+                                            continue;
-+                                        }
++					if (cf_exclude_file(dp->d_name))
++						continue;
  
  					snprintf(buf2, sizeof(buf2), "%s%s",
  						 value, dp->d_name);
-diff -r -u freeradius-server-2.2.0.orig/src/modules/rlm_policy/parse.c freeradius-server-2.2.0.configfile/src/modules/rlm_policy/parse.c
---- freeradius-server-2.2.0.orig/src/modules/rlm_policy/parse.c	2012-09-10 07:51:34.000000000 -0400
-+++ freeradius-server-2.2.0.configfile/src/modules/rlm_policy/parse.c	2012-10-10 08:17:35.678130655 -0400
-@@ -1584,13 +1584,22 @@
- 			}
- 
- 			/*
--			 *	Read the directory, ignoring "." files.
-+			 *	Read the directory, ignoring invalid files.
- 			 */
+diff --git a/src/modules/rlm_policy/parse.c b/src/modules/rlm_policy/parse.c
+index 71a7eb6..4b3fc7c 100644
+--- a/src/modules/rlm_policy/parse.c
++++ b/src/modules/rlm_policy/parse.c
+@@ -1589,8 +1589,7 @@ static int parse_include(policy_lex_file_t *lexer)
  			while ((dp = readdir(dir)) != NULL) {
  				struct stat buf;
  
 -				if (dp->d_name[0] == '.') continue;
 -				if (strchr(dp->d_name, '~') != NULL) continue;
-+				/*
-+				 *	Check for invalid file names
-+				 */
-+				if (fr_exclude_config_file(dp->d_name)) {
-+					if (!(strcmp(dp->d_name, ".")  == 0 ||
-+					      strcmp(dp->d_name, "..") == 0)) {
-+	                                    fprintf(stderr, "skipping policy file, invalid name \"%s%s\"",
-+						buffer, dp->d_name);
-+					}
-+					continue;
-+				}
++				if (cf_exclude_file(dp->d_name)) continue;
  
  				strlcpy(p, dp->d_name,
  					sizeof(buffer) - (p - buffer));
