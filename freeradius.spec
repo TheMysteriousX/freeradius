@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.2.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -159,10 +159,14 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 find $RPM_BUILD_DIR/freeradius-server-%{version} \( -name '*.c' -o -name '*.h' \) -a -perm /0111 -exec chmod a-x {} +
 
 %build
+# Because this is a network facing authentication daemon add build options to improve security
+# pic, pie, -znow produce fully relocatable code loaded at random addresses, address tables are read-only
 %ifarch s390 s390x
-export CFLAGS="$RPM_OPT_FLAGS -fPIC"
+export CFLAGS="$RPM_OPT_FLAGS -fPIC -fPIE -DPIE"
+export LDFLAGS="-pie -Wl,-znow"
 %else
-export CFLAGS="$RPM_OPT_FLAGS -fpic"
+export CFLAGS="$RPM_OPT_FLAGS -fpic -fPIE -DPIE"
+export LDFLAGS="-pie -Wl,-znow"
 %endif
 
 %configure \
@@ -193,7 +197,7 @@ export CFLAGS="$RPM_OPT_FLAGS -fpic"
 perl -pi -e 's:sys_lib_search_path_spec=.*:sys_lib_search_path_spec="/lib64 /usr/lib64 /usr/local/lib64":' libtool
 %endif
 
-make LINK_MODE=-pie
+make
 
 %install
 mkdir -p $RPM_BUILD_ROOT/%{_localstatedir}/lib/radiusd
@@ -604,6 +608,9 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Wed Dec 12 2012 John Dennis <jdennis@redhat.com> - 2.2.0-2
+- add security options to compiler/linker
+
 * Mon Dec 10 2012 John Dennis <jdennis@redhat.com> - 2.2.0-1
 - resolves: bug#876564 - fails to start without freeradius-mysql
 - use upstream version of freeradius-exclude-config-file.patch
