@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.2.0
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -159,13 +159,19 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 find $RPM_BUILD_DIR/freeradius-server-%{version} \( -name '*.c' -o -name '*.h' \) -a -perm /0111 -exec chmod a-x {} +
 
 %build
-# Because this is a network facing authentication daemon add build options to improve security
-# pic, pie, -znow produce fully relocatable code loaded at random addresses, address tables are read-only
+# Add compile/link options
+#   -fpic, -fPIE, -DPIE -pie, -Wl,-znow
+#     Extra security for network facing daemon; fully relocatable code
+#     loaded at random addresses, address tables are read-only
+#   -fno-strict-aliasing
+#     Source code does not observe strict aliasing, disable certain
+#     optimizations which may yield unanticipated results, fixes this error:
+#     "dereferencing type-punned pointer will break strict-aliasing rules"
 %ifarch s390 s390x
-export CFLAGS="$RPM_OPT_FLAGS -fPIC -fPIE -DPIE"
+export CFLAGS="$RPM_OPT_FLAGS -fno-strict-aliasing -fPIC -fPIE -DPIE"
 export LDFLAGS="-pie -Wl,-znow"
 %else
-export CFLAGS="$RPM_OPT_FLAGS -fpic -fPIE -DPIE"
+export CFLAGS="$RPM_OPT_FLAGS -fno-strict-aliasing -fpic -fPIE -DPIE"
 export LDFLAGS="-pie -Wl,-znow"
 %endif
 
@@ -608,6 +614,9 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Thu Dec 13 2012 John Dennis <jdennis@redhat.com> - 2.2.0-4
+- add compile option -fno-strict-aliasing
+
 * Thu Dec 13 2012 John Dennis <jdennis@redhat.com> - 2.2.0-3
 - specify homedir (/var/lib/radiusd) for radiusd user in useradd,
   do not permit useradd to default the homedir.
