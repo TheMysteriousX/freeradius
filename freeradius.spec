@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.2.0
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -263,7 +263,7 @@ EOF
 # Make sure our user/group is present prior to any package or subpackage installation
 %pre
 getent group  radiusd >/dev/null || /usr/sbin/groupadd -r -g 95 radiusd > /dev/null 2>&1
-getent passwd radiusd >/dev/null || /usr/sbin/useradd  -r -g radiusd -u 95 -c "radiusd user" -s /sbin/nologin radiusd > /dev/null 2>&1
+getent passwd radiusd >/dev/null || /usr/sbin/useradd  -r -g radiusd -u 95 -c "radiusd user" -d %{_localstatedir}/lib/radiusd -s /sbin/nologin radiusd > /dev/null 2>&1
 exit 0
 
 %post
@@ -608,6 +608,10 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Thu Dec 13 2012 John Dennis <jdennis@redhat.com> - 2.2.0-3
+- specify homedir (/var/lib/radiusd) for radiusd user in useradd,
+  do not permit useradd to default the homedir.
+
 * Wed Dec 12 2012 John Dennis <jdennis@redhat.com> - 2.2.0-2
 - add security options to compiler/linker
 
