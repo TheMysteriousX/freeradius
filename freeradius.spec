@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.2.0
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -273,9 +273,9 @@ getent passwd radiusd >/dev/null || /usr/sbin/useradd  -r -g radiusd -u 95 -c "r
 exit 0
 
 %post
+%systemd_post radiusd.service
 if [ $1 -eq 1 ]; then           # install
   # Initial installation
-  /bin/systemctl daemon-reload >/dev/null 2>&1 || :
   if [ ! -e /etc/raddb/certs/server.pem ]; then
     /sbin/runuser -g radiusd -c 'umask 007; /etc/raddb/certs/bootstrap' > /dev/null 2>&1
   fi
@@ -283,18 +283,11 @@ fi
 exit 0
 
 %preun
-if [ $1 -eq 0 ] ; then
-    # Package removal, not upgrade
-    /bin/systemctl --no-reload disable radiusd.service > /dev/null 2>&1 || :
-    /bin/systemctl stop radiusd.service > /dev/null 2>&1 || :
-fi
+%systemd_preun radiusd.service
 
 %postun
-/bin/systemctl daemon-reload >/dev/null 2>&1 || :
-if [ $1 -ge 1 ] ; then
-    # Package upgrade, not uninstall
-    /bin/systemctl try-restart radiusd.service >/dev/null 2>&1 || :
-elif [ $1 -eq 0 ]; then           # uninstall
+%systemd_postun_with_restart radiusd.service
+if [ $1 -eq 0 ]; then           # uninstall
   getent passwd radiusd >/dev/null && /usr/sbin/userdel  radiusd > /dev/null 2>&1
   getent group  radiusd >/dev/null && /usr/sbin/groupdel radiusd > /dev/null 2>&1
 fi
@@ -614,6 +607,9 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Fri Dec 14 2012 John Dennis <jdennis@redhat.com> - 2.2.0-5
+- resolves: bug#850119 - Introduce new systemd-rpm macros (>= F18)
+
 * Thu Dec 13 2012 John Dennis <jdennis@redhat.com> - 2.2.0-4
 - add compile option -fno-strict-aliasing
 
