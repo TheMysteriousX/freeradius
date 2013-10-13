@@ -1,6 +1,17 @@
---- freeradius-server-release_3_0_0_rc0.orig/raddb/radiusd.conf.in	2013-07-11 11:09:02.000000000 -0400
-+++ freeradius-server-release_3_0_0_rc0/raddb/radiusd.conf.in	2013-07-20 07:51:22.811104727 -0400
-@@ -376,8 +376,8 @@
+diff -r -u freeradius-server-3.0.0.orig/raddb/radiusd.conf.in freeradius-server-3.0.0/raddb/radiusd.conf.in
+--- freeradius-server-3.0.0.orig/raddb/radiusd.conf.in	2013-10-07 15:49:47.000000000 -0400
++++ freeradius-server-3.0.0/raddb/radiusd.conf.in	2013-10-09 14:10:18.595543308 -0400
+@@ -71,8 +71,7 @@
+ cadir   = ${confdir}/certs
+ run_dir = ${localstatedir}/run/${name}
+ 
+-# Should likely be ${localstatedir}/lib/radiusd
+-db_dir = ${raddbdir}
++db_dir = ${localstatedir}/lib/radiusd
+ 
+ #
+ # libdir: Where to find the rlm_* modules.
+@@ -376,8 +375,8 @@
  	#  member.  This can allow for some finer-grained access
  	#  controls.
  	#
@@ -11,3 +22,4 @@
  
  	#  Core dumps are a bad thing.  This should only be set to
  	#  'yes' if you're debugging a problem with the server.
+Only in freeradius-server-3.0.0/raddb: radiusd.conf.in~

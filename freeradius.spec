@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.0
-Release: 0.2.rc0%{?dist}
+Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -13,14 +13,13 @@ URL: http://www.freeradius.org/
 %global HAVE_EC_CRYPTO 0
 %endif
 
-%global dist_base freeradius-server-release_3_0_0_rc0
+%global dist_base freeradius-server-3.0.0
 
-Source0: %{dist_base}.tar.gz
-#FIXME, after 3.0 is released  Source0: ftp://ftp.freeradius.org/pub/radius/%{dist_base}.tar.bz2
+Source0: ftp://ftp.freeradius.org/pub/radius/%{dist_base}.tar.bz2
 Source100: radiusd.service
 Source102: freeradius-logrotate
 Source103: freeradius-pam-conf
-Source104: %{name}-tmpfiles.conf
+Source104: freeradius-tmpfiles.conf
 
 Patch1: freeradius-redhat-config.patch
 
@@ -246,7 +245,7 @@ rm -rf $RPM_BUILD_ROOT/etc/raddb/mods-config/sql/main/oracle
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/experimental.conf
 
 # install doc files omitted by standard install
-for f in COPYRIGHT CREDITS INSTALL README.rst VERSION; do
+for f in COPYRIGHT CREDITS INSTALL.rst README.rst VERSION; do
     cp $f $RPM_BUILD_ROOT/%{docdir}
 done
 cp LICENSE $RPM_BUILD_ROOT/%{docdir}/LICENSE.gpl
@@ -387,14 +386,10 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-available/tls
 
 # sites-enabled
-
+# symlink: /etc/raddb/sites-enabled/xxx -> ../sites-available/xxx
 %dir %attr(750,root,radiusd) /etc/raddb/sites-enabled
-
-# symlink: /etc/raddb/sites-enabled/inner-tunnel -> ../sites-available/inner-tunnel
-/etc/raddb/sites-enabled/inner-tunnel
-
-# symlink: /etc/raddb/sites-enabled/default -> ../sites-available/default
-/etc/raddb/sites-enabled/default
+%config(missingok) /etc/raddb/sites-enabled/inner-tunnel
+%config(missingok) /etc/raddb/sites-enabled/default
 
 # mods-available
 %dir %attr(750,root,radiusd) /etc/raddb/mods-available
@@ -435,6 +430,7 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/pap
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/passwd
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/preprocess
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/python
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/radutmp
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/realm
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/redis
@@ -595,7 +591,6 @@ exit 0
 %doc %{_mandir}/man5/rlm_mschap.5.gz
 %doc %{_mandir}/man5/rlm_pap.5.gz
 %doc %{_mandir}/man5/rlm_passwd.5.gz
-%doc %{_mandir}/man5/rlm_policy.5.gz
 %doc %{_mandir}/man5/rlm_realm.5.gz
 %doc %{_mandir}/man5/rlm_sql.5.gz
 %doc %{_mandir}/man5/rlm_unix.5.gz
@@ -605,7 +600,6 @@ exit 0
 %doc %{_mandir}/man8/radiusd.8.gz
 %doc %{_mandir}/man8/radmin.8.gz
 %doc %{_mandir}/man8/radrelay.8.gz
-%doc %{_mandir}/man8/radwatch.8.gz
 
 # utils man pages
 %doc %{_mandir}/man1/radclient.1.gz
@@ -728,6 +722,11 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc.so
 
 %changelog
+* Sun Oct 13 2013 John Dennis <jdennis@redhat.com> - 3.0.0-1
+- Offical 3.0 gold release from upstream
+- resolves: bug#1016873
+- resolves: bug#891297
+
 * Sat Aug 03 2013 Petr Pisar <ppisar@redhat.com> - 3.0.0-0.2.rc0
 - Perl 5.18 rebuild
 
