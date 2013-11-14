@@ -6,13 +6,6 @@ License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
 
-# Is elliptic curve cryptography supported?
-%if 0%{?rhel} >= 7
-%global HAVE_EC_CRYPTO 1
-%else
-%global HAVE_EC_CRYPTO 0
-%endif
-
 %global dist_base freeradius-server-3.0.0
 
 Source0: ftp://ftp.freeradius.org/pub/radius/%{dist_base}.tar.bz2
@@ -536,9 +529,7 @@ exit 0
 %{_libdir}/freeradius/rlm_eap_md5.so
 %{_libdir}/freeradius/rlm_eap_mschapv2.so
 %{_libdir}/freeradius/rlm_eap_peap.so
-%if %{HAVE_EC_CRYPTO}
 %{_libdir}/freeradius/rlm_eap_pwd.so
-%endif
 %{_libdir}/freeradius/rlm_eap_sim.so
 %{_libdir}/freeradius/rlm_eap_tls.so
 %{_libdir}/freeradius/rlm_eap_tnc.so
