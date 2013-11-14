@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.0
-Release: 1%{?dist}
+Release: 3%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -22,6 +22,7 @@ Source103: freeradius-pam-conf
 Source104: freeradius-tmpfiles.conf
 
 Patch1: freeradius-redhat-config.patch
+Patch2: freeradius-bool-config.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -38,9 +39,9 @@ BuildRequires: libpcap-devel
 BuildRequires: systemd-units
 BuildRequires: libtalloc-devel
 BuildRequires: pcre-devel
+BuildRequires: tncfhh-devel
 
 %if ! 0%{?rhel}
-BuildRequires: tncfhh-devel
 BuildRequires: libyubikey-devel
 BuildRequires: ykclient-devel
 %endif
@@ -177,6 +178,7 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 %prep
 %setup -q -n %{dist_base}
 %patch1 -p1 -b .redhat-config
+%patch2 -p1 -b .bool-config
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -539,9 +541,7 @@ exit 0
 %endif
 %{_libdir}/freeradius/rlm_eap_sim.so
 %{_libdir}/freeradius/rlm_eap_tls.so
-%if ! 0%{?rhel}
 %{_libdir}/freeradius/rlm_eap_tnc.so
-%endif
 %{_libdir}/freeradius/rlm_eap_ttls.so
 %{_libdir}/freeradius/rlm_exec.so
 %{_libdir}/freeradius/rlm_expiration.so
@@ -722,6 +722,14 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc.so
 
 %changelog
+* Wed Nov 13 2013 John Dennis <jdennis@redhat.com> - 3.0.0-3
+- resolves: bug#1029941
+  PW_TYPE_BOOLEAN config item should be declared int, not bool
+
+* Mon Oct 28 2013 John Dennis <jdennis@redhat.com> - 3.0.0-2
+- resolves: bug#1024119
+  tncfhh-devel is now available in RHEL-7, remove conditional BuildRequires
+
 * Sun Oct 13 2013 John Dennis <jdennis@redhat.com> - 3.0.0-1
 - Offical 3.0 gold release from upstream
 - resolves: bug#1016873
