@@ -1,10 +1,17 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.0
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
+
+# Is elliptic curve cryptography supported?
+%if 0%{?rhel} >= 7 || 0%{fedora} >= 20
+%global HAVE_EC_CRYPTO 1
+%else
+%global HAVE_EC_CRYPTO 0
+%endif
 
 %global dist_base freeradius-server-3.0.0
 
@@ -16,6 +23,7 @@ Source104: freeradius-tmpfiles.conf
 
 Patch1: freeradius-redhat-config.patch
 Patch2: freeradius-bool-config.patch
+Patch3: freeradius-rlm_leap.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -170,8 +178,9 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 
 %prep
 %setup -q -n %{dist_base}
-%patch1 -p1 -b .redhat-config
-%patch2 -p1 -b .bool-config
+%patch1 -p1
+%patch2 -p1
+%patch3 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -212,6 +221,7 @@ install -D -m 644 %{SOURCE103} $RPM_BUILD_ROOT/%{_sysconfdir}/pam.d/radiusd
 mkdir -p %{buildroot}%{_sysconfdir}/tmpfiles.d
 mkdir -p %{buildroot}%{_localstatedir}/run/
 install -d -m 0710 %{buildroot}%{_localstatedir}/run/radiusd/
+install -d -m 0700 %{buildroot}%{_localstatedir}/run/radiusd/tmp
 install -m 0644 %{SOURCE104} %{buildroot}%{_sysconfdir}/tmpfiles.d/radiusd.conf
 
 # remove unneeded stuff
@@ -225,6 +235,8 @@ rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/certs/index.*
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/certs/serial*
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/certs/dh
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/certs/random
+
+rm -f $RPM_BUILD_ROOT/%{_mandir}/man1/radeapclient.1
 
 rm -f $RPM_BUILD_ROOT/usr/sbin/rc.radiusd
 rm -rf $RPM_BUILD_ROOT/%{_libdir}/freeradius/*.a
@@ -307,6 +319,7 @@ exit 0
 %{_unitdir}/radiusd.service
 %config %{_sysconfdir}/tmpfiles.d/radiusd.conf
 %dir %attr(710,radiusd,radiusd) %{_localstatedir}/run/radiusd
+%dir %attr(700,radiusd,radiusd) %{_localstatedir}/run/radiusd/tmp
 %dir %attr(755,radiusd,radiusd) %{_localstatedir}/lib/radiusd
 
 # configs (raddb)
@@ -529,7 +542,9 @@ exit 0
 %{_libdir}/freeradius/rlm_eap_md5.so
 %{_libdir}/freeradius/rlm_eap_mschapv2.so
 %{_libdir}/freeradius/rlm_eap_peap.so
+%if %{HAVE_EC_CRYPTO}
 %{_libdir}/freeradius/rlm_eap_pwd.so
+%endif
 %{_libdir}/freeradius/rlm_eap_sim.so
 %{_libdir}/freeradius/rlm_eap_tls.so
 %{_libdir}/freeradius/rlm_eap_tnc.so
@@ -561,10 +576,6 @@ exit 0
 %{_libdir}/freeradius/rlm_wimax.so
 %{_libdir}/freeradius/rlm_yubikey.so
 
-%files doc
-
-%doc %{docdir}/
-
 # main man pages
 %doc %{_mandir}/man5/clients.conf.5.gz
 %doc %{_mandir}/man5/dictionary.5.gz
@@ -592,9 +603,16 @@ exit 0
 %doc %{_mandir}/man8/radmin.8.gz
 %doc %{_mandir}/man8/radrelay.8.gz
 
+%files doc
+
+%doc %{docdir}/
+
+
+%files utils
+/usr/bin/*
+
 # utils man pages
 %doc %{_mandir}/man1/radclient.1.gz
-%doc %{_mandir}/man1/radeapclient.1.gz
 %doc %{_mandir}/man1/radlast.1.gz
 %doc %{_mandir}/man1/radtest.1.gz
 %doc %{_mandir}/man1/radwho.1.gz
@@ -606,10 +624,6 @@ exit 0
 %doc %{_mandir}/man8/radsniff.8.gz
 %doc %{_mandir}/man8/radsqlrelay.8.gz
 %doc %{_mandir}/man8/rlm_ippool_tool.8.gz
-
-
-%files utils
-/usr/bin/*
 
 %files devel
 /usr/include/freeradius
@@ -713,6 +727,17 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc.so
 
 %changelog
+* Tue Nov 26 2013 John Dennis <jdennis@redhat.com> - 3.0.0-4
+- resolves: bug#1031035
+  remove radeapclient man page,
+  upstream no longer supports radeapclient, use eapol_test instead
+- resolves: bug#1031061
+  rlm_eap_leap memory corruption, see freeradius-rlm_leap.patch
+- move man pages for utils into utils subpackage from doc subpackage
+- fix HAVE_EC_CRYPTO test to include f20
+- add new directory /var/run/radiusd/tmp
+  update mods-available/eap so tls-common.verify.tmpdir to point to it
+
 * Wed Nov 13 2013 John Dennis <jdennis@redhat.com> - 3.0.0-3
 - resolves: bug#1029941
   PW_TYPE_BOOLEAN config item should be declared int, not bool
