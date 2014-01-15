@@ -1,6 +1,6 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 2.2.0
+Version: 2.2.3
 Release: 6%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
@@ -13,10 +13,7 @@ Source103: freeradius-pam-conf
 Source104: %{name}-tmpfiles.conf
 
 Patch1: freeradius-cert-config.patch
-Patch2: freeradius-radtest.patch
-Patch3: freeradius-radeapclient-ipv6.patch
-Patch4: freeradius-exclude-config-file.patch
-Patch5: freeradius-dhcp_sqlippool.patch
+Patch2: freeradius-dhcp_sqlippool.patch
 
 Obsoletes: freeradius-devel
 Obsoletes: freeradius-libs
@@ -149,11 +146,8 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 %prep
 %setup -q -n freeradius-server-%{version}
 %patch1 -p1 -b .cert-config
-%patch2 -p1 -b .radtest
-%patch3 -p1 -b radeapclient-ipv6
-%patch4 -p1 -b exclude-config-file
 # do not make backup file for module configs, the backup will be installed
-%patch5 -p1
+%patch2 -p1
 
 # Some source files mistakenly have execute permissions set
 find $RPM_BUILD_DIR/freeradius-server-%{version} \( -name '*.c' -o -name '*.h' \) -a -perm /0111 -exec chmod a-x {} +
@@ -246,7 +240,7 @@ rm -rf $RPM_BUILD_ROOT/%{_includedir}
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/experimental.conf
 
 # install doc files omitted by standard install
-for f in COPYRIGHT CREDITS INSTALL README; do
+for f in COPYRIGHT CREDITS INSTALL README.rst; do
     cp $f $RPM_BUILD_ROOT/%{docdir}
 done
 cp LICENSE $RPM_BUILD_ROOT/%{docdir}/LICENSE.gpl
@@ -607,6 +601,10 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Tue Jan 14 2014 John Dennis <jdennis@redhat.com> - 2.2.3-6
+- Upgrade to upstream 2.2.3 release
+  See /usr/share/doc/freeradius-2.2.3/ChangeLog for details
+
 * Wed Feb 13 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.2.0-6
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_19_Mass_Rebuild
 
