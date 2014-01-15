@@ -1,19 +1,19 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 3.0.0
-Release: 4%{?dist}
+Version: 3.0.1
+Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
 
 # Is elliptic curve cryptography supported?
-%if 0%{?rhel} >= 7 || 0%{fedora} >= 20
+%if 0%{?rhel} >= 7 || 0%{?fedora} >= 20
 %global HAVE_EC_CRYPTO 1
 %else
 %global HAVE_EC_CRYPTO 0
 %endif
 
-%global dist_base freeradius-server-3.0.0
+%global dist_base freeradius-server-%{version}
 
 Source0: ftp://ftp.freeradius.org/pub/radius/%{dist_base}.tar.bz2
 Source100: radiusd.service
@@ -22,8 +22,7 @@ Source103: freeradius-pam-conf
 Source104: freeradius-tmpfiles.conf
 
 Patch1: freeradius-redhat-config.patch
-Patch2: freeradius-bool-config.patch
-Patch3: freeradius-rlm_leap.patch
+Patch2: freeradius-postgres-sql.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -178,9 +177,10 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 
 %prep
 %setup -q -n %{dist_base}
+# Note: We explicitly do not make patch backup files because the build
+# mistakenly include these files, especially problematic for raddb config files.
 %patch1 -p1
 %patch2 -p1
-%patch3 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -409,6 +409,7 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/chap
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/counter
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/cui
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/date
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/detail
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/detail.example.com
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/detail.log
@@ -450,6 +451,7 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/soh
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/sometimes
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/sql
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/sqlcounter
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/sqlippool
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/sradutmp
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/unix
@@ -532,6 +534,7 @@ exit 0
 %{_libdir}/freeradius/rlm_chap.so
 %{_libdir}/freeradius/rlm_counter.so
 %{_libdir}/freeradius/rlm_cram.so
+%{_libdir}/freeradius/rlm_date.so
 %{_libdir}/freeradius/rlm_detail.so
 %{_libdir}/freeradius/rlm_dhcp.so
 %{_libdir}/freeradius/rlm_digest.so
@@ -647,7 +650,10 @@ exit 0
 
 %files mysql
 %dir %attr(750,root,radiusd) /etc/raddb/mods-config/sql/counter/mysql
-%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/counter/mysql/queries.conf
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/counter/mysql/dailycounter.conf
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/counter/mysql/expire_on_login.conf
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/counter/mysql/monthlycounter.conf
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/counter/mysql/noresetcounter.conf
 
 %dir %attr(750,root,radiusd) /etc/raddb/mods-config/sql/cui/mysql
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/cui/mysql/queries.conf
@@ -679,7 +685,10 @@ exit 0
 
 %files postgresql
 %dir %attr(750,root,radiusd) /etc/raddb/mods-config/sql/counter/postgresql
-%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/counter/postgresql/queries.conf
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/counter/postgresql/dailycounter.conf
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/counter/postgresql/expire_on_login.conf
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/counter/postgresql/monthlycounter.conf
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/counter/postgresql/noresetcounter.conf
 
 %dir %attr(750,root,radiusd) /etc/raddb/mods-config/sql/cui/postgresql
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/cui/postgresql/queries.conf
@@ -702,6 +711,12 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_postgresql.so
 
 %files sqlite
+%dir %attr(750,root,radiusd) /etc/raddb/mods-config/sql/counter/sqlite
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/counter/sqlite/dailycounter.conf
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/counter/sqlite/expire_on_login.conf
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/counter/sqlite/monthlycounter.conf
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/counter/sqlite/noresetcounter.conf
+
 %dir %attr(750,root,radiusd) /etc/raddb/mods-config/sql/cui/sqlite
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/cui/sqlite/queries.conf
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/cui/sqlite/schema.sql
@@ -727,6 +742,12 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc.so
 
 %changelog
+* Tue Jan 14 2014 John Dennis <jdennis@redhat.com> - 3.0.1-1
+- Upgrade to upstream 3.0.1 release, full config compatible with 3.0.0.
+  This is a roll-up of all upstream bugs fixes found in 3.0.0
+  See upstream ChangeLog for details (in freeradius-doc subpackage)
+- fixes bugs 1053020 1044747 1048474 1043036
+
 * Tue Nov 26 2013 John Dennis <jdennis@redhat.com> - 3.0.0-4
 - resolves: bug#1031035
   remove radeapclient man page,
