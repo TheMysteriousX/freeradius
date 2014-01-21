@@ -1,0 +1,12 @@
+diff -r -u freeradius-server-3.0.1.orig/raddb/mods-config/sql/main/mysql/schema.sql freeradius-server-3.0.1/raddb/mods-config/sql/main/mysql/schema.sql
+--- freeradius-server-3.0.1.orig/raddb/mods-config/sql/main/mysql/schema.sql	2014-01-13 20:13:56.000000000 -0500
++++ freeradius-server-3.0.1/raddb/mods-config/sql/main/mysql/schema.sql	2014-01-21 12:37:29.349480066 -0500
+@@ -28,7 +28,7 @@
+   acctupdatetime datetime NULL default NULL,
+   acctstoptime datetime NULL default NULL,
+   acctinterval int(12) default NULL,
+-  acctsessiontime unsigned int(12) default NULL,
++  acctsessiontime int(12) unsigned default NULL,
+   acctauthentic varchar(32) default NULL,
+   connectinfo_start varchar(50) default NULL,
+   connectinfo_stop varchar(50) default NULL,

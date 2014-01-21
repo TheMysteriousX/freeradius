@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -23,6 +23,9 @@ Source104: freeradius-tmpfiles.conf
 
 Patch1: freeradius-redhat-config.patch
 Patch2: freeradius-postgres-sql.patch
+Patch3: freeradius-ippool.patch
+Patch4: freeradius-imacros.patch
+Patch5: freeradius-mysql-schema.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -181,6 +184,9 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 # mistakenly include these files, especially problematic for raddb config files.
 %patch1 -p1
 %patch2 -p1
+%patch3 -p1
+%patch4 -p1
+%patch5 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -742,6 +748,14 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc.so
 
 %changelog
+* Sun Jan 19 2014 John Dennis <jdennis@redhat.com> - 3.0.1-2
+- resolves: bug#1055073 (fedora 1055072)
+  rlm_ippool; bad config file attribute and fails to send reply attributes
+- resolves: bug#1055567 (fedora 1056227)
+  bad mysql sql syntax
+- change CFLAGS -imacros to -include to address gcc/gdb bug 1004526
+  where gdb will not display source information, only <command-line>
+
 * Tue Jan 14 2014 John Dennis <jdennis@redhat.com> - 3.0.1-1
 - Upgrade to upstream 3.0.1 release, full config compatible with 3.0.0.
   This is a roll-up of all upstream bugs fixes found in 3.0.0
