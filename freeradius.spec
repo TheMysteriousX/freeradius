@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.2.3
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -14,6 +14,7 @@ Source104: %{name}-tmpfiles.conf
 
 Patch1: freeradius-cert-config.patch
 Patch2: freeradius-dhcp_sqlippool.patch
+Patch3: freeradius-rlm_pap-overflow.patch
 
 Obsoletes: freeradius-devel
 Obsoletes: freeradius-libs
@@ -148,6 +149,7 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 %patch1 -p1 -b .cert-config
 # do not make backup file for module configs, the backup will be installed
 %patch2 -p1
+%patch3 -p1
 
 # Some source files mistakenly have execute permissions set
 find $RPM_BUILD_DIR/freeradius-server-%{version} \( -name '*.c' -o -name '*.h' \) -a -perm /0111 -exec chmod a-x {} +
@@ -601,6 +603,11 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Fri Feb 21 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 2.2.3-7
+- Fix CVE-2014-2015 "freeradius: stack-based buffer overflow flaw in rlm_pap
+  module"
+- resolves: bug#1066984 (fedora 1066763)
+
 * Tue Jan 14 2014 John Dennis <jdennis@redhat.com> - 2.2.3-6
 - Upgrade to upstream 2.2.3 release
   See /usr/share/doc/freeradius-2.2.3/ChangeLog for details
