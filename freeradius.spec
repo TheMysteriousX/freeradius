@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.1
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -26,6 +26,7 @@ Patch2: freeradius-postgres-sql.patch
 Patch3: freeradius-ippool.patch
 Patch4: freeradius-imacros.patch
 Patch5: freeradius-mysql-schema.patch
+Patch6: freeradius-perl.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -180,13 +181,14 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 
 %prep
 %setup -q -n %{dist_base}
-# Note: We explicitly do not make patch backup files because the build
-# mistakenly include these files, especially problematic for raddb config files.
+# Note: We explicitly do not make patch backup files because 'make install'
+# mistakenly includes the backup files, especially problematic for raddb config files.
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
+%patch6 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -748,6 +750,10 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc.so
 
 %changelog
+* Fri Feb 21 2014 John Dennis <jdennis@redhat.com> - 3.0.1-3
+- resolves: bug#1068798 (fedora 1068795)
+  rlm_perl attribute values truncated
+
 * Sun Jan 19 2014 John Dennis <jdennis@redhat.com> - 3.0.1-2
 - resolves: bug#1055073 (fedora 1055072)
   rlm_ippool; bad config file attribute and fails to send reply attributes
