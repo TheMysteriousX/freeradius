@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.1
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -27,6 +27,7 @@ Patch3: freeradius-ippool.patch
 Patch4: freeradius-imacros.patch
 Patch5: freeradius-mysql-schema.patch
 Patch6: freeradius-perl.patch
+Patch7: freeradius-rlm_pap-overflow.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -189,6 +190,7 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
+%patch7 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -750,6 +752,11 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc.so
 
 %changelog
+* Mon Feb 24 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.1-4
+- Fix CVE-2014-2015 "freeradius: stack-based buffer overflow flaw in rlm_pap
+  module"
+- resolves: bug#1066984 (fedora 1066763)
+
 * Fri Feb 21 2014 John Dennis <jdennis@redhat.com> - 3.0.1-3
 - resolves: bug#1068798 (fedora 1068795)
   rlm_perl attribute values truncated
