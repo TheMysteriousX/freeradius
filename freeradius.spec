@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 3.0.1
-Release: 4%{?dist}
+Version: 3.0.2
+Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -23,11 +23,6 @@ Source104: freeradius-tmpfiles.conf
 
 Patch1: freeradius-redhat-config.patch
 Patch2: freeradius-postgres-sql.patch
-Patch3: freeradius-ippool.patch
-Patch4: freeradius-imacros.patch
-Patch5: freeradius-mysql-schema.patch
-Patch6: freeradius-perl.patch
-Patch7: freeradius-rlm_pap-overflow.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -186,11 +181,6 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 # mistakenly includes the backup files, especially problematic for raddb config files.
 %patch1 -p1
 %patch2 -p1
-%patch3 -p1
-%patch4 -p1
-%patch5 -p1
-%patch6 -p1
-%patch7 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -255,6 +245,7 @@ rm -rf $RPM_BUILD_ROOT/%{_libdir}/freeradius/*.la
 rm -rf $RPM_BUILD_ROOT/etc/raddb/mods-config/sql/main/mssql
 
 rm -rf $RPM_BUILD_ROOT/etc/raddb/mods-config/sql/ippool/oracle
+rm -rf $RPM_BUILD_ROOT/etc/raddb/mods-config/sql/ippool-dhcp/oracle
 rm -rf $RPM_BUILD_ROOT/etc/raddb/mods-config/sql/main/oracle
 
 
@@ -336,6 +327,8 @@ exit 0
 %dir %attr(755,root,radiusd) /etc/raddb
 %defattr(-,root,radiusd)
 /etc/raddb/README.rst
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/panic.gdb
+
 %attr(644,root,radiusd) %config(noreplace) /etc/raddb/dictionary
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/clients.conf
 
@@ -465,6 +458,7 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/sqlippool
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/sradutmp
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/unix
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/unpack
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/utf8
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/wimax
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/yubikey
@@ -500,6 +494,7 @@ exit 0
 %config(missingok) /etc/raddb/mods-enabled/soh
 %config(missingok) /etc/raddb/mods-enabled/sradutmp
 %config(missingok) /etc/raddb/mods-enabled/unix
+%config(missingok) /etc/raddb/mods-enabled/unpack
 %config(missingok) /etc/raddb/mods-enabled/utf8
 
 # policy
@@ -585,6 +580,7 @@ exit 0
 %{_libdir}/freeradius/rlm_sqlippool.so
 %{_libdir}/freeradius/rlm_sql_null.so
 %{_libdir}/freeradius/rlm_unix.so
+%{_libdir}/freeradius/rlm_unpack.so
 %{_libdir}/freeradius/rlm_utf8.so
 %{_libdir}/freeradius/rlm_wimax.so
 %{_libdir}/freeradius/rlm_yubikey.so
@@ -737,6 +733,7 @@ exit 0
 
 %dir %attr(750,root,radiusd) /etc/raddb/mods-config/sql/ippool-dhcp/sqlite
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/ippool-dhcp/sqlite/queries.conf
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/ippool-dhcp/sqlite/schema.sql
 
 %dir %attr(750,root,radiusd) /etc/raddb/mods-config/sql/main/sqlite
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/main/sqlite/queries.conf
@@ -752,6 +749,11 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc.so
 
 %changelog
+* Wed May  7 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.2-1
+- Upgrade to upstream 3.0.2 release, configuration compatible with 3.0.1.
+  See upstream ChangeLog for details (in freeradius-doc subpackage)
+- Fixes bugs 1058884 1061408 1070447 1079500
+
 * Mon Feb 24 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.1-4
 - Fix CVE-2014-2015 "freeradius: stack-based buffer overflow flaw in rlm_pap
   module"
