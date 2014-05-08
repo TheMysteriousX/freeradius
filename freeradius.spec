@@ -1,6 +1,6 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 2.2.4
+Version: 2.2.5
 Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
@@ -602,6 +602,10 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Thu May  8 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 2.2.5-1
+- Upgrade to upstream 2.2.5 release.
+  See /usr/share/doc/freeradius-2.2.5/ChangeLog for details
+
 * Fri Mar 21 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 2.2.4-1
 - Rebase onto 2.2.4. Resolves: bug#1078762.
 
