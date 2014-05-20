@@ -1,6 +1,6 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 3.0.2
+Version: 3.0.3
 Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
@@ -23,6 +23,10 @@ Source104: freeradius-tmpfiles.conf
 
 Patch1: freeradius-redhat-config.patch
 Patch2: freeradius-postgres-sql.patch
+Patch3: freeradius-case-insensitive-matching.patch
+Patch4: freeradius-perl-string-escaping.patch
+Patch5: freeradius-segfault-on-config-parse.patch
+Patch6: freeradius-foreach.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -181,6 +185,10 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 # mistakenly includes the backup files, especially problematic for raddb config files.
 %patch1 -p1
 %patch2 -p1
+%patch3 -p1
+%patch4 -p1
+%patch5 -p1
+%patch6 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -202,7 +210,8 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
         --without-rlm_sql_iodbc \
         --without-rlm_sql_firebird \
         --without-rlm_sql_db2 \
-        --without-rlm_sql_oracle
+        --without-rlm_sql_oracle \
+        --without-rlm_unbound
 
 make
 
@@ -236,6 +245,7 @@ rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/certs/serial*
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/certs/dh
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/certs/random
 
+
 rm -f $RPM_BUILD_ROOT/%{_mandir}/man1/radeapclient.1
 
 rm -f $RPM_BUILD_ROOT/usr/sbin/rc.radiusd
@@ -248,6 +258,8 @@ rm -rf $RPM_BUILD_ROOT/etc/raddb/mods-config/sql/ippool/oracle
 rm -rf $RPM_BUILD_ROOT/etc/raddb/mods-config/sql/ippool-dhcp/oracle
 rm -rf $RPM_BUILD_ROOT/etc/raddb/mods-config/sql/main/oracle
 
+rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-available/unbound
+rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-config/unbound/default.conf
 
 # remove unsupported config files
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/experimental.conf
@@ -628,7 +640,6 @@ exit 0
 %doc %{_mandir}/man1/radzap.1.gz
 %doc %{_mandir}/man1/smbencrypt.1.gz
 %doc %{_mandir}/man5/checkrad.5.gz
-%doc %{_mandir}/man8/radconf2xml.8.gz
 %doc %{_mandir}/man8/radcrypt.8.gz
 %doc %{_mandir}/man8/radsniff.8.gz
 %doc %{_mandir}/man8/radsqlrelay.8.gz
@@ -749,6 +760,20 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc.so
 
 %changelog
+* Wed May 14 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.3-1
+- Upgrade to upstream 3.0.3 release.
+  See upstream ChangeLog for details (in freeradius-doc subpackage).
+- Minor configuration parsing change: "Double-escaping of characters in Perl,
+  and octal characters has been fixed. If your configuration has text like
+  "\\000", you will need to remove one backslash."
+- Additionally includes post-release fixes for:
+  * case-insensitive matching in compiled regular expressions not working,
+  * upstream issue #634 "3.0.3 SIGSEGV on config parse",
+  * upstream issue #635 "3.0.x - rlm_perl - strings are still
+    escaped when passed to perl from FreeRADIUS",
+  * upstream issue #639 "foreach may cause ABORT".
+- Fixes bugs 1097266 1070447
+
 * Wed May  7 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.2-1
 - Upgrade to upstream 3.0.2 release, configuration compatible with 3.0.1.
   See upstream ChangeLog for details (in freeradius-doc subpackage)
