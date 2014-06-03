@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.3
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -27,6 +27,7 @@ Patch3: freeradius-case-insensitive-matching.patch
 Patch4: freeradius-perl-string-escaping.patch
 Patch5: freeradius-segfault-on-config-parse.patch
 Patch6: freeradius-foreach.patch
+Patch7: freeradius-heartbleed-confirm.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -50,7 +51,7 @@ BuildRequires: libyubikey-devel
 BuildRequires: ykclient-devel
 %endif
 
-Requires: openssl
+Requires: openssl >= 1.0.1e-37.fc20.1
 Requires(pre): shadow-utils glibc-common
 Requires(post): systemd-sysv
 Requires(post): systemd-units
@@ -189,6 +190,7 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
+%patch7 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -758,6 +760,12 @@ exit 0
 
 %files unixODBC
 %{_libdir}/freeradius/rlm_sql_unixodbc.so
+
+%changelog
+* Mon Jun  2 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.3-2
+- Add explicit dependency on OpenSSL package with fixed CVE-2014-0160
+  (Heartbleed bug).
+- Add confirmation of CVE-2014-0160 being fixed in OpenSSL to radiusd.conf.
 
 %changelog
 * Wed May 14 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.3-1
