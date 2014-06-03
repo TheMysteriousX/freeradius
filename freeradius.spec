@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 2.2.5
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -14,6 +14,7 @@ Source104: %{name}-tmpfiles.conf
 
 Patch1: freeradius-cert-config.patch
 Patch2: freeradius-dhcp_sqlippool.patch
+Patch3: freeradius-openssl-fix-confirm.patch
 
 Obsoletes: freeradius-devel
 Obsoletes: freeradius-libs
@@ -34,7 +35,7 @@ BuildRequires: readline-devel
 BuildRequires: libpcap-devel
 BuildRequires: systemd-units
 
-Requires: openssl
+Requires: openssl >= 1.0.1e-37.fc19.1
 Requires(pre): shadow-utils glibc-common
 Requires(post): systemd-sysv
 Requires(post): systemd-units
@@ -148,6 +149,7 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 %patch1 -p1 -b .cert-config
 # do not make backup file for module configs, the backup will be installed
 %patch2 -p1
+%patch3 -p1
 
 # Some source files mistakenly have execute permissions set
 find $RPM_BUILD_DIR/freeradius-server-%{version} \( -name '*.c' -o -name '*.h' \) -a -perm /0111 -exec chmod a-x {} +
@@ -602,6 +604,11 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc-%{version}.so
 
 %changelog
+* Mon Jun  2 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 2.2.5-2
+- Add explicit dependency on OpenSSL package with fixed CVE-2014-0160
+  (Heartbleed bug).
+- Add confirmation of fixed OpenSSL vulnerabilities to radiusd.conf.
+
 * Thu May  8 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 2.2.5-1
 - Upgrade to upstream 2.2.5 release.
   See /usr/share/doc/freeradius-2.2.5/ChangeLog for details
