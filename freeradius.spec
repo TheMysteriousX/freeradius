@@ -247,6 +247,9 @@ rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/certs/serial*
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/certs/dh
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/certs/random
 
+# install SNMP MIB files
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/snmp/mibs/
+install -m 644 mibs/*RADIUS*.txt $RPM_BUILD_ROOT%{_datadir}/snmp/mibs/
 
 rm -f $RPM_BUILD_ROOT/%{_mandir}/man1/radeapclient.1
 
@@ -625,6 +628,9 @@ exit 0
 %doc %{_mandir}/man8/radiusd.8.gz
 %doc %{_mandir}/man8/radmin.8.gz
 %doc %{_mandir}/man8/radrelay.8.gz
+
+# MIB files
+%{_datadir}/snmp/mibs/*RADIUS*.txt
 
 %files doc
 
