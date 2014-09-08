@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 3.0.3
-Release: 4%{?dist}
+Version: 3.0.4
+Release: 0.1.rc2%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -13,7 +13,7 @@ URL: http://www.freeradius.org/
 %global HAVE_EC_CRYPTO 0
 %endif
 
-%global dist_base freeradius-server-%{version}
+%global dist_base freeradius-server-%{version}rc2
 
 Source0: ftp://ftp.freeradius.org/pub/radius/%{dist_base}.tar.bz2
 Source100: radiusd.service
@@ -23,11 +23,7 @@ Source104: freeradius-tmpfiles.conf
 
 Patch1: freeradius-redhat-config.patch
 Patch2: freeradius-postgres-sql.patch
-Patch3: freeradius-case-insensitive-matching.patch
-Patch4: freeradius-perl-string-escaping.patch
-Patch5: freeradius-segfault-on-config-parse.patch
-Patch6: freeradius-foreach.patch
-Patch7: freeradius-heartbleed-confirm.patch
+Patch3: freeradius-heartbleed-confirm.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -187,10 +183,6 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
-%patch4 -p1
-%patch5 -p1
-%patch6 -p1
-%patch7 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -265,6 +257,7 @@ rm -rf $RPM_BUILD_ROOT/etc/raddb/mods-config/sql/main/oracle
 
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-available/unbound
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-config/unbound/default.conf
+rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-available/couchbase
 
 # remove unsupported config files
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/experimental.conf
@@ -412,6 +405,7 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-available/copy-acct-to-home-server
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-available/buffered-sql
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-available/tls
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-available/channel_bindings
 
 # sites-enabled
 # symlink: /etc/raddb/sites-enabled/xxx -> ../sites-available/xxx
@@ -671,6 +665,7 @@ exit 0
 %files python
 %dir %attr(750,root,radiusd) /etc/raddb/mods-config/python
 /etc/raddb/mods-config/python/example.py*
+/etc/raddb/mods-config/python/radiusd.py*
 %{_libdir}/freeradius/rlm_python.so
 
 %files mysql
@@ -768,6 +763,10 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc.so
 
 %changelog
+* Mon Sep  8 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.4-0.1.rc2
+- Upgrade to upstream 3.0.4-rc2 release.
+  See upstream ChangeLog for details (in freeradius-doc subpackage).
+
 * Sat Aug 16 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.0.3-4
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_21_22_Mass_Rebuild
 
