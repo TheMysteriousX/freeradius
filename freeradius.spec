@@ -243,8 +243,6 @@ rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/certs/random
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/snmp/mibs/
 install -m 644 mibs/*RADIUS*.txt $RPM_BUILD_ROOT%{_datadir}/snmp/mibs/
 
-rm -f $RPM_BUILD_ROOT/%{_mandir}/man1/radeapclient.1
-
 rm -f $RPM_BUILD_ROOT/usr/sbin/rc.radiusd
 rm -rf $RPM_BUILD_ROOT/%{_libdir}/freeradius/*.a
 rm -rf $RPM_BUILD_ROOT/%{_libdir}/freeradius/*.la
@@ -636,6 +634,7 @@ exit 0
 
 # utils man pages
 %doc %{_mandir}/man1/radclient.1.gz
+%doc %{_mandir}/man1/radeapclient.1.gz
 %doc %{_mandir}/man1/radlast.1.gz
 %doc %{_mandir}/man1/radtest.1.gz
 %doc %{_mandir}/man1/radwho.1.gz
