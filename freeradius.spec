@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.4
-Release: 0.1.rc2%{?dist}
+Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -13,7 +13,7 @@ URL: http://www.freeradius.org/
 %global HAVE_EC_CRYPTO 0
 %endif
 
-%global dist_base freeradius-server-%{version}rc2
+%global dist_base freeradius-server-%{version}
 
 Source0: ftp://ftp.freeradius.org/pub/radius/%{dist_base}.tar.bz2
 Source100: radiusd.service
@@ -512,6 +512,7 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/policy.d/canonicalization
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/policy.d/control
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/policy.d/cui
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/policy.d/debug
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/policy.d/dhcp
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/policy.d/eap
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/policy.d/filter
@@ -684,6 +685,7 @@ exit 0
 
 %dir %attr(750,root,radiusd) /etc/raddb/mods-config/sql/ippool-dhcp/mysql
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/ippool-dhcp/mysql/queries.conf
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/ippool-dhcp/mysql/schema.sql
 
 %dir %attr(750,root,radiusd) /etc/raddb/mods-config/sql/main/mysql
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/main/mysql/setup.sql
@@ -762,6 +764,11 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc.so
 
 %changelog
+* Mon Sep 15 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.4-1
+- Upgrade to upstream 3.0.4 release.
+  See upstream ChangeLog for details (in freeradius-doc subpackage).
+- Resolves: Bug#1099620
+
 * Mon Sep  8 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.4-0.1.rc2
 - Upgrade to upstream 3.0.4-rc2 release.
   See upstream ChangeLog for details (in freeradius-doc subpackage).

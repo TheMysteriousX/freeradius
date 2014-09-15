@@ -1,4 +1,4 @@
-From af06b80f84b5e95153abc7ef55dedaa614eb6b04 Mon Sep 17 00:00:00 2001
+From 61aa3696bb0179a8296e4f389f34ffc31424dbf1 Mon Sep 17 00:00:00 2001
 From: Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com>
 Date: Mon, 8 Sep 2014 12:32:13 +0300
 Subject: [PATCH 1/1] Adjust configuration to fit Red Hat specifics
@@ -9,10 +9,10 @@ Subject: [PATCH 1/1] Adjust configuration to fit Red Hat specifics
  2 files changed, 5 insertions(+), 6 deletions(-)
 
 diff --git a/raddb/mods-available/eap b/raddb/mods-available/eap
-index 9ac2a74..86141d6 100644
+index 6938171..95ef666 100644
 --- a/raddb/mods-available/eap
 +++ b/raddb/mods-available/eap
-@@ -435,7 +435,7 @@ eap {
+@@ -430,7 +430,7 @@ eap {
  			#
  			#  You should also delete all of the files
  			#  in the directory when the server starts.
@@ -21,7 +21,7 @@ index 9ac2a74..86141d6 100644
  
  			#  The command used to verify the client cert.
  			#  We recommend using the OpenSSL command-line
-@@ -449,7 +449,7 @@ eap {
+@@ -444,7 +444,7 @@ eap {
  			#  in PEM format.  This file is automatically
  			#  deleted by the server when the command
  			#  returns.
