@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.4
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -24,6 +24,13 @@ Source104: freeradius-tmpfiles.conf
 Patch1: freeradius-redhat-config.patch
 Patch2: freeradius-postgres-sql.patch
 Patch3: freeradius-heartbleed-confirm.patch
+Patch4: freeradius-talloc-dummy-request.patch
+Patch5: freeradius-dont-detach-after-perl_parse.patch
+Patch6: freeradius-access-union-consistently.patch
+Patch7: freeradius-dont-truncate-uint64.patch
+Patch8: freeradius-prefix-endian-macros.patch
+Patch9: freeradius-dont-swap-uint128-printing-on-be.patch
+Patch10: freeradius-fix-dhcp-dictionary-loading.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -183,6 +190,13 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
+%patch4 -p1
+%patch5 -p1
+%patch6 -p1
+%patch7 -p1
+%patch8 -p1
+%patch9 -p1
+%patch10 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -658,7 +672,7 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/perl
 
 %dir %attr(750,root,radiusd) /etc/raddb/mods-config/perl
-/etc/raddb/mods-config/perl/example.pl
+%attr(640,root,radiusd) /etc/raddb/mods-config/perl/example.pl
 
 %{_libdir}/freeradius/rlm_perl.so
 
@@ -764,6 +778,13 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc.so
 
 %changelog
+* Mon Oct  6 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.4-2
+- Fix abort on home server triggers.
+- Fix segfault upon example.pl read failure.
+- Fix example.pl permissions.
+- Fix integer handling in various cases.
+- Fix dhcpclient's dictionary.dhcp loading.
+
 * Mon Sep 15 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.4-1
 - Upgrade to upstream 3.0.4 release.
   See upstream ChangeLog for details (in freeradius-doc subpackage).

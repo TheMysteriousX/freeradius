@@ -1,0 +1,46 @@
+From 168275c3f4ffe9d0e09ed7a3789b45b440416f73 Mon Sep 17 00:00:00 2001
+From: Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com>
+Date: Wed, 1 Oct 2014 16:32:11 +0300
+Subject: [PATCH 4/4] Don't assume little-endian in fr_prints_uint128
+
+Add handling of big-endian architectures to fr_prints_uint128.
+---
+ src/lib/misc.c | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/src/lib/misc.c b/src/lib/misc.c
+index 66171ff..d0ccd6c 100644
+--- a/src/lib/misc.c
++++ b/src/lib/misc.c
+@@ -1366,6 +1366,13 @@ size_t fr_prints_uint128(char *out, size_t outlen, uint128_t const num)
+ 	uint64_t n[2];
+ 	char *p = buff;
+ 	int i;
++#ifdef RADIUS_LITTLE_ENDIAN
++	const size_t l = 0;
++	const size_t h = 1;
++#else
++	const size_t l = 1;
++	const size_t h = 0;
++#endif
+ 
+ 	memset(buff, '0', sizeof(buff) - 1);
+ 	buff[sizeof(buff) - 1] = '\0';
+@@ -1376,11 +1383,11 @@ size_t fr_prints_uint128(char *out, size_t outlen, uint128_t const num)
+ 		ssize_t j;
+ 		int carry;
+ 
+-		carry = (n[1] >= 0x8000000000000000);
++		carry = (n[h] >= 0x8000000000000000);
+ 
+ 		// Shift n[] left, doubling it
+-		n[1] = ((n[1] << 1) & 0xffffffffffffffff) + (n[0] >= 0x8000000000000000);
+-		n[0] = ((n[0] << 1) & 0xffffffffffffffff);
++		n[h] = ((n[h] << 1) & 0xffffffffffffffff) + (n[l] >= 0x8000000000000000);
++		n[l] = ((n[l] << 1) & 0xffffffffffffffff);
+ 
+ 		// Add s[] to itself in decimal, doubling it
+ 		for (j = sizeof(buff) - 2; j >= 0; j--) {
+-- 
+2.1.0
+
