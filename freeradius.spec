@@ -23,7 +23,7 @@ Source104: freeradius-tmpfiles.conf
 
 Patch1: freeradius-redhat-config.patch
 Patch2: freeradius-postgres-sql.patch
-Patch3: freeradius-heartbleed-confirm.patch
+Patch3: freeradius-add-disable-openssl-version-check.patch
 Patch4: freeradius-talloc-dummy-request.patch
 Patch5: freeradius-dont-detach-after-perl_parse.patch
 Patch6: freeradius-access-union-consistently.patch
@@ -204,6 +204,7 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 
 %configure \
         --libdir=%{_libdir}/freeradius \
+        --disable-openssl-version-check \
         --with-udpfromto \
         --with-threads \
         --with-docdir=%{docdir} \

@@ -1,0 +1,258 @@
+From 10636fbfd51320c8ca8b40651bf3e959211ca921 Mon Sep 17 00:00:00 2001
+From: Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com>
+Date: Tue, 21 Oct 2014 18:30:05 +0300
+Subject: [PATCH 1/1] Add --disable-openssl-version-check option
+
+Add "--disable-openssl-version-check" configure option, which removes
+checking for vulnerable OpenSSL versions. It is supposed to be used by
+downstream packagers and distributions who have other means to ensure
+vulnerabilities are fixed, such as versioned package dependencies and
+vulnerability handling processes.
+
+This avoids the necessity of editing radiusd.conf on package upgrade to
+make sure it keeps working. At the same time, it provides safe default
+to those installing FreeRADIUS from source.
+---
+ configure                 | 30 ++++++++++++++++++++++++++++++
+ configure.ac              | 26 ++++++++++++++++++++++++++
+ raddb/radiusd.conf.in     | 10 +---------
+ src/include/autoconf.h.in |  3 +++
+ src/include/radiusd.h     |  2 ++
+ src/include/tls-h         |  2 ++
+ src/main/mainconfig.c     |  2 ++
+ src/main/radiusd.c        |  2 ++
+ src/main/tls.c            |  4 ++++
+ 9 files changed, 72 insertions(+), 9 deletions(-)
+
+diff --git a/configure b/configure
+index 1b54efd..addfeba 100755
+--- a/configure
++++ b/configure
+@@ -652,6 +652,7 @@ RUSERS
+ SNMPWALK
+ SNMPGET
+ PERL
++openssl_version_check_config
+ modconfdir
+ dictdir
+ raddbdir
+@@ -754,6 +755,7 @@ with_rlm_FOO_include_dir
+ with_openssl
+ with_openssl_lib_dir
+ with_openssl_include_dir
++enable_openssl_version_check
+ with_talloc_lib_dir
+ with_talloc_include_dir
+ with_pcap_lib_dir
+@@ -1396,6 +1398,9 @@ Optional Features:
+   --disable-largefile     omit support for large files
+   --enable-strict-dependencies  fail configure on lack of module dependancy.
+   --enable-werror         causes the build to fail if any warnings are generated.
++  --disable-openssl-version-check
++                          disable vulnerable OpenSSL version check
++
+ 
+ Optional Packages:
+   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
+@@ -5430,6 +5435,31 @@ if test "${with_openssl_include_dir+set}" = set; then :
+ fi
+ 
+ 
++# Check whether --enable-openssl-version-check was given.
++if test "${enable_openssl_version_check+set}" = set; then :
++  enableval=$enable_openssl_version_check;
++fi
++
++if test "x$enable_openssl_version_check" != "xno"; then
++
++$as_echo "#define ENABLE_OPENSSL_VERSION_CHECK 1" >>confdefs.h
++
++  openssl_version_check_config="\
++	#
++	#  allow_vulnerable_openssl: Allow the server to start with
++	#  versions of OpenSSL known to have critical vulnerabilities.
++	#
++	#  This check is based on the version number reported by libssl
++	#  and may not reflect patches applied to libssl by
++	#  distribution maintainers.
++	#
++	allow_vulnerable_openssl = no"
++else
++  openssl_version_check_config=
++fi
++
++
++
+ 
+ CHECKRAD=checkrad
+ # Extract the first word of "perl", so it can be a program name with args.
+diff --git a/configure.ac b/configure.ac
+index 30b226b..b223505 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -576,6 +576,32 @@ AC_ARG_WITH(openssl-include-dir,
+   esac ]
+ )
+ 
++dnl #
++dnl #  extra argument: --disable-openssl-version-check
++dnl #
++AC_ARG_ENABLE(openssl-version-check,
++[AS_HELP_STRING([--disable-openssl-version-check],
++                [disable vulnerable OpenSSL version check])]
++)
++if test "x$enable_openssl_version_check" != "xno"; then
++  AC_DEFINE(ENABLE_OPENSSL_VERSION_CHECK, [1],
++            [Define to 1 to have OpenSSL version check enabled])
++  openssl_version_check_config="\
++	#
++	#  allow_vulnerable_openssl: Allow the server to start with
++	#  versions of OpenSSL known to have critical vulnerabilities.
++	#
++	#  This check is based on the version number reported by libssl
++	#  and may not reflect patches applied to libssl by
++	#  distribution maintainers.
++	#
++	allow_vulnerable_openssl = no"
++else
++  openssl_version_check_config=
++fi
++AC_SUBST([openssl_version_check_config])
++
++
+ dnl #############################################################
+ dnl #
+ dnl #  1. Checks for programs
+diff --git a/raddb/radiusd.conf.in b/raddb/radiusd.conf.in
+index 307ae10..0e1ff46 100644
+--- a/raddb/radiusd.conf.in
++++ b/raddb/radiusd.conf.in
+@@ -475,15 +475,7 @@ security {
+ 	#
+ 	status_server = yes
+ 
+-	#
+-	#  allow_vulnerable_openssl: Allow the server to start with
+-	#  versions of OpenSSL known to have critical vulnerabilities.
+-	#
+-	#  This check is based on the version number reported by libssl
+-	#  and may not reflect patches applied to libssl by
+-	#  distribution maintainers.
+-	#
+-	allow_vulnerable_openssl = no
++@openssl_version_check_config@
+ }
+ 
+ # PROXY CONFIGURATION
+diff --git a/src/include/autoconf.h.in b/src/include/autoconf.h.in
+index c313bca..f500049 100644
+--- a/src/include/autoconf.h.in
++++ b/src/include/autoconf.h.in
+@@ -9,6 +9,9 @@
+ /* style of ctime_r function */
+ #undef CTIMERSTYLE
+ 
++/* Define to 1 to have OpenSSL version check enabled */
++#undef ENABLE_OPENSSL_VERSION_CHECK
++
+ /* style of gethostbyaddr_r functions */
+ #undef GETHOSTBYADDRRSTYLE
+ 
+diff --git a/src/include/radiusd.h b/src/include/radiusd.h
+index ebe3a21..1ec6959 100644
+--- a/src/include/radiusd.h
++++ b/src/include/radiusd.h
+@@ -437,7 +437,9 @@ typedef struct main_config_t {
+ #endif
+ 	uint32_t	reject_delay;
+ 	bool		status_server;
++#ifdef ENABLE_OPENSSL_VERSION_CHECK
+ 	char const	*allow_vulnerable_openssl;
++#endif
+ 
+ 	uint32_t	max_request_time;
+ 	uint32_t	cleanup_delay;
+diff --git a/src/include/tls-h b/src/include/tls-h
+index ade93d5..1418ea2 100644
+--- a/src/include/tls-h
++++ b/src/include/tls-h
+@@ -295,7 +295,9 @@ int		cbtls_verify(int ok, X509_STORE_CTX *ctx);
+ 
+ /* TLS */
+ void		tls_global_init(void);
++#ifdef ENABLE_OPENSSL_VERSION_CHECK
+ int		tls_global_version_check(char const *acknowledged);
++#endif
+ void		tls_global_cleanup(void);
+ tls_session_t	*tls_new_session(TALLOC_CTX *ctx, fr_tls_server_conf_t *conf, REQUEST *request, bool client_cert);
+ tls_session_t	*tls_new_client_session(fr_tls_server_conf_t *conf, int fd);
+diff --git a/src/main/mainconfig.c b/src/main/mainconfig.c
+index cf1eea5..76979ad 100644
+--- a/src/main/mainconfig.c
++++ b/src/main/mainconfig.c
+@@ -99,7 +99,9 @@ static const CONF_PARSER security_config[] = {
+ 	{ "max_attributes",  FR_CONF_POINTER(PW_TYPE_INTEGER, &fr_max_attributes), STRINGIFY(0) },
+ 	{ "reject_delay",  FR_CONF_POINTER(PW_TYPE_INTEGER, &main_config.reject_delay), STRINGIFY(0) },
+ 	{ "status_server", FR_CONF_POINTER(PW_TYPE_BOOLEAN, &main_config.status_server), "no"},
++#ifdef ENABLE_OPENSSL_VERSION_CHECK
+ 	{ "allow_vulnerable_openssl", FR_CONF_POINTER(PW_TYPE_STRING, &main_config.allow_vulnerable_openssl), "no"},
++#endif
+ 	{ NULL, -1, 0, NULL, NULL }
+ };
+ 
+diff --git a/src/main/radiusd.c b/src/main/radiusd.c
+index 620d7d4..fe8057d 100644
+--- a/src/main/radiusd.c
++++ b/src/main/radiusd.c
+@@ -359,10 +359,12 @@ int main(int argc, char *argv[])
+ 
+ 	/*  Check for vulnerabilities in the version of libssl were linked against */
+ #ifdef HAVE_OPENSSL_CRYPTO_H
++#ifdef ENABLE_OPENSSL_VERSION_CHECK
+ 	if (tls_global_version_check(main_config.allow_vulnerable_openssl) < 0) {
+ 		exit(EXIT_FAILURE);
+ 	}
+ #endif
++#endif
+ 
+ 	/*
+ 	 *  Load the modules
+diff --git a/src/main/tls.c b/src/main/tls.c
+index 542ce69..42b538c 100644
+--- a/src/main/tls.c
++++ b/src/main/tls.c
+@@ -51,6 +51,7 @@ USES_APPLE_DEPRECATED_API	/* OpenSSL API has been deprecated by Apple */
+ #include <openssl/ocsp.h>
+ #endif
+ 
++#ifdef ENABLE_OPENSSL_VERSION_CHECK
+ typedef struct libssl_defect {
+ 	uint64_t	high;
+ 	uint64_t	low;
+@@ -71,6 +72,7 @@ static libssl_defect_t libssl_defects[] =
+ 		.comment	= "For more information see http://heartbleed.com"
+ 	}
+ };
++#endif
+ 
+ /* record */
+ static void 		record_init(record_t *buf);
+@@ -2063,6 +2065,7 @@ void tls_global_init(void)
+ 	OPENSSL_config(NULL);
+ }
+ 
++#ifdef ENABLE_OPENSSL_VERSION_CHECK
+ /** Check for vulnerable versions of libssl
+  *
+  * @param acknowledged The highest CVE number a user has confirmed is not present in the system's libssl.
+@@ -2101,6 +2104,7 @@ int tls_global_version_check(char const *acknowledged)
+ 
+ 	return 0;
+ }
++#endif
+ 
+ /** Free any memory alloced by libssl
+  *
+-- 
+2.1.1
+
