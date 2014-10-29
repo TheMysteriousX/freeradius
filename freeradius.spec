@@ -33,6 +33,12 @@ Patch9: freeradius-dont-swap-uint128-printing-on-be.patch
 Patch10: freeradius-fix-dhcp-dictionary-loading.patch
 Patch11: freeradius-mention-eap-md5-in-radtest-synopsis.patch
 Patch12: freeradius-add-P-option-to-radtest-synopsis.patch
+Patch13: freeradius-exec-dont-assume-request-presence-when-logging.patch
+Patch14: freeradius-raddb-remove-extra-apostrophe-from-trigger.conf.patch
+Patch15: freeradius-raddb-use-appropriate-module-names-in-traps.patch
+Patch16: freeradius-connection-fall-through-to-global-module-triggers.patch
+Patch17: freeradius-ignore-SIGTERM-when-firing-stop-and-signal.term.patch
+Patch18: freeradius-raddb-update-triggers-in-trigger.conf.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -201,6 +207,12 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 %patch10 -p1
 %patch11 -p1
 %patch12 -p1
+%patch13 -p1
+%patch14 -p1
+%patch15 -p1
+%patch16 -p1
+%patch17 -p1
+%patch18 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon

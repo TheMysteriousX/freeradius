@@ -1,0 +1,30 @@
+From e37dbd2dd0f20ff255ddc934296afa67e59695c6 Mon Sep 17 00:00:00 2001
+From: Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com>
+Date: Thu, 16 Oct 2014 13:48:32 +0300
+Subject: [PATCH 2/4] raddb: Remove extra apostrophe from trigger.conf
+
+Remove a spurious apostrophe from trigger.conf's trigger.modules.args.
+
+This fixes module triggers, otherwise producing this error:
+
+    rad_expand_xlat: Invalid string passed as argument
+---
+ raddb/trigger.conf | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/raddb/trigger.conf b/raddb/trigger.conf
+index aa846c3..b80089c 100644
+--- a/raddb/trigger.conf
++++ b/raddb/trigger.conf
+@@ -194,7 +194,7 @@ trigger {
+ 	#  "trigger" subsection in the module configuration.
+ 	modules {
+ 		# Common arguments
+-		args = "radiusdModuleName s ldap' radiusdModuleInstance s ''"
++		args = "radiusdModuleName s ldap radiusdModuleInstance s ''"
+ 
+ 		# The files module
+ 		files {
+-- 
+2.1.1
+
