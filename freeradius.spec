@@ -31,8 +31,8 @@ Patch7: freeradius-dont-truncate-uint64.patch
 Patch8: freeradius-prefix-endian-macros.patch
 Patch9: freeradius-dont-swap-uint128-printing-on-be.patch
 Patch10: freeradius-fix-dhcp-dictionary-loading.patch
-Patch11: freeradius-add-P-option-to-radtest-synopsis.patch
-Patch12: freeradius-mention-eap-md5-in-radtest-synopsis.patch
+Patch11: freeradius-mention-eap-md5-in-radtest-synopsis.patch
+Patch12: freeradius-add-P-option-to-radtest-synopsis.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
