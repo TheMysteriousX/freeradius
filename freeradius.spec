@@ -31,6 +31,7 @@ Patch7: freeradius-dont-truncate-uint64.patch
 Patch8: freeradius-prefix-endian-macros.patch
 Patch9: freeradius-dont-swap-uint128-printing-on-be.patch
 Patch10: freeradius-fix-dhcp-dictionary-loading.patch
+Patch11: freeradius-add-P-option-to-radtest-synopsis.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -197,6 +198,7 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 %patch8 -p1
 %patch9 -p1
 %patch10 -p1
+%patch11 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
