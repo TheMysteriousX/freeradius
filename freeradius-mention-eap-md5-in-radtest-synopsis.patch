@@ -1,0 +1,27 @@
+From b00d9a63963c4d5dec72d8c4671a72cde5c4ca69 Mon Sep 17 00:00:00 2001
+From: Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com>
+Date: Mon, 27 Oct 2014 16:14:35 +0200
+Subject: [PATCH 1/2] man: Mention eap-md5 in radtest synopsis
+
+Add "eap-md5" to the possible values of -t option in radtest's manpage
+SYNOPSIS to match the detailed description in the OPTIONS.
+---
+ man/man1/radtest.1 | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/man/man1/radtest.1 b/man/man1/radtest.1
+index f4fdba3..587870c 100644
+--- a/man/man1/radtest.1
++++ b/man/man1/radtest.1
+@@ -6,7 +6,7 @@ radtest - send packets to a RADIUS server, show reply
+ .RB [ \-d
+ .IR raddb_directory ]
+ .RB [ \-t
+-.IR pap/chap/mschap ]
++.IR pap/chap/mschap/eap-md5 ]
+ .RB [ \-x
+ .IR ]
+ .RB [ \-4
+-- 
+2.1.1
+
