@@ -40,6 +40,7 @@ Patch16: freeradius-connection-fall-through-to-global-module-triggers.patch
 Patch17: freeradius-ignore-SIGTERM-when-firing-stop-and-signal.term.patch
 Patch18: freeradius-raddb-update-triggers-in-trigger.conf.patch
 Patch19: freeradius-make-grp-tallo-c-too.patch
+Patch20: freeradius-fix-checks-for-PW_TYPE_FILE_INPUT.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -215,6 +216,7 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 %patch17 -p1
 %patch18 -p1
 %patch19 -p1
+%patch20 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
