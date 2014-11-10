@@ -240,6 +240,7 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
         --without-rlm_sql_firebird \
         --without-rlm_sql_db2 \
         --without-rlm_sql_oracle \
+        --without-rlm_rest \
         --without-rlm_unbound
 
 make
