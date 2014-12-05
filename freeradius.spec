@@ -282,6 +282,7 @@ mkdir -p $RPM_BUILD_ROOT%{_datadir}/snmp/mibs/
 install -m 644 mibs/*RADIUS*.txt $RPM_BUILD_ROOT%{_datadir}/snmp/mibs/
 
 rm -f $RPM_BUILD_ROOT/usr/sbin/rc.radiusd
+rm -f $RPM_BUILD_ROOT/usr/bin/rbmonkey
 rm -rf $RPM_BUILD_ROOT/%{_libdir}/freeradius/*.a
 rm -rf $RPM_BUILD_ROOT/%{_libdir}/freeradius/*.la
 
