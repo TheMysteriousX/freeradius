@@ -1,0 +1,37 @@
+From 08700ea8b1f3a1ace01d294548f3ba2391cc06ab Mon Sep 17 00:00:00 2001
+From: "Alan T. DeKok" <aland@freeradius.org>
+Date: Sun, 2 Nov 2014 14:44:32 -0500
+Subject: [PATCH 1/1] Added -D option to mirror radclient
+
+---
+ src/modules/proto_dhcp/dhcpclient.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/src/modules/proto_dhcp/dhcpclient.c b/src/modules/proto_dhcp/dhcpclient.c
+index ac52ffd..3bce4b3 100644
+--- a/src/modules/proto_dhcp/dhcpclient.c
++++ b/src/modules/proto_dhcp/dhcpclient.c
+@@ -73,6 +73,7 @@ static void NEVER_RETURNS usage(void)
+ 
+ 	fprintf(stderr, "  <command>              One of discover, request, offer, decline, release, inform.\n");
+ 	fprintf(stderr, "  -d <directory>         Set the directory where the dictionaries are stored (defaults to " RADDBDIR ").\n");
++	fprintf(stderr, "  -D <dictdir>           Set main dictionary directory (defaults to " DICTDIR ").\n");
+ 	fprintf(stderr, "  -f <file>              Read packets from file, not stdin.\n");
+ 	fprintf(stderr, "  -t <timeout>           Wait 'timeout' seconds for a reply (may be a floating point number).\n");
+ 	fprintf(stderr, "  -v                     Show program version information.\n");
+@@ -270,7 +271,11 @@ int main(int argc, char **argv)
+ 
+ 	fr_debug_flag = 0;
+ 
+-	while ((c = getopt(argc, argv, "d:f:hr:t:vx")) != EOF) switch(c) {
++	while ((c = getopt(argc, argv, "d:D:f:hr:t:vx")) != EOF) switch(c) {
++		case 'D':
++			dict_dir = optarg;
++			break;
++
+ 		case 'd':
+ 			radius_dir = optarg;
+ 			break;
+-- 
+2.1.3
+
