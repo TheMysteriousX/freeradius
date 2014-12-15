@@ -1,0 +1,26 @@
+From 313d551547efa8493741ef1344e0629aab04dd70 Mon Sep 17 00:00:00 2001
+From: Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com>
+Date: Fri, 5 Dec 2014 15:07:59 +0200
+Subject: [PATCH 3/3] dhcpclient: Add a short description to help output
+
+Add a short description of the program's function to the help output of
+dhcpclient.
+---
+ src/modules/proto_dhcp/dhcpclient.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/modules/proto_dhcp/dhcpclient.c b/src/modules/proto_dhcp/dhcpclient.c
+index 64debfe..5677588 100644
+--- a/src/modules/proto_dhcp/dhcpclient.c
++++ b/src/modules/proto_dhcp/dhcpclient.c
+@@ -70,6 +70,7 @@ char const *dhcpclient_version = "dhcpclient version " RADIUSD_VERSION_STRING
+ static void NEVER_RETURNS usage(void)
+ {
+ 	fprintf(stderr, "Usage: dhcpclient [options] server[:port] <command>\n");
++	fprintf(stderr, "Send a DHCP request with provided RADIUS attrs and output response.\n");
+ 
+ 	fprintf(stderr, "  <command>              One of discover, request, offer, decline, release, inform.\n");
+ 	fprintf(stderr, "  -d <directory>         Set the directory where the dictionaries are stored (defaults to " RADDBDIR ").\n");
+-- 
+2.1.3
+

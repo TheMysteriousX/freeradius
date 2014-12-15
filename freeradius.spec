@@ -45,6 +45,9 @@ Patch21: freeradius-added-D-option-to-mirror-radclient.patch
 Patch22: freeradius-man-remove-client-attribute-description.patch
 Patch23: freeradius-man-remove-references-to-naslist-and-clients.patch
 Patch24: freeradius-valuepair-don-t-remove-unkown-backslash.patch
+Patch25: freeradius-rad_counter-use-heredoc-for-help-message.patch
+Patch26: freeradius-rad_counter-Refine-help-message.patch
+Patch27: freeradius-dhcpclient-Add-a-short-description-to-help-output.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -225,6 +228,9 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 %patch22 -p1
 %patch23 -p1
 %patch24 -p1
+%patch25 -p1
+%patch26 -p1
+%patch27 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
