@@ -48,6 +48,7 @@ Patch24: freeradius-valuepair-don-t-remove-unkown-backslash.patch
 Patch25: freeradius-rad_counter-use-heredoc-for-help-message.patch
 Patch26: freeradius-rad_counter-Refine-help-message.patch
 Patch27: freeradius-dhcpclient-Add-a-short-description-to-help-output.patch
+Patch28: freeradius-raddb-Move-trigger.conf-INCLUDE-before-modules.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -231,6 +232,7 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 %patch25 -p1
 %patch26 -p1
 %patch27 -p1
+%patch28 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
