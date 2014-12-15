@@ -44,6 +44,7 @@ Patch20: freeradius-fix-checks-for-PW_TYPE_FILE_INPUT.patch
 Patch21: freeradius-added-D-option-to-mirror-radclient.patch
 Patch22: freeradius-man-remove-client-attribute-description.patch
 Patch23: freeradius-man-remove-references-to-naslist-and-clients.patch
+Patch24: freeradius-valuepair-don-t-remove-unkown-backslash.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -223,6 +224,7 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 %patch21 -p1
 %patch22 -p1
 %patch23 -p1
+%patch24 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
