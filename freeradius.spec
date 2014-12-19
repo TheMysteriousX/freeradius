@@ -51,6 +51,7 @@ Patch27: freeradius-dhcpclient-Add-a-short-description-to-help-output.patch
 Patch28: freeradius-raddb-Move-trigger.conf-INCLUDE-before-modules.patch
 Patch29: freeradius-Resolve-to-all-families-on-ip_hton-fallback.patch
 Patch30: freeradius-Don-t-overwrite-ip_hton-af-prefix-in-fr_pton4-6.patch
+Patch31: freeradius-raddb-Comment-on-ipaddr-ipv4addr-ipv6addr-use.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -237,6 +238,7 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 %patch28 -p1
 %patch29 -p1
 %patch30 -p1
+%patch31 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
