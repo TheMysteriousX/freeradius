@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.4
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -778,6 +778,9 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc.so
 
 %changelog
+* Fri Dec 19 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.4-3
+- Rebuilt with new OpenSSL.
+
 * Mon Oct  6 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.4-2
 - Fix abort on home server triggers.
 - Fix segfault upon example.pl read failure.
