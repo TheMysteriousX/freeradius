@@ -1,0 +1,62 @@
+From 64ee0b30df59857bce8f0efea019d065cf48c54c Mon Sep 17 00:00:00 2001
+From: Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com>
+Date: Thu, 18 Dec 2014 22:05:35 +0200
+Subject: [PATCH 2/2] Don't overwrite ip_hton af/prefix in fr_pton4/6
+
+Don't overwrite address family and prefix set by ip_hton (which can fall
+back onto other address family) with AF_INET/32 and AF_INET6/128, in
+fr_pton4 and fr_pton6 respectively.
+
+This fixes radiusd listening on wrong address data when falling back to
+another address family.
+---
+ src/lib/misc.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/src/lib/misc.c b/src/lib/misc.c
+index ad27057..cf49917 100644
+--- a/src/lib/misc.c
++++ b/src/lib/misc.c
+@@ -238,6 +238,9 @@ int fr_pton4(fr_ipaddr_t *out, char const *value, size_t inlen, bool resolve, bo
+ 	 *	192.0.2.2 is parsed as if it was /32
+ 	 */
+ 	if (!p) {
++		out->prefix = 32;
++		out->af = AF_INET;
++
+ 		/*
+ 		 *	Allow '*' as the wildcard address usually 0.0.0.0
+ 		 */
+@@ -258,9 +261,6 @@ int fr_pton4(fr_ipaddr_t *out, char const *value, size_t inlen, bool resolve, bo
+ 			}
+ 		} else if (ip_hton(out, AF_INET, value, fallback) < 0) return -1;
+ 
+-		out->prefix = 32;
+-		out->af = AF_INET;
+-
+ 		return 0;
+ 	}
+ 
+@@ -338,6 +338,9 @@ int fr_pton6(fr_ipaddr_t *out, char const *value, size_t inlen, bool resolve, bo
+ 
+ 	p = strchr(value, '/');
+ 	if (!p) {
++		out->prefix = 128;
++		out->af = AF_INET6;
++
+ 		/*
+ 		 *	Allow '*' as the wildcard address
+ 		 */
+@@ -350,9 +353,6 @@ int fr_pton6(fr_ipaddr_t *out, char const *value, size_t inlen, bool resolve, bo
+ 			}
+ 		} else if (ip_hton(out, AF_INET6, value, fallback) < 0) return -1;
+ 
+-		out->prefix = 128;
+-		out->af = AF_INET6;
+-
+ 		return 0;
+ 	}
+ 
+-- 
+2.1.3
+
