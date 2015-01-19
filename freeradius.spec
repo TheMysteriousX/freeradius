@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.4
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -824,6 +824,49 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc.so
 
 %changelog
+* Mon Jan 19 2015 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.4-4
+- Fix OpenSSL version parsing when checking for compatibility at run time.
+  Resolves: Bug#1173821
+- Don't remove backslash from unknown escape sequences in LDAP values.
+  Resolves: Bug#1173526
+- Improve dhcpclient and rad_counter online help.
+  Resolves: Bug#1146966
+- raddb: Move trigger.conf INCLUDE before modules, making it easier to refer
+  to trigger variables from module configurations.
+  Resolves: Bug#1155961
+- Fix ipaddr option fallback onto ipv6.
+  Resolves: Bug#1168868
+- raddb: Comment on ipaddr/ipv4addr/ipv6addr use.
+  Resolves: Bug#1168247
+- Disable rlm_rest building explicitly to avoid unintended builds on some
+  architectures breaking RPM build.
+  Resolves: Bug#1162156
+- Add -D option support to dhcpclient.
+  Related: Bug#1146939
+- Don't install rbmonkey - a test tool only useful to developers.
+  Related: Bug#1146966
+- Update clients(5) man page
+  Resolves: Bug#1147464
+- Fix possible group info corruption/segfault in rlm_unix' fr_getgrnam.
+- Fix file configuration item parsing.
+- Fix a number of trigger issues.
+  Resolves: Bug#1110407 radiusd doesn't send snmp trap after "radmin -e 'hup
+                        files'"
+  Resolves: Bug#1110414 radiusd doesn't send snmp trap when sql connection is
+                        opened,closed or fail
+  Resolves: Bug#1110186 radiusd doesn't send snmp trap when ldap connection
+                        fails/opens/closes
+  Resolves: Bug#1109164 snmp trap messages send by radiusd are inconsistent
+                        and incomplete
+- Fix two omissions from radtest manpage.
+  Resolves: Bug#1146898 'eap-md5' value is missing in -t option in SYNOPSIS
+                        of radtest man page
+  Resolves: Bug#1114669 Missing -P option in radtest manpage
+- Disable OpenSSL version checking to avoid the need to edit radiusd.conf to
+  confirm heartbleed is fixed.
+  Resolves: Bug#1155070 FreeRADIUS doesn't start after upgrade due to failing
+                        OpenSSL version check
+
 * Fri Dec 19 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.4-3
 - Rebuilt with new OpenSSL.
 
