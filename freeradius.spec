@@ -788,6 +788,7 @@ exit 0
 %changelog
 * Fri Feb 17 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.11-7
 - Make sure FreeRADIUS starts after IPA, directory, and Kerberos servers
+- Don't rotate radutmp, as it's not a log file
 
 * Fri Feb 10 2017 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.11-6
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
