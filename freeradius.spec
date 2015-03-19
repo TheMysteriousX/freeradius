@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 3.0.4
-Release: 4%{?dist}
+Version: 3.0.7
+Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -23,36 +23,6 @@ Source104: freeradius-tmpfiles.conf
 
 Patch1: freeradius-redhat-config.patch
 Patch2: freeradius-postgres-sql.patch
-Patch3: freeradius-add-disable-openssl-version-check.patch
-Patch4: freeradius-talloc-dummy-request.patch
-Patch5: freeradius-dont-detach-after-perl_parse.patch
-Patch6: freeradius-access-union-consistently.patch
-Patch7: freeradius-dont-truncate-uint64.patch
-Patch8: freeradius-prefix-endian-macros.patch
-Patch9: freeradius-dont-swap-uint128-printing-on-be.patch
-Patch10: freeradius-fix-dhcp-dictionary-loading.patch
-Patch11: freeradius-mention-eap-md5-in-radtest-synopsis.patch
-Patch12: freeradius-add-P-option-to-radtest-synopsis.patch
-Patch13: freeradius-exec-dont-assume-request-presence-when-logging.patch
-Patch14: freeradius-raddb-remove-extra-apostrophe-from-trigger.conf.patch
-Patch15: freeradius-raddb-use-appropriate-module-names-in-traps.patch
-Patch16: freeradius-connection-fall-through-to-global-module-triggers.patch
-Patch17: freeradius-ignore-SIGTERM-when-firing-stop-and-signal.term.patch
-Patch18: freeradius-raddb-update-triggers-in-trigger.conf.patch
-Patch19: freeradius-make-grp-tallo-c-too.patch
-Patch20: freeradius-fix-checks-for-PW_TYPE_FILE_INPUT.patch
-Patch21: freeradius-added-D-option-to-mirror-radclient.patch
-Patch22: freeradius-man-remove-client-attribute-description.patch
-Patch23: freeradius-man-remove-references-to-naslist-and-clients.patch
-Patch24: freeradius-valuepair-don-t-remove-unkown-backslash.patch
-Patch25: freeradius-rad_counter-use-heredoc-for-help-message.patch
-Patch26: freeradius-rad_counter-Refine-help-message.patch
-Patch27: freeradius-dhcpclient-Add-a-short-description-to-help-output.patch
-Patch28: freeradius-raddb-Move-trigger.conf-INCLUDE-before-modules.patch
-Patch29: freeradius-Resolve-to-all-families-on-ip_hton-fallback.patch
-Patch30: freeradius-Don-t-overwrite-ip_hton-af-prefix-in-fr_pton4-6.patch
-Patch31: freeradius-raddb-Comment-on-ipaddr-ipv4addr-ipv6addr-use.patch
-Patch32: freeradius-Fix-OpenSSL-version-check-issues.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -211,35 +181,6 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 # mistakenly includes the backup files, especially problematic for raddb config files.
 %patch1 -p1
 %patch2 -p1
-%patch3 -p1
-%patch4 -p1
-%patch5 -p1
-%patch6 -p1
-%patch7 -p1
-%patch8 -p1
-%patch9 -p1
-%patch10 -p1
-%patch11 -p1
-%patch12 -p1
-%patch13 -p1
-%patch14 -p1
-%patch15 -p1
-%patch16 -p1
-%patch17 -p1
-%patch18 -p1
-%patch19 -p1
-%patch20 -p1
-%patch21 -p1
-%patch22 -p1
-%patch23 -p1
-%patch24 -p1
-%patch25 -p1
-%patch26 -p1
-%patch27 -p1
-%patch28 -p1
-%patch29 -p1
-%patch30 -p1
-%patch31 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -316,6 +257,11 @@ rm -rf $RPM_BUILD_ROOT/etc/raddb/mods-config/sql/main/oracle
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-available/unbound
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-config/unbound/default.conf
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-available/couchbase
+rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-available/abfab*
+rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/policy.d/abfab*
+rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/sites-available/abfab*
+
+rm $RPM_BUILD_ROOT/%{_libdir}/freeradius/rlm_test.so
 
 # remove unsupported config files
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/experimental.conf
@@ -418,6 +364,7 @@ exit 0
 # certs
 %dir %attr(770,root,radiusd) /etc/raddb/certs
 %config(noreplace) /etc/raddb/certs/Makefile
+%config(noreplace) /etc/raddb/certs/passwords.mk
 /etc/raddb/certs/README
 %config(noreplace) /etc/raddb/certs/xpextensions
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/certs/*.cnf
@@ -606,6 +553,7 @@ exit 0
 %{_libdir}/freeradius/rlm_always.so
 %{_libdir}/freeradius/rlm_attr_filter.so
 %{_libdir}/freeradius/rlm_cache.so
+%{_libdir}/freeradius/rlm_cache_rbtree.so
 %{_libdir}/freeradius/rlm_chap.so
 %{_libdir}/freeradius/rlm_counter.so
 %{_libdir}/freeradius/rlm_cram.so
@@ -824,6 +772,11 @@ exit 0
 %{_libdir}/freeradius/rlm_sql_unixodbc.so
 
 %changelog
+* Thu Mar 19 2015 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.7-1
+- Upgrade to upstream v3.0.7 release.
+  See upstream ChangeLog for details (in freeradius-doc subpackage).
+  Resolves: Bug#1133959
+
 * Fri Feb 13 2015 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.4-4
 - Bump release number to catch up with Fedora 21.
 
