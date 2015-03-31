@@ -286,6 +286,10 @@ install -d -m 0710 %{buildroot}%{_localstatedir}/run/radiusd/
 install -d -m 0700 %{buildroot}%{_localstatedir}/run/radiusd/tmp
 install -m 0644 %{SOURCE104} %{buildroot}%{_sysconfdir}/tmpfiles.d/radiusd.conf
 
+# install SNMP MIB files
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/snmp/mibs/
+install -m 644 mibs/*RADIUS*.txt $RPM_BUILD_ROOT%{_datadir}/snmp/mibs/
+
 # remove unneeded stuff
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/certs/*.crt
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/certs/*.csr
@@ -297,10 +301,6 @@ rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/certs/index.*
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/certs/serial*
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/certs/dh
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/certs/random
-
-# install SNMP MIB files
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/snmp/mibs/
-install -m 644 mibs/*RADIUS*.txt $RPM_BUILD_ROOT%{_datadir}/snmp/mibs/
 
 rm -f $RPM_BUILD_ROOT/usr/sbin/rc.radiusd
 rm -f $RPM_BUILD_ROOT/usr/bin/rbmonkey
