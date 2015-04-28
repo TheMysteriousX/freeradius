@@ -1,6 +1,6 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 3.0.7
+Version: 3.0.8
 Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
@@ -783,6 +783,11 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Tue Apr 28 2015 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.8-1
+- Upgrade to upstream v3.0.7 release.
+  See upstream ChangeLog for details (in freeradius-doc subpackage).
+  Related: Bug#1133959
+
 * Thu Mar 19 2015 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.7-1
 - Upgrade to upstream v3.0.7 release.
   See upstream ChangeLog for details (in freeradius-doc subpackage).
