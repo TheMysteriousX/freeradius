@@ -417,6 +417,7 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-available/buffered-sql
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-available/tls
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-available/channel_bindings
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-available/challenge
 
 # sites-enabled
 # symlink: /etc/raddb/sites-enabled/xxx -> ../sites-available/xxx
