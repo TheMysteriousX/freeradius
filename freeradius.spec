@@ -22,7 +22,6 @@ Source103: freeradius-pam-conf
 Source104: freeradius-tmpfiles.conf
 
 Patch1: freeradius-redhat-config.patch
-Patch2: freeradius-postgres-sql.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -189,7 +188,6 @@ This plugin provides the REST support for the FreeRADIUS server project.
 # Note: We explicitly do not make patch backup files because 'make install'
 # mistakenly includes the backup files, especially problematic for raddb config files.
 %patch1 -p1
-%patch2 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
