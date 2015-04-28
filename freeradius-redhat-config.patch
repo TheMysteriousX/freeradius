@@ -1,4 +1,4 @@
-From 61aa3696bb0179a8296e4f389f34ffc31424dbf1 Mon Sep 17 00:00:00 2001
+From 3f5aac1af1da83cb2212fdd5293f76e1c252af0e Mon Sep 17 00:00:00 2001
 From: Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com>
 Date: Mon, 8 Sep 2014 12:32:13 +0300
 Subject: [PATCH 1/1] Adjust configuration to fit Red Hat specifics
@@ -9,10 +9,10 @@ Subject: [PATCH 1/1] Adjust configuration to fit Red Hat specifics
  2 files changed, 5 insertions(+), 6 deletions(-)
 
 diff --git a/raddb/mods-available/eap b/raddb/mods-available/eap
-index 6938171..95ef666 100644
+index 165971a..d8a695a 100644
 --- a/raddb/mods-available/eap
 +++ b/raddb/mods-available/eap
-@@ -430,7 +430,7 @@ eap {
+@@ -436,7 +436,7 @@ eap {
  			#
  			#  You should also delete all of the files
  			#  in the directory when the server starts.
@@ -21,7 +21,7 @@ index 6938171..95ef666 100644
  
  			#  The command used to verify the client cert.
  			#  We recommend using the OpenSSL command-line
-@@ -444,7 +444,7 @@ eap {
+@@ -450,7 +450,7 @@ eap {
  			#  in PEM format.  This file is automatically
  			#  deleted by the server when the command
  			#  returns.
@@ -31,7 +31,7 @@ index 6938171..95ef666 100644
  
  		#
 diff --git a/raddb/radiusd.conf.in b/raddb/radiusd.conf.in
-index 307ae10..7cf71be 100644
+index fb7d1bd..ae8be51 100644
 --- a/raddb/radiusd.conf.in
 +++ b/raddb/radiusd.conf.in
 @@ -70,8 +70,7 @@ certdir = ${confdir}/certs
@@ -44,7 +44,7 @@ index 307ae10..7cf71be 100644
  
  #
  # libdir: Where to find the rlm_* modules.
-@@ -415,8 +414,8 @@ security {
+@@ -436,8 +435,8 @@ security {
  	#  member.  This can allow for some finer-grained access
  	#  controls.
  	#
@@ -56,5 +56,5 @@ index 307ae10..7cf71be 100644
  	#  Core dumps are a bad thing.  This should only be set to
  	#  'yes' if you're debugging a problem with the server.
 -- 
-2.1.0
+2.1.4
 
