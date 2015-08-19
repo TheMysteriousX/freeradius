@@ -1,7 +1,7 @@
-From 3f5aac1af1da83cb2212fdd5293f76e1c252af0e Mon Sep 17 00:00:00 2001
+From 8af37f606e89367f360cce012e0e1c363b44a50f Mon Sep 17 00:00:00 2001
 From: Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com>
 Date: Mon, 8 Sep 2014 12:32:13 +0300
-Subject: [PATCH 1/1] Adjust configuration to fit Red Hat specifics
+Subject: [PATCH] Adjust configuration to fit Red Hat specifics
 
 ---
  raddb/mods-available/eap | 4 ++--
@@ -9,10 +9,10 @@ Subject: [PATCH 1/1] Adjust configuration to fit Red Hat specifics
  2 files changed, 5 insertions(+), 6 deletions(-)
 
 diff --git a/raddb/mods-available/eap b/raddb/mods-available/eap
-index 165971a..d8a695a 100644
+index 10026ec..212f25b 100644
 --- a/raddb/mods-available/eap
 +++ b/raddb/mods-available/eap
-@@ -436,7 +436,7 @@ eap {
+@@ -440,7 +440,7 @@ eap {
  			#
  			#  You should also delete all of the files
  			#  in the directory when the server starts.
@@ -21,7 +21,7 @@ index 165971a..d8a695a 100644
  
  			#  The command used to verify the client cert.
  			#  We recommend using the OpenSSL command-line
-@@ -450,7 +450,7 @@ eap {
+@@ -454,7 +454,7 @@ eap {
  			#  in PEM format.  This file is automatically
  			#  deleted by the server when the command
  			#  returns.
@@ -31,7 +31,7 @@ index 165971a..d8a695a 100644
  
  		#
 diff --git a/raddb/radiusd.conf.in b/raddb/radiusd.conf.in
-index fb7d1bd..ae8be51 100644
+index c62f4ff..625f434 100644
 --- a/raddb/radiusd.conf.in
 +++ b/raddb/radiusd.conf.in
 @@ -70,8 +70,7 @@ certdir = ${confdir}/certs
@@ -56,5 +56,5 @@ index fb7d1bd..ae8be51 100644
  	#  Core dumps are a bad thing.  This should only be set to
  	#  'yes' if you're debugging a problem with the server.
 -- 
-2.1.4
+2.5.0
 

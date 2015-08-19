@@ -1,6 +1,6 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 3.0.8
+Version: 3.0.9
 Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
@@ -235,7 +235,7 @@ install -m 0644 %{SOURCE104} %{buildroot}%{_sysconfdir}/tmpfiles.d/radiusd.conf
 
 # install SNMP MIB files
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/snmp/mibs/
-install -m 644 mibs/*RADIUS*.txt $RPM_BUILD_ROOT%{_datadir}/snmp/mibs/
+install -m 644 mibs/*RADIUS*.mib $RPM_BUILD_ROOT%{_datadir}/snmp/mibs/
 
 # remove unneeded stuff
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/certs/*.crt
@@ -602,6 +602,7 @@ exit 0
 %{_libdir}/freeradius/rlm_sql.so
 %{_libdir}/freeradius/rlm_sqlcounter.so
 %{_libdir}/freeradius/rlm_sqlippool.so
+%{_libdir}/freeradius/rlm_sqlhpwippool.so
 %{_libdir}/freeradius/rlm_sql_null.so
 %{_libdir}/freeradius/rlm_unix.so
 %{_libdir}/freeradius/rlm_unpack.so
@@ -637,7 +638,7 @@ exit 0
 %doc %{_mandir}/man8/radrelay.8.gz
 
 # MIB files
-%{_datadir}/snmp/mibs/*RADIUS*.txt
+%{_datadir}/snmp/mibs/*RADIUS*.mib
 
 %files doc
 
@@ -782,6 +783,13 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Wed Aug 19 2015 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.9-1
+- Upgrade to upstream v3.0.9 release.
+  See upstream ChangeLog for details (in freeradius-doc subpackage).
+  Resolves: Bug#1133959
+  Resolves: Bug#1248894
+  Resolves: Bug#1234976
+
 * Tue Apr 28 2015 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.8-1
 - Upgrade to upstream v3.0.7 release.
   See upstream ChangeLog for details (in freeradius-doc subpackage).
