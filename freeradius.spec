@@ -785,6 +785,8 @@ exit 0
 %changelog
 * Wed Aug 19 2015 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.9-1
 - Upgrade to upstream v3.0.9 release.
+  See upstream ChangeLog for details (in freeradius-doc subpackage).
+  Resolves: Bug#1133959
 
 * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.0.8-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
