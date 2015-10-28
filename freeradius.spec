@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 3.0.9
-Release: 1%{?dist}
+Version: 3.0.10
+Release: 0%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -45,7 +45,7 @@ BuildRequires: libyubikey-devel
 BuildRequires: ykclient-devel
 %endif
 
-Requires: openssl >= 1.0.1e-37.fc20.1
+Requires: openssl >= 1.0.1e-34
 Requires(pre): shadow-utils glibc-common
 Requires(post): systemd-sysv
 Requires(post): systemd-units
@@ -783,35 +783,7 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
-* Wed Aug 19 2015 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.9-1
-- Upgrade to upstream v3.0.9 release.
-  See upstream ChangeLog for details (in freeradius-doc subpackage).
-  Resolves: Bug#1133959
-
-* Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.0.8-3
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
-
-* Fri Jun 05 2015 Jitka Plesnikova <jplesnik@redhat.com> - 3.0.8-2
-- Perl 5.22 rebuild
-
-* Tue Apr 28 2015 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.8-1
-- Upgrade to upstream v3.0.7 release.
-  See upstream ChangeLog for details (in freeradius-doc subpackage).
-  Related: Bug#1133959
-
-* Thu Mar 19 2015 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.7-1
-- Upgrade to upstream v3.0.7 release.
-  See upstream ChangeLog for details (in freeradius-doc subpackage).
-  Resolves: Bug#1133959
-- Add freeradius-rest package containing rlm_rest module.
-  Resolves: Bug#1196276
-
-* Fri Feb 13 2015 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.4-4
-- Bump release number to catch up with Fedora 21.
-
-* Mon Jan 19 2015 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.4-3
-- Fix OpenSSL version parsing when checking for compatibility at run time.
-  Resolves: Bug#1173821
+* Fri Dec 26 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.4-6
 - Don't remove backslash from unknown escape sequences in LDAP values.
   Resolves: Bug#1173526
 - Improve dhcpclient and rad_counter online help.
@@ -823,6 +795,8 @@ exit 0
   Resolves: Bug#1168868
 - raddb: Comment on ipaddr/ipv4addr/ipv6addr use.
   Resolves: Bug#1168247
+
+* Tue Dec 09 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.4-5
 - Disable rlm_rest building explicitly to avoid unintended builds on some
   architectures breaking RPM build.
   Resolves: Bug#1162156
@@ -832,8 +806,12 @@ exit 0
   Related: Bug#1146966
 - Update clients(5) man page
   Resolves: Bug#1147464
+
+* Thu Oct 30 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.4-4
 - Fix possible group info corruption/segfault in rlm_unix' fr_getgrnam.
 - Fix file configuration item parsing.
+
+* Wed Oct 29 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.4-3
 - Fix a number of trigger issues.
   Resolves: Bug#1110407 radiusd doesn't send snmp trap after "radmin -e 'hup
                         files'"
@@ -854,66 +832,56 @@ exit 0
 
 * Mon Oct  6 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.4-2
 - Fix abort on home server triggers.
+  Resolves: Bug#1113509 radiusd aborts when it has no proxy response with active
+                        snmp traps
 - Fix segfault upon example.pl read failure.
+  Resolves: Bug#1146403 radiusd segfaults when file for perl module has
+                        wrong permissions
 - Fix example.pl permissions.
+  Resolves: Bug#1146406 /etc/raddb/mods-config/perl/example.pl has wrong
+                        permissions and radiusd fails to start
 - Fix integer handling in various cases.
+  Resolves: Bug#1146441 upstream test suite fails
 - Fix dhcpclient's dictionary.dhcp loading.
+  Resolves: Bug#1146939 dhcpclient lookups dictionary.dhcp file in wrong
+                        location
 
 * Mon Sep 15 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.4-1
 - Upgrade to upstream 3.0.4 release.
   See upstream ChangeLog for details (in freeradius-doc subpackage).
-- Resolves: Bug#1099620
-
-* Tue Sep 09 2014 Jitka Plesnikova <jplesnik@redhat.com> - 3.0.4-0.2.rc2
-- Perl 5.20 mass
 
 * Mon Sep  8 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.4-0.1.rc2
 - Upgrade to upstream 3.0.4-rc2 release.
   See upstream ChangeLog for details (in freeradius-doc subpackage).
+- Add installation of SNMP MIB files.
+- Resolves: Bug#1036562 Missing doc page for kerberos module
+- Resolves: Bug#1099625 Default message digest defaults to sha1
+- Resolves: Bug#1109159 missing mib files in freeradius package
+- Resolves: Bug#1113010 radiusd doesn't send snmp trap when max_threads value
+                        is reached
+- Resolves: Bug#1114669 Missing -P option in radtest manpage
+- Resolves: Bug#1115128 radisud can't start if proto = udp is specified
+- Resolves: Bug#1115134 radiusd aborts after 'Access-Request' when listens on
+                        TCP port
+- Resolves: Bug#1115137 radiusd listens on udp port even if proto = tcp is
+                        specified
+- Resolves: Bug#1126725 radiusd silently fails when start_servers is higher
+                        than max_servers
+- Resolves: Bug#1135446 Radeapclient is not available
 
-* Tue Aug 26 2014 Jitka Plesnikova <jplesnik@redhat.com> - 3.0.3-5
-- Perl 5.20 rebuild
-
-* Sat Aug 16 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.0.3-4
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_22_Mass_Rebuild
-
-* Sat Jun 07 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.0.3-3
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
-
-* Mon Jun  2 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.3-2
-- Add explicit dependency on OpenSSL package with fixed CVE-2014-0160
-  (Heartbleed bug).
-- Add confirmation of CVE-2014-0160 being fixed in OpenSSL to radiusd.conf.
-
-* Wed May 14 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.3-1
-- Upgrade to upstream 3.0.3 release.
-  See upstream ChangeLog for details (in freeradius-doc subpackage).
-- Minor configuration parsing change: "Double-escaping of characters in Perl,
-  and octal characters has been fixed. If your configuration has text like
-  "\\000", you will need to remove one backslash."
-- Additionally includes post-release fixes for:
-  * case-insensitive matching in compiled regular expressions not working,
-  * upstream issue #634 "3.0.3 SIGSEGV on config parse",
-  * upstream issue #635 "3.0.x - rlm_perl - strings are still
-    escaped when passed to perl from FreeRADIUS",
-  * upstream issue #639 "foreach may cause ABORT".
-- Fixes bugs 1097266 1070447
-
-* Wed May  7 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.2-1
-- Upgrade to upstream 3.0.2 release, configuration compatible with 3.0.1.
-  See upstream ChangeLog for details (in freeradius-doc subpackage)
-- Fixes bugs 1058884 1061408 1070447 1079500
-
-* Mon Feb 24 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.1-4
+* Thu Feb 27 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.1-6
 - Fix CVE-2014-2015 "freeradius: stack-based buffer overflow flaw in rlm_pap
   module"
 - resolves: bug#1066984 (fedora 1066763)
 
-* Fri Feb 21 2014 John Dennis <jdennis@redhat.com> - 3.0.1-3
+* Thu Feb 27 2014 John Dennis <jdennis@redhat.com> - 3.0.1-5
 - resolves: bug#1068798 (fedora 1068795)
   rlm_perl attribute values truncated
 
-* Sun Jan 19 2014 John Dennis <jdennis@redhat.com> - 3.0.1-2
+* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 3.0.1-4
+- Mass rebuild 2014-01-24
+
+* Sun Jan 19 2014 John Dennis <jdennis@redhat.com> - 3.0.1-3
 - resolves: bug#1055073 (fedora 1055072)
   rlm_ippool; bad config file attribute and fails to send reply attributes
 - resolves: bug#1055567 (fedora 1056227)
@@ -921,11 +889,21 @@ exit 0
 - change CFLAGS -imacros to -include to address gcc/gdb bug 1004526
   where gdb will not display source information, only <command-line>
 
+* Wed Jan 15 2014 Honza Horak <hhorak@redhat.com> - 3.0.1-2
+- Rebuild for mariadb-libs
+  Related: #1045013
+
 * Tue Jan 14 2014 John Dennis <jdennis@redhat.com> - 3.0.1-1
 - Upgrade to upstream 3.0.1 release, full config compatible with 3.0.0.
   This is a roll-up of all upstream bugs fixes found in 3.0.0
   See upstream ChangeLog for details (in freeradius-doc subpackage)
-- fixes bugs 1053020 1044747 1048474 1043036
+- resolves: bug#1052450 (fedora 1053020)
+- resolves: bug#1044748 (fedora 1044747)
+- resolves: bug#1048475 (fedora 1048474)
+- resolves: bug#1043037 (fedora 1043036)
+
+* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 3.0.0-5
+- Mass rebuild 2013-12-27
 
 * Tue Nov 26 2013 John Dennis <jdennis@redhat.com> - 3.0.0-4
 - resolves: bug#1031035
@@ -946,13 +924,10 @@ exit 0
 - resolves: bug#1024119
   tncfhh-devel is now available in RHEL-7, remove conditional BuildRequires
 
-* Sun Oct 13 2013 John Dennis <jdennis@redhat.com> - 3.0.0-1
+* Wed Oct  9 2013 John Dennis <jdennis@redhat.com> - 3.0.0-1
 - Offical 3.0 gold release from upstream
-- resolves: bug#1016873
-- resolves: bug#891297
-
-* Sun Sep  8 2013 John Dennis <jdennis@redhat.com> - 3.0.0-0.4.rc1
-- upgrade to second 3.0 release candidate rc1
+- resolves: bug#1000455
+- resolves: bug#891305
 
 * Mon Aug 26 2013 John Dennis <jdennis@redhat.com> - 3.0.0-0.3.rc0
 - add missingok config attribute to /etc/raddb/sites-enabled/* symlinks

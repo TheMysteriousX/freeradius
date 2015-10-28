@@ -1,6 +1,6 @@
-From 8af37f606e89367f360cce012e0e1c363b44a50f Mon Sep 17 00:00:00 2001
-From: Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com>
-Date: Mon, 8 Sep 2014 12:32:13 +0300
+From 314235dfc2f290f542cf511e3b689f6dac3fde93 Mon Sep 17 00:00:00 2001
+From: Adam Bishop <adam@omega.org.uk>
+Date: Thu, 29 Oct 2015 10:04:45 +0000
 Subject: [PATCH] Adjust configuration to fit Red Hat specifics
 
 ---
@@ -9,7 +9,7 @@ Subject: [PATCH] Adjust configuration to fit Red Hat specifics
  2 files changed, 5 insertions(+), 6 deletions(-)
 
 diff --git a/raddb/mods-available/eap b/raddb/mods-available/eap
-index 10026ec..212f25b 100644
+index 8759784..694905e 100644
 --- a/raddb/mods-available/eap
 +++ b/raddb/mods-available/eap
 @@ -440,7 +440,7 @@ eap {
@@ -57,4 +57,3 @@ index c62f4ff..625f434 100644
  	#  'yes' if you're debugging a problem with the server.
 -- 
 2.5.0
-
