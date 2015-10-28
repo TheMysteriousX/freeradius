@@ -783,6 +783,9 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Wed Oct 28 2015 Adam Bishop <Adam.bishop@jisc.ac.uk> - 3.10.0-0
+- Update spec file for 3.0.10 based on changes in Fedora up to 2fbcdb04d763e4f7a7655ce4c523bcfc68784b59
+
 * Fri Dec 26 2014 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.4-6
 - Don't remove backslash from unknown escape sequences in LDAP values.
   Resolves: Bug#1173526
