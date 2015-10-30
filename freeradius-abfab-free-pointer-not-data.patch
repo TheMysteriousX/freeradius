@@ -1,0 +1,21 @@
+From 9ab5f5283f346303778c3ba4abb0c4ec8f3f377d Mon Sep 17 00:00:00 2001
+From: "Alan T. DeKok" <aland@freeradius.org>
+Date: Thu, 29 Oct 2015 12:33:21 -0400
+Subject: [PATCH] Free the pointer, not the data it points to
+
+---
+ src/modules/rlm_realm/rlm_realm.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/modules/rlm_realm/rlm_realm.c b/src/modules/rlm_realm/rlm_realm.c
+index aafbe64..aced9eb 100644
+--- a/src/modules/rlm_realm/rlm_realm.c
++++ b/src/modules/rlm_realm/rlm_realm.c
+@@ -375,7 +375,7 @@ static int mod_instantiate(CONF_SECTION *conf, void *instance)
+ 	if (strcmp(inst->trust_router, "none") != 0) {
+ 		if (!tr_init()) return -1;
+ 	} else {
+-		rad_const_free(&inst->trust_router);
++		rad_const_free(inst->trust_router);
+ 	}
+ #endif

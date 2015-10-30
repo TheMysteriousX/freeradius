@@ -1,0 +1,20 @@
+From d39d71152d739392923bd481e886e095c11e39fd Mon Sep 17 00:00:00 2001
+From: Adam Bishop <TheMysteriousX@users.noreply.github.com>
+Date: Thu, 29 Oct 2015 17:09:16 +0000
+Subject: [PATCH] Restore trailing curly brace
+
+Looks like it was accidentally removed in 73847d34f5a59a7deb60259c2b35ca5b02a9c62d
+---
+ raddb/sites-available/abfab-tr-idp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/raddb/sites-available/abfab-tr-idp b/raddb/sites-available/abfab-tr-idp
+index 16820e1..d4e53a9 100644
+--- a/raddb/sites-available/abfab-tr-idp
++++ b/raddb/sites-available/abfab-tr-idp
+@@ -170,4 +170,4 @@ post-proxy {
+ 	#
+ 	eap
+ }
+-
++}
