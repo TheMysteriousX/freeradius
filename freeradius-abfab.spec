@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 3.0.7
-Release: 1%{?dist}
+Version: 3.0.10
+Release: 0%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -23,6 +23,8 @@ Source103: freeradius-pam-conf
 Source104: freeradius-tmpfiles.conf
 
 Patch1: freeradius-redhat-config.patch
+Patch2: freeradius-abfab-free-pointer-not-data.patch
+Patch3: freeradius-abfab-restore-trailing-curly-brace.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 %define initddir %{?_initddir:%{_initddir}}%{!?_initddir:%{_initrddir}}
@@ -46,6 +48,10 @@ BuildRequires: libyubikey-devel
 BuildRequires: tncfhh-devel
 BuildRequires: ykclient-devel
 %endif
+
+# Moonshot Dependencies
+BuildRequires: trust_router-devel
+Requires: trust_router-libs
 
 Requires: openssl >= 1.0.1e-16.el6_5.7
 Requires(pre): shadow-utils glibc-common
@@ -165,6 +171,16 @@ BuildRequires: postgresql-devel
 %description postgresql
 This plugin provides the postgresql support for the FreeRADIUS server project.
 
+%package rest
+Summary: REST support for freeradius
+Group: System Environment/Daemons
+Requires: %{name} = %{version}-%{release}
+BuildRequires: libcurl-devel
+BuildRequires: json-c-devel
+
+%description rest
+This plugin provides the REST support for the FreeRADIUS server project.
+
 %package sqlite
 Summary: SQLite support for freeradius
 Group: System Environment/Daemons
@@ -189,6 +205,8 @@ This plugin provides the unixODBC support for the FreeRADIUS server project.
 # Note: We explicitly do not make patch backup files because 'make install'
 # mistakenly includes the backup files, especially problematic for raddb config files.
 %patch1 -p1
+%patch2 -p1
+%patch3 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -410,6 +428,7 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-available/abfab-tr-idp
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-available/abfab-tls
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-available/control-socket
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-available/challenge
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-available/channel_bindings
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-available/decoupled-accounting
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-available/robust-proxy-accounting
@@ -486,7 +505,6 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/redis
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rediswho
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/replicate
-%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/smbpasswd
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/smsotp
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/soh
@@ -615,12 +633,12 @@ exit 0
 %{_libdir}/freeradius/rlm_radutmp.so
 %{_libdir}/freeradius/rlm_realm.so
 %{_libdir}/freeradius/rlm_replicate.so
-%{_libdir}/freeradius/rlm_rest.so
 %{_libdir}/freeradius/rlm_soh.so
 %{_libdir}/freeradius/rlm_sometimes.so
 %{_libdir}/freeradius/rlm_sql.so
 %{_libdir}/freeradius/rlm_sqlcounter.so
 %{_libdir}/freeradius/rlm_sqlippool.so
+%{_libdir}/freeradius/rlm_sqlhpwippool.so
 %{_libdir}/freeradius/rlm_sql_null.so
 %{_libdir}/freeradius/rlm_test.so
 %{_libdir}/freeradius/rlm_unix.so
@@ -797,6 +815,10 @@ exit 0
 %files ldap
 %{_libdir}/freeradius/rlm_ldap.so
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/ldap
+
+%files rest
+%{_libdir}/freeradius/rlm_rest.so
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %files unixODBC
 %{_libdir}/freeradius/rlm_sql_unixodbc.so
