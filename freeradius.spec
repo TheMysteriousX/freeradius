@@ -1,6 +1,6 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 3.0.9
+Version: 3.0.10
 Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
@@ -38,7 +38,6 @@ BuildRequires: libpcap-devel
 BuildRequires: systemd-units
 BuildRequires: libtalloc-devel
 BuildRequires: pcre-devel
-BuildRequires: tncfhh-devel
 
 %if ! 0%{?rhel}
 BuildRequires: libyubikey-devel
@@ -207,6 +206,7 @@ This plugin provides the REST support for the FreeRADIUS server project.
         --with-rlm-dbm-lib-dir=%{_libdir} \
         --with-rlm-krb5-include-dir=/usr/kerberos/include \
         --without-rlm_eap_ikev2 \
+        --without-rlm_eap_tnc \
         --without-rlm_sql_iodbc \
         --without-rlm_sql_firebird \
         --without-rlm_sql_db2 \
@@ -579,7 +579,6 @@ exit 0
 %endif
 %{_libdir}/freeradius/rlm_eap_sim.so
 %{_libdir}/freeradius/rlm_eap_tls.so
-%{_libdir}/freeradius/rlm_eap_tnc.so
 %{_libdir}/freeradius/rlm_eap_ttls.so
 %{_libdir}/freeradius/rlm_exec.so
 %{_libdir}/freeradius/rlm_expiration.so
@@ -783,6 +782,12 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Wed Dec 09 2015 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.10-1
+- Upgrade to upstream v3.0.10 release.
+  See upstream ChangeLog for details (in freeradius-doc subpackage).
+  Related: Bug#1133959
+- Remove rlm_eap_tnc support as the required package "tncfhh" was retired.
+
 * Wed Aug 19 2015 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.9-1
 - Upgrade to upstream v3.0.9 release.
   See upstream ChangeLog for details (in freeradius-doc subpackage).
