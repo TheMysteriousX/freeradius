@@ -1,4 +1,4 @@
-From 8af37f606e89367f360cce012e0e1c363b44a50f Mon Sep 17 00:00:00 2001
+From edcb433824bea5f7f7832b3ce0a2d59228e7e513 Mon Sep 17 00:00:00 2001
 From: Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com>
 Date: Mon, 8 Sep 2014 12:32:13 +0300
 Subject: [PATCH] Adjust configuration to fit Red Hat specifics
@@ -9,10 +9,10 @@ Subject: [PATCH] Adjust configuration to fit Red Hat specifics
  2 files changed, 5 insertions(+), 6 deletions(-)
 
 diff --git a/raddb/mods-available/eap b/raddb/mods-available/eap
-index 10026ec..212f25b 100644
+index 1b69550..8f38c47 100644
 --- a/raddb/mods-available/eap
 +++ b/raddb/mods-available/eap
-@@ -440,7 +440,7 @@ eap {
+@@ -453,7 +453,7 @@ eap {
  			#
  			#  You should also delete all of the files
  			#  in the directory when the server starts.
@@ -21,7 +21,7 @@ index 10026ec..212f25b 100644
  
  			#  The command used to verify the client cert.
  			#  We recommend using the OpenSSL command-line
-@@ -454,7 +454,7 @@ eap {
+@@ -467,7 +467,7 @@ eap {
  			#  in PEM format.  This file is automatically
  			#  deleted by the server when the command
  			#  returns.
@@ -56,5 +56,5 @@ index c62f4ff..625f434 100644
  	#  Core dumps are a bad thing.  This should only be set to
  	#  'yes' if you're debugging a problem with the server.
 -- 
-2.5.0
+2.8.0.rc3
 

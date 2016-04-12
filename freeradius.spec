@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 3.0.10
-Release: 2%{?dist}
+Version: 3.0.11
+Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -601,7 +601,6 @@ exit 0
 %{_libdir}/freeradius/rlm_sql.so
 %{_libdir}/freeradius/rlm_sqlcounter.so
 %{_libdir}/freeradius/rlm_sqlippool.so
-%{_libdir}/freeradius/rlm_sqlhpwippool.so
 %{_libdir}/freeradius/rlm_sql_null.so
 %{_libdir}/freeradius/rlm_unix.so
 %{_libdir}/freeradius/rlm_unpack.so
@@ -782,6 +781,10 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Tue Apr 12 2016 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.11-1
+- Upgrade to upstream v3.0.10 release.
+  See upstream ChangeLog for details (in freeradius-doc subpackage).
+
 * Wed Feb 03 2016 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.10-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
 
