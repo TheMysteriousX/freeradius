@@ -214,7 +214,9 @@ This plugin provides the REST support for the FreeRADIUS server project.
         --without-rlm_sql_firebird \
         --without-rlm_sql_db2 \
         --without-rlm_sql_oracle \
-        --without-rlm_unbound
+        --without-rlm_unbound \
+        --without-rlm_redis \
+        --without-rlm_rediswho
 
 make
 
