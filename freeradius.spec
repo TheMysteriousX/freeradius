@@ -228,7 +228,7 @@ make install R=$RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/var/log/radius/radacct
 touch $RPM_BUILD_ROOT/var/log/radius/{radutmp,radius.log}
 
-install -D -m 755 %{SOURCE100} $RPM_BUILD_ROOT/%{_unitdir}/radiusd.service
+install -D -m 644 %{SOURCE100} $RPM_BUILD_ROOT/%{_unitdir}/radiusd.service
 install -D -m 644 %{SOURCE102} $RPM_BUILD_ROOT/%{_sysconfdir}/logrotate.d/radiusd
 install -D -m 644 %{SOURCE103} $RPM_BUILD_ROOT/%{_sysconfdir}/pam.d/radiusd
 
@@ -790,6 +790,7 @@ exit 0
 - Make sure FreeRADIUS starts after IPA, directory, and Kerberos servers
 - Don't rotate radutmp, as it's not a log file
 - Logrotate with "systemctl" instead of "service"
+- Remove executable bits from "radiusd.service"
 
 * Fri Feb 10 2017 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.11-6
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
