@@ -122,6 +122,7 @@ Requires: %{name} = %{version}-%{release}
 Requires: perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
 %{?fedora:BuildRequires: perl-devel}
 BuildRequires: perl-devel
+BuildRequires: perl-generators
 BuildRequires: perl(ExtUtils::Embed)
 
 %description perl
