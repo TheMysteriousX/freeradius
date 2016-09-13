@@ -40,10 +40,12 @@ BuildRequires: systemd-units
 BuildRequires: libtalloc-devel
 BuildRequires: pcre-devel
 
-%if ! 0%{?rhel}
+BuildRequires: samba-devel
+BuildRequires: libwbclient-devel
+BuildRequires: trust_router-devel
+BuildRequires: libmemcached-devel
 BuildRequires: libyubikey-devel
 BuildRequires: ykclient-devel
-%endif
 
 # Require OpenSSL version we built with, or newer, to avoid startup failures
 # due to runtime OpenSSL version checks.
@@ -68,6 +70,17 @@ also RADIUS clients available for Web servers, firewalls, Unix logins, and
 more.  Using RADIUS allows authentication and authorization for a network to
 be centralized, and minimizes the amount of re-configuration which has to be
 done when adding or deleting new users.
+
+%package abfab
+Group: System Environment/Daemons
+Summary: FreeRADIUS ABFAb Configuration
+Requires: %{name} = %{version}-%{release}
+Requires: freeradius-sqlite
+Requires: trust_router-libs
+
+%description abfab
+This package provides configuration required by an ABFAb (RFC 7055)
+identity provider or RP proxy.
 
 %package doc
 Group: Documentation
@@ -163,6 +176,15 @@ BuildRequires: postgresql-devel
 %description postgresql
 This plugin provides the postgresql support for the FreeRADIUS server project.
 
+%package redis
+Summary: Redis support for freeradius
+Group: System Environment/Daemons
+Requires: %{name} = %{version}-%{release}
+BuildRequires: hiredis-devel
+
+%description redis
+This plugin provides the MySQL support for the FreeRADIUS server project.
+
 %package sqlite
 Summary: SQLite support for freeradius
 Group: System Environment/Daemons
@@ -221,10 +243,7 @@ This plugin provides the REST support for the FreeRADIUS server project.
         --without-rlm_sql_firebird \
         --without-rlm_sql_db2 \
         --without-rlm_sql_oracle \
-        --without-rlm_unbound \
-        --without-rlm_redis \
-        --without-rlm_rediswho \
-        --without-rlm_cache_memcached
+        --without-rlm_unbound
 
 make
 
@@ -272,16 +291,10 @@ rm -rf $RPM_BUILD_ROOT/etc/raddb/mods-config/sql/main/mssql
 rm -rf $RPM_BUILD_ROOT/etc/raddb/mods-config/sql/ippool/oracle
 rm -rf $RPM_BUILD_ROOT/etc/raddb/mods-config/sql/ippool-dhcp/oracle
 rm -rf $RPM_BUILD_ROOT/etc/raddb/mods-config/sql/main/oracle
-rm -r $RPM_BUILD_ROOT/etc/raddb/mods-config/sql/moonshot-targeted-ids
 
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-available/unbound
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-config/unbound/default.conf
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-available/couchbase
-rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-available/abfab*
-rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-available/moonshot-targeted-ids
-rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/policy.d/abfab*
-rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/policy.d/moonshot-targeted-ids
-rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/sites-available/abfab*
 
 rm $RPM_BUILD_ROOT/%{_libdir}/freeradius/rlm_test.so
 
@@ -576,6 +589,7 @@ exit 0
 %{_libdir}/freeradius/rlm_always.so
 %{_libdir}/freeradius/rlm_attr_filter.so
 %{_libdir}/freeradius/rlm_cache.so
+%{_libdir}/freeradius/rlm_cache_memcached.so
 %{_libdir}/freeradius/rlm_cache_rbtree.so
 %{_libdir}/freeradius/rlm_chap.so
 %{_libdir}/freeradius/rlm_counter.so
@@ -656,10 +670,23 @@ exit 0
 # MIB files
 %{_datadir}/snmp/mibs/*RADIUS*.mib
 
+%files abfab
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/abfab_psk_sql
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/moonshot-targeted-ids
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/moonshot-targeted-ids/mysql/queries.conf
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/moonshot-targeted-ids/mysql/schema.sql
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/moonshot-targeted-ids/postgresql/queries.conf
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/moonshot-targeted-ids/postgresql/schema.sql
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/moonshot-targeted-ids/sqlite/queries.conf
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/moonshot-targeted-ids/sqlite/schema.sql
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/policy.d/abfab-tr
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/policy.d/moonshot-targeted-ids
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-available/abfab-tr-idp
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/sites-available/abfab-tls
+
 %files doc
 
 %doc %{docdir}/
-
 
 %files utils
 /usr/bin/*
@@ -763,6 +790,13 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/main/postgresql/extras/cisco_h323_db_schema.sql
 
 %{_libdir}/freeradius/rlm_sql_postgresql.so
+
+%files redis
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/redis
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rediswho
+
+%{_libdir}/freeradius/rlm_redis.so
+%{_libdir}/freeradius/rlm_rediswho.so
 
 %files sqlite
 %dir %attr(750,root,radiusd) /etc/raddb/mods-config/sql/counter/sqlite
