@@ -226,7 +226,6 @@ This plugin provides the REST support for the FreeRADIUS server project.
 
 %configure \
         --libdir=%{_libdir}/freeradius \
-        --disable-openssl-version-check \
         --with-udpfromto \
         --with-threads \
         --with-docdir=%{docdir} \
