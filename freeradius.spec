@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.11
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -22,6 +22,7 @@ Source103: freeradius-pam-conf
 Source104: freeradius-tmpfiles.conf
 
 Patch1: freeradius-redhat-config.patch
+Patch2: Use-system-crypto-policy-by-default.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -188,6 +189,7 @@ This plugin provides the REST support for the FreeRADIUS server project.
 # Note: We explicitly do not make patch backup files because 'make install'
 # mistakenly includes the backup files, especially problematic for raddb config files.
 %patch1 -p1
+%patch2 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -782,6 +784,10 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Mon Sep 26 2016 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.11-3
+- Switch default configuration to use system's crypto policy.
+  Resolves: Bug#1179224
+
 * Tue May 17 2016 Jitka Plesnikova <jplesnik@redhat.com> - 3.0.11-2
 - Perl 5.24 rebuild
 
