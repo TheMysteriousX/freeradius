@@ -6,6 +6,12 @@ License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
 
+#EL7 et al. do not have /bin/perl
+%{?filter_setup:
+%filter_from_requires \/bin\/perl/d
+%filter_setup
+}
+
 # Is elliptic curve cryptography supported?
 %if 0%{?rhel} >= 7 || 0%{?fedora} >= 20
 %global HAVE_EC_CRYPTO 1
@@ -50,6 +56,7 @@ BuildRequires: ykclient-devel
 # Require OpenSSL version we built with, or newer, to avoid startup failures
 # due to runtime OpenSSL version checks.
 Requires: openssl >= %(rpm -q --queryformat '%%{EPOCH}:%%{VERSION}' openssl)
+Requires: perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
 Requires(pre): shadow-utils glibc-common
 Requires(post): systemd-sysv
 Requires(post): systemd-units
