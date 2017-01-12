@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.11
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -784,6 +784,9 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Thu Jan 12 2017 Igor Gnatenko <ignatenko@redhat.com> - 3.0.11-4
+- Rebuild for readline 7.x
+
 * Mon Sep 26 2016 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.11-3
 - Switch default configuration to use system's crypto policy.
   Resolves: Bug#1179224
