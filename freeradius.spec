@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.11
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -784,6 +784,10 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Mon Jan 16 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.11-5
+- Move tmpfiles.d config to %{_tmpfilesdir}
+- Install license files as %license
+
 * Thu Jan 12 2017 Igor Gnatenko <ignatenko@redhat.com> - 3.0.11-4
 - Rebuild for readline 7.x
 
