@@ -332,9 +332,9 @@ exit 0
 %defattr(-,root,root)
 
 # doc
-%doc %{docdir}/LICENSE.gpl
-%doc %{docdir}/LICENSE.lgpl
-%doc %{docdir}/LICENSE.openssl
+%license %{docdir}/LICENSE.gpl
+%license %{docdir}/LICENSE.lgpl
+%license %{docdir}/LICENSE.openssl
 %doc %{docdir}/REDHAT
 
 # system
