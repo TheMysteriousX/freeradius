@@ -230,11 +230,11 @@ install -D -m 755 %{SOURCE100} $RPM_BUILD_ROOT/%{_unitdir}/radiusd.service
 install -D -m 644 %{SOURCE102} $RPM_BUILD_ROOT/%{_sysconfdir}/logrotate.d/radiusd
 install -D -m 644 %{SOURCE103} $RPM_BUILD_ROOT/%{_sysconfdir}/pam.d/radiusd
 
-mkdir -p %{buildroot}%{_sysconfdir}/tmpfiles.d
+mkdir -p %{buildroot}%{_tmpfilesdir}
 mkdir -p %{buildroot}%{_localstatedir}/run/
 install -d -m 0710 %{buildroot}%{_localstatedir}/run/radiusd/
 install -d -m 0700 %{buildroot}%{_localstatedir}/run/radiusd/tmp
-install -m 0644 %{SOURCE104} %{buildroot}%{_sysconfdir}/tmpfiles.d/radiusd.conf
+install -m 0644 %{SOURCE104} %{buildroot}%{_tmpfilesdir}/radiusd.conf
 
 # install SNMP MIB files
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/snmp/mibs/
@@ -341,7 +341,7 @@ exit 0
 %config(noreplace) %{_sysconfdir}/pam.d/radiusd
 %config(noreplace) %{_sysconfdir}/logrotate.d/radiusd
 %{_unitdir}/radiusd.service
-%config %{_sysconfdir}/tmpfiles.d/radiusd.conf
+%{_tmpfilesdir}/radiusd.conf
 %dir %attr(710,radiusd,radiusd) %{_localstatedir}/run/radiusd
 %dir %attr(700,radiusd,radiusd) %{_localstatedir}/run/radiusd/tmp
 %dir %attr(755,radiusd,radiusd) %{_localstatedir}/lib/radiusd
