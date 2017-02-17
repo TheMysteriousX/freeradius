@@ -1,4 +1,4 @@
-From 7811b36eba8d10f6f9425d120e6999211b3addde Mon Sep 17 00:00:00 2001
+From f6ca45b1bab63cbb75d81de3c17b8e7c43983acc Mon Sep 17 00:00:00 2001
 From: Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com>
 Date: Mon, 26 Sep 2016 19:48:36 +0300
 Subject: [PATCH] Use system crypto policy by default
@@ -11,20 +11,20 @@ Subject: [PATCH] Use system crypto policy by default
  4 files changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/raddb/mods-available/eap b/raddb/mods-available/eap
-index 8f38c47..432389a 100644
+index 5c99b09d4..83b5f95c7 100644
 --- a/raddb/mods-available/eap
 +++ b/raddb/mods-available/eap
-@@ -320,7 +320,7 @@ eap {
- 		# Set this option to specify the allowed
- 		# TLS cipher suites.  The format is listed
- 		# in "man 1 ciphers".
+@@ -323,7 +323,7 @@ eap {
+ 		#
+ 		# For EAP-FAST, use "ALL:!EXPORT:!eNULL:!SSLv2"
+ 		#
 -		cipher_list = "DEFAULT"
 +		cipher_list = "PROFILE=SYSTEM"
  
  		# Work-arounds for OpenSSL nonsense
  		# OpenSSL 1.0.1f and 1.0.1g do not calculate
 diff --git a/raddb/mods-available/inner-eap b/raddb/mods-available/inner-eap
-index 2b4df62..af9aa88 100644
+index 2b4df6267..af9aa88cd 100644
 --- a/raddb/mods-available/inner-eap
 +++ b/raddb/mods-available/inner-eap
 @@ -68,7 +68,7 @@ eap inner-eap {
@@ -37,7 +37,7 @@ index 2b4df62..af9aa88 100644
  		#  You may want to set a very small fragment size.
  		#  The TLS data here needs to go inside of the
 diff --git a/raddb/sites-available/abfab-tls b/raddb/sites-available/abfab-tls
-index 79d74e6..d04d6be 100644
+index 79d74e6fc..d04d6be89 100644
 --- a/raddb/sites-available/abfab-tls
 +++ b/raddb/sites-available/abfab-tls
 @@ -19,7 +19,7 @@ listen {
@@ -50,7 +50,7 @@ index 79d74e6..d04d6be 100644
  		cache {
  			enable = no
 diff --git a/raddb/sites-available/tls b/raddb/sites-available/tls
-index eb60fa5..9b340d2 100644
+index eb60fa57b..9b340d2af 100644
 --- a/raddb/sites-available/tls
 +++ b/raddb/sites-available/tls
 @@ -197,7 +197,7 @@ listen {
@@ -72,5 +72,5 @@ index eb60fa5..9b340d2 100644
  
  }
 -- 
-2.9.3
+2.11.0
 

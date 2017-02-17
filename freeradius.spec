@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 3.0.11
-Release: 7%{?dist}
+Version: 3.0.12
+Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -270,6 +270,7 @@ rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-config/unbound/default.conf
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-available/couchbase
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-available/abfab*
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/policy.d/abfab*
+rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/policy.d/moonshot-targeted-ids
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/sites-available/abfab*
 
 rm $RPM_BUILD_ROOT/%{_libdir}/freeradius/rlm_test.so
@@ -497,6 +498,7 @@ exit 0
 %config(missingok) /etc/raddb/mods-enabled/attr_filter
 %config(missingok) /etc/raddb/mods-enabled/cache_eap
 %config(missingok) /etc/raddb/mods-enabled/chap
+%config(missingok) /etc/raddb/mods-enabled/date
 %config(missingok) /etc/raddb/mods-enabled/detail
 %config(missingok) /etc/raddb/mods-enabled/detail.log
 %config(missingok) /etc/raddb/mods-enabled/dhcp
@@ -574,6 +576,7 @@ exit 0
 %{_libdir}/freeradius/rlm_digest.so
 %{_libdir}/freeradius/rlm_dynamic_clients.so
 %{_libdir}/freeradius/rlm_eap.so
+%{_libdir}/freeradius/rlm_eap_fast.so
 %{_libdir}/freeradius/rlm_eap_gtc.so
 %{_libdir}/freeradius/rlm_eap_leap.so
 %{_libdir}/freeradius/rlm_eap_md5.so
@@ -658,7 +661,9 @@ exit 0
 %doc %{_mandir}/man1/radtest.1.gz
 %doc %{_mandir}/man1/radwho.1.gz
 %doc %{_mandir}/man1/radzap.1.gz
+%doc %{_mandir}/man1/rad_counter.1.gz
 %doc %{_mandir}/man1/smbencrypt.1.gz
+%doc %{_mandir}/man1/dhcpclient.1.gz
 %doc %{_mandir}/man5/checkrad.5.gz
 %doc %{_mandir}/man8/radcrypt.8.gz
 %doc %{_mandir}/man8/radsniff.8.gz
@@ -786,6 +791,10 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Fri Feb 17 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.12-1
+- Upgrade to upstream v3.0.12 release.
+  See upstream ChangeLog for details (in freeradius-doc subpackage).
+
 * Fri Feb 17 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.11-7
 - Make sure FreeRADIUS starts after IPA, directory, and Kerberos servers
 - Don't rotate radutmp, as it's not a log file
