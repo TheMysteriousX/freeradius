@@ -22,7 +22,7 @@ Source103: freeradius-pam-conf
 Source104: freeradius-tmpfiles.conf
 
 Patch1: freeradius-redhat-config.patch
-Patch2: Use-system-crypto-policy-by-default.patch
+Patch2: freeradius-Use-system-crypto-policy-by-default.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
