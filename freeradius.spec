@@ -24,6 +24,7 @@ Source104: freeradius-tmpfiles.conf
 Patch1: freeradius-redhat-config.patch
 Patch2: freeradius-Use-system-crypto-policy-by-default.patch
 Patch3: freeradius-Fix-three-cases-of-comparing-pointer-to-zero-char.patch
+Patch4: freeradius-Support-OpenSSL-v1.1.0.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -192,6 +193,7 @@ This plugin provides the REST support for the FreeRADIUS server project.
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
+%patch4 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -795,6 +797,8 @@ exit 0
 %changelog
 * Mon Feb 20 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.12-2
 - Fix three cases of comparing pointers to zero characters
+- Support OpenSSL v1.1.0
+  Resolves: Bug#1385588
 
 * Fri Feb 17 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.12-1
 - Upgrade to upstream v3.0.12 release.
