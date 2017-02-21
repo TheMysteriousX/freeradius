@@ -31,7 +31,7 @@
 	missingok
 	compress
 	postrotate
-		/usr/bin/systemctl reload radiusd
+		/usr/bin/systemctl reload-or-try-restart radiusd
 	endscript
 }
 

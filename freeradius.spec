@@ -796,6 +796,7 @@ exit 0
 
 %changelog
 * Tue Feb 21 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.12-3
+- Do not fail logrotate if radiusd is not running.
 
 * Mon Feb 20 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.12-2
 - Fix three cases of comparing pointers to zero characters
