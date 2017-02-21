@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.12
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -795,6 +795,8 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Tue Feb 21 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.12-3
+
 * Mon Feb 20 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.12-2
 - Fix three cases of comparing pointers to zero characters
 - Support OpenSSL v1.1.0
