@@ -1,0 +1,49 @@
+From ea411c1bc571aae541e609d4501184f21c67c10f Mon Sep 17 00:00:00 2001
+From: "Alan T. DeKok" <aland@freeradius.org>
+Date: Thu, 16 Feb 2017 10:59:22 -0500
+Subject: [PATCH] suid down after fchown.  Fixes #1914
+
+(cherry picked from commit a408998ab22c4e3e443e53bdf07eff4986f26132)
+---
+ src/main/mainconfig.c | 18 +++++++++---------
+ 1 file changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/src/main/mainconfig.c b/src/main/mainconfig.c
+index 43bc2b136..938a47ae2 100644
+--- a/src/main/mainconfig.c
++++ b/src/main/mainconfig.c
+@@ -643,15 +643,6 @@ static int switch_users(CONF_SECTION *cs)
+ 	}
+ 
+ 	/*
+-	 *	Once we're done with all of the privileged work,
+-	 *	permanently change the UID.
+-	 */
+-	if (do_suid) {
+-		rad_suid_set_down_uid(server_uid);
+-		rad_suid_down();
+-	}
+-
+-	/*
+ 	 *	If we don't already have a log file open, open one
+ 	 *	now.  We may not have been logging anything yet.  The
+ 	 *	server normally starts up fairly quietly.
+@@ -685,6 +676,15 @@ static int switch_users(CONF_SECTION *cs)
+ 	}
+ 
+ 	/*
++	 *	Once we're done with all of the privileged work,
++	 *	permanently change the UID.
++	 */
++	if (do_suid) {
++		rad_suid_set_down_uid(server_uid);
++		rad_suid_down();
++	}
++
++	/*
+ 	 *	This also clears the dumpable flag if core dumps
+ 	 *	aren't allowed.
+ 	 */
+-- 
+2.11.0
+
