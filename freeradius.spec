@@ -28,6 +28,7 @@ Patch4: freeradius-Support-OpenSSL-v1.1.0.patch
 Patch5: freeradius-suid-down-after-fchown.-Fixes-1914.patch
 Patch6: freeradius-Handle-hostnames-in-fr_pton4-6.patch
 Patch7: freeradius-Rename-lt_-to-fr_-.-Fixes-1277.patch
+Patch8: freeradius-Remove-mentions-of-Auth-Type-System-from-docs.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -200,6 +201,7 @@ This plugin provides the REST support for the FreeRADIUS server project.
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
+%patch8 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -806,6 +808,7 @@ exit 0
 - Fix output to log file specified with -l option.
 - Fix long hostnames interpreted as IP addresses.
 - Avoid clashes with libtool library symbols.
+- Remove mentions of Auth-Type = System from docs.
 
 * Mon Feb 20 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.12-2
 - Fix three cases of comparing pointers to zero characters
