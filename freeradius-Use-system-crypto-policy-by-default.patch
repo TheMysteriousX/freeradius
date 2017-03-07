@@ -1,4 +1,4 @@
-From f6ca45b1bab63cbb75d81de3c17b8e7c43983acc Mon Sep 17 00:00:00 2001
+From 20779164a67f77bd9530a9c5ac9cfbe249977db9 Mon Sep 17 00:00:00 2001
 From: Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com>
 Date: Mon, 26 Sep 2016 19:48:36 +0300
 Subject: [PATCH] Use system crypto policy by default
@@ -11,7 +11,7 @@ Subject: [PATCH] Use system crypto policy by default
  4 files changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/raddb/mods-available/eap b/raddb/mods-available/eap
-index 5c99b09d4..83b5f95c7 100644
+index 9659db1cd..b1ece3ad0 100644
 --- a/raddb/mods-available/eap
 +++ b/raddb/mods-available/eap
 @@ -323,7 +323,7 @@ eap {
@@ -21,8 +21,8 @@ index 5c99b09d4..83b5f95c7 100644
 -		cipher_list = "DEFAULT"
 +		cipher_list = "PROFILE=SYSTEM"
  
- 		# Work-arounds for OpenSSL nonsense
- 		# OpenSSL 1.0.1f and 1.0.1g do not calculate
+ 		# If enabled, OpenSSL will use server cipher list
+ 		# (possibly defined by cipher_list option above)
 diff --git a/raddb/mods-available/inner-eap b/raddb/mods-available/inner-eap
 index 2b4df6267..af9aa88cd 100644
 --- a/raddb/mods-available/inner-eap
@@ -50,7 +50,7 @@ index 79d74e6fc..d04d6be89 100644
  		cache {
  			enable = no
 diff --git a/raddb/sites-available/tls b/raddb/sites-available/tls
-index eb60fa57b..9b340d2af 100644
+index c9555e1c7..a34d009a7 100644
 --- a/raddb/sites-available/tls
 +++ b/raddb/sites-available/tls
 @@ -197,7 +197,7 @@ listen {
@@ -60,9 +60,9 @@ index eb60fa57b..9b340d2af 100644
 -		cipher_list = "DEFAULT"
 +		cipher_list = "PROFILE=SYSTEM"
  
- 		#
- 		#  Session resumption / fast reauthentication
-@@ -493,7 +493,7 @@ home_server tls {
+ 		# If enabled, OpenSSL will use server cipher list
+ 		# (possibly defined by cipher_list option above)
+@@ -501,7 +501,7 @@ home_server tls {
  		# Set this option to specify the allowed
  		# TLS cipher suites.  The format is listed
  		# in "man 1 ciphers".
