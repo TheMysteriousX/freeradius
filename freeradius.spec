@@ -46,7 +46,9 @@ BuildRequires: libyubikey-devel
 BuildRequires: ykclient-devel
 %endif
 
-Requires: openssl >= 1.0.1e-37.fc20.1
+# Require OpenSSL version we built with, or newer, to avoid startup failures
+# due to runtime OpenSSL version checks.
+Requires: openssl >= %(rpm -q --queryformat '%%{EPOCH}:%%{VERSION}' openssl)
 Requires(pre): shadow-utils glibc-common
 Requires(post): systemd-sysv
 Requires(post): systemd-units
@@ -795,6 +797,9 @@ exit 0
 %changelog
 * Wed Mar 15 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.13-2
 - Fix permissions of default key files in raddb/certs.
+- Require OpenSSL version we built with, or newer, to avoid startup failures
+  due to runtime OpenSSL version checks.
+  Resolves: Bug#1299388
 
 * Tue Mar 07 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.13-1
 - Upgrade to upstream v3.0.13 release.
