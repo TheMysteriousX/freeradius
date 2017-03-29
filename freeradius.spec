@@ -222,7 +222,8 @@ This plugin provides the REST support for the FreeRADIUS server project.
         --without-rlm_sql_oracle \
         --without-rlm_unbound \
         --without-rlm_redis \
-        --without-rlm_rediswho
+        --without-rlm_rediswho \
+        --without-rlm_cache_memcached
 
 make
 
@@ -798,6 +799,8 @@ exit 0
 
 %changelog
 * Wed Mar 29 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.13-3
+- Explicitly disable rlm_cache_memcached to avoid error when the module's
+  dependencies are installed, and it is built, but not packaged.
 
 * Wed Mar 15 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.13-2
 - Fix permissions of default key files in raddb/certs.
