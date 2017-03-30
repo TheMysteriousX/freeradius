@@ -1,0 +1,30 @@
+From bd67f9fc09690f0b3ac195cb9c57d51bd7a7dc23 Mon Sep 17 00:00:00 2001
+From: Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com>
+Date: Wed, 29 Mar 2017 10:43:14 +0300
+Subject: [PATCH] Handle connection error in rlm_ldap_cacheable_groupobj
+
+Closes #1951
+
+(cherry picked from commit 208681c80e1149de888affdb87f34de0c371db50)
+---
+ src/modules/rlm_ldap/groups.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/modules/rlm_ldap/groups.c b/src/modules/rlm_ldap/groups.c
+index 12f34da2a..5e0a1819e 100644
+--- a/src/modules/rlm_ldap/groups.c
++++ b/src/modules/rlm_ldap/groups.c
+@@ -461,8 +461,10 @@ rlm_rcode_t rlm_ldap_cacheable_groupobj(rlm_ldap_t const *inst, REQUEST *request
+ 
+ 	case LDAP_PROC_NO_RESULT:
+ 		RDEBUG2("No cacheable group memberships found in group objects");
++		goto finish;
+ 
+ 	default:
++		rcode = RLM_MODULE_FAIL;
+ 		goto finish;
+ 	}
+ 
+-- 
+2.11.0
+

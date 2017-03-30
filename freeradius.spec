@@ -25,6 +25,7 @@ Patch1: freeradius-redhat-config.patch
 Patch2: freeradius-Use-system-crypto-policy-by-default.patch
 Patch3: freeradius-Relax-OpenSSL-permissions-for-default-key-files.patch
 Patch4: freeradius-Fix-some-issues-found-with-static-analyzers.patch
+Patch5: freeradius-Handle-connection-error-in-rlm_ldap_cacheable_groupo.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -196,6 +197,7 @@ This plugin provides the REST support for the FreeRADIUS server project.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
+%patch5 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -801,6 +803,8 @@ exit 0
 * Wed Mar 29 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.13-3
 - Explicitly disable rlm_cache_memcached to avoid error when the module's
   dependencies are installed, and it is built, but not packaged.
+- Prevent segfaults by adding a missing handling of connection errors in
+  rlm_ldap.
 
 * Wed Mar 15 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.13-2
 - Fix permissions of default key files in raddb/certs.
