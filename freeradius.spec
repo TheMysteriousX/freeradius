@@ -26,6 +26,7 @@ Patch2: freeradius-Use-system-crypto-policy-by-default.patch
 Patch3: freeradius-Relax-OpenSSL-permissions-for-default-key-files.patch
 Patch4: freeradius-Fix-some-issues-found-with-static-analyzers.patch
 Patch5: freeradius-Handle-connection-error-in-rlm_ldap_cacheable_groupo.patch
+Patch6: freeradius-radtest-should-use-Cleartext-Password-for-EAP.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -198,6 +199,7 @@ This plugin provides the REST support for the FreeRADIUS server project.
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
+%patch6 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -805,6 +807,7 @@ exit 0
   dependencies are installed, and it is built, but not packaged.
 - Prevent segfaults by adding a missing handling of connection errors in
   rlm_ldap.
+- Make radtest use Cleartext-Password for EAP, fixing its support for eap-md5.
 
 * Wed Mar 15 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.13-2
 - Fix permissions of default key files in raddb/certs.
