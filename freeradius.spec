@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 3.0.13
-Release: 3%{?dist}
+Version: 3.0.14
+Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -23,10 +23,6 @@ Source104: freeradius-tmpfiles.conf
 
 Patch1: freeradius-redhat-config.patch
 Patch2: freeradius-Use-system-crypto-policy-by-default.patch
-Patch3: freeradius-Relax-OpenSSL-permissions-for-default-key-files.patch
-Patch4: freeradius-Fix-some-issues-found-with-static-analyzers.patch
-Patch5: freeradius-Handle-connection-error-in-rlm_ldap_cacheable_groupo.patch
-Patch6: freeradius-radtest-should-use-Cleartext-Password-for-EAP.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -196,10 +192,6 @@ This plugin provides the REST support for the FreeRADIUS server project.
 # mistakenly includes the backup files, especially problematic for raddb config files.
 %patch1 -p1
 %patch2 -p1
-%patch3 -p1
-%patch4 -p1
-%patch5 -p1
-%patch6 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -275,11 +267,13 @@ rm -rf $RPM_BUILD_ROOT/etc/raddb/mods-config/sql/main/mssql
 rm -rf $RPM_BUILD_ROOT/etc/raddb/mods-config/sql/ippool/oracle
 rm -rf $RPM_BUILD_ROOT/etc/raddb/mods-config/sql/ippool-dhcp/oracle
 rm -rf $RPM_BUILD_ROOT/etc/raddb/mods-config/sql/main/oracle
+rm -r $RPM_BUILD_ROOT/etc/raddb/mods-config/sql/moonshot-targeted-ids
 
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-available/unbound
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-config/unbound/default.conf
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-available/couchbase
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-available/abfab*
+rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-available/moonshot-targeted-ids
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/policy.d/abfab*
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/policy.d/moonshot-targeted-ids
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/sites-available/abfab*
@@ -802,6 +796,11 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Tue May 30 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.14-1
+- Upgrade to upstream v3.0.14 release.
+  See upstream ChangeLog for details (in freeradius-doc subpackage).
+- Fix TLS resumption authentication bypass (CVE-2017-9148)
+
 * Wed Mar 29 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.13-3
 - Explicitly disable rlm_cache_memcached to avoid error when the module's
   dependencies are installed, and it is built, but not packaged.
