@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.14
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -796,6 +796,9 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Sun Jun 04 2017 Jitka Plesnikova <jplesnik@redhat.com> - 3.0.14-2
+- Perl 5.26 rebuild
+
 * Tue May 30 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.14-1
 - Upgrade to upstream v3.0.14 release.
   See upstream ChangeLog for details (in freeradius-doc subpackage).
