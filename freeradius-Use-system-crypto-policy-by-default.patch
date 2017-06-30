@@ -1,7 +1,7 @@
-From d78bf5ab1f5c8102b2b6051cfb1198488be9597d Mon Sep 17 00:00:00 2001
+From aff09f1696b4f940182f74247d0c61d7473227a3 Mon Sep 17 00:00:00 2001
 From: Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com>
 Date: Mon, 26 Sep 2016 19:48:36 +0300
-Subject: [PATCH] Use system crypto policy by default
+Subject: [PATCH] Use system crypto policy by default.
 
 ---
  raddb/mods-available/eap        | 2 +-
@@ -11,10 +11,10 @@ Subject: [PATCH] Use system crypto policy by default
  4 files changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/raddb/mods-available/eap b/raddb/mods-available/eap
-index 94494b2c6..9a8dc9327 100644
+index 5c9aff2c6..5b4dd3435 100644
 --- a/raddb/mods-available/eap
 +++ b/raddb/mods-available/eap
-@@ -323,7 +323,7 @@ eap {
+@@ -327,7 +327,7 @@ eap {
  		#
  		# For EAP-FAST, use "ALL:!EXPORT:!eNULL:!SSLv2"
  		#
@@ -24,10 +24,10 @@ index 94494b2c6..9a8dc9327 100644
  		# If enabled, OpenSSL will use server cipher list
  		# (possibly defined by cipher_list option above)
 diff --git a/raddb/mods-available/inner-eap b/raddb/mods-available/inner-eap
-index 2b4df6267..af9aa88cd 100644
+index 576eb7739..ffa07188e 100644
 --- a/raddb/mods-available/inner-eap
 +++ b/raddb/mods-available/inner-eap
-@@ -68,7 +68,7 @@ eap inner-eap {
+@@ -77,7 +77,7 @@ eap inner-eap {
  		#  certificates.  If so, edit this file.
  		ca_file = ${cadir}/ca.pem
  
@@ -50,10 +50,10 @@ index 5dbe143da..46b5fea78 100644
  		cache {
  			enable = no
 diff --git a/raddb/sites-available/tls b/raddb/sites-available/tls
-index cf1cd7a8a..7dd59cb6f 100644
+index 1219aa6bc..7d6623e43 100644
 --- a/raddb/sites-available/tls
 +++ b/raddb/sites-available/tls
-@@ -197,7 +197,7 @@ listen {
+@@ -200,7 +200,7 @@ listen {
  		# Set this option to specify the allowed
  		# TLS cipher suites.  The format is listed
  		# in "man 1 ciphers".
@@ -62,7 +62,7 @@ index cf1cd7a8a..7dd59cb6f 100644
  
  		# If enabled, OpenSSL will use server cipher list
  		# (possibly defined by cipher_list option above)
-@@ -499,7 +499,7 @@ home_server tls {
+@@ -502,7 +502,7 @@ home_server tls {
  		# Set this option to specify the allowed
  		# TLS cipher suites.  The format is listed
  		# in "man 1 ciphers".
@@ -72,5 +72,5 @@ index cf1cd7a8a..7dd59cb6f 100644
  
  }
 -- 
-2.13.2
+2.14.3 (Apple Git-98)
 
