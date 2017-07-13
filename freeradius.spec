@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.14
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -796,6 +796,9 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Thu Jul 13 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.14-3
+- Rebuild with updated MySQL client library
+
 * Sun Jun 04 2017 Jitka Plesnikova <jplesnik@redhat.com> - 3.0.14-2
 - Perl 5.26 rebuild
 
