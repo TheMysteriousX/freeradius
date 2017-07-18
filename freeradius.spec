@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 3.0.14
-Release: 3%{?dist}
+Version: 3.0.15
+Release: 1%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -21,7 +21,7 @@ Source102: freeradius-logrotate
 Source103: freeradius-pam-conf
 Source104: freeradius-tmpfiles.conf
 
-Patch1: freeradius-redhat-config.patch
+Patch1: freeradius-Adjust-configuration-to-fit-Red-Hat-specifics.patch
 Patch2: freeradius-Use-system-crypto-policy-by-default.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
@@ -796,6 +796,10 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Tue Jul 18 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.15-1
+- Upgrade to upstream v3.0.15 release.
+  See upstream ChangeLog for details (in freeradius-doc subpackage).
+
 * Thu Jul 13 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.14-3
 - Rebuild with updated MySQL client library
 
