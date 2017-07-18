@@ -799,6 +799,20 @@ exit 0
 * Tue Jul 18 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.15-1
 - Upgrade to upstream v3.0.15 release.
   See upstream ChangeLog for details (in freeradius-doc subpackage).
+- Resolves: Bug#1471848 CVE-2017-10978 freeradius: Out-of-bounds read/write
+                        due to improper output buffer size check in
+                        make_secret()
+- Resolves: Bug#1471860 CVE-2017-10983 freeradius: Out-of-bounds read in
+                        fr_dhcp_decode() when decoding option 63
+- Resolves: Bug#1471861 CVE-2017-10984 freeradius: Out-of-bounds write in
+                        data2vp_wimax()
+- Resolves: Bug#1471863 CVE-2017-10985 freeradius: Infinite loop and memory
+                        exhaustion with 'concat' attributes
+- Resolves: Bug#1471864 CVE-2017-10986 freeradius: Infinite read in
+                        dhcp_attr2vp()
+- Resolves: Bug#1471865 CVE-2017-10987 freeradius: Buffer over-read in
+                        fr_dhcp_decode_suboptions()
+- Resolves: Bug#1456220 freeradius-3.0.15 is available
 
 * Thu Jul 13 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.14-3
 - Rebuild with updated MySQL client library
