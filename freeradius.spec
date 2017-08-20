@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.15
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -132,14 +132,15 @@ BuildRequires: perl(ExtUtils::Embed)
 This plugin provides the Perl support for the FreeRADIUS server project.
 
 %package -n python2-freeradius
-%{?python_provide:%python_provide python2-freeradius}
-# Remove before F30
-Provides: %{name}-python%{?_isa} = %{version}-%{release}
-Obsoletes: %{name}-python < %{version}-%{release}
 Summary: Python support for freeradius
 Group: System Environment/Daemons
 Requires: %{name} = %{version}-%{release}
 BuildRequires: python-devel
+%{?python_provide:%python_provide python2-freeradius}
+# Remove before F30
+Provides: %{name}-python = %{version}-%{release}
+Provides: %{name}-python%{?_isa} = %{version}-%{release}
+Obsoletes: %{name}-python < %{version}-%{release}
 
 %description -n python2-freeradius
 This plugin provides the Python support for the FreeRADIUS server project.
@@ -800,6 +801,9 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Sun Aug 20 2017 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 3.0.15-5
+- Add Provides for the old name without %%_isa
+
 * Sat Aug 19 2017 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 3.0.15-4
 - Python 2 binary package renamed to python2-freeradius
   See https://fedoraproject.org/wiki/FinalizingFedoraSwitchtoPython3
