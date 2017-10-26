@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.15
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -149,7 +149,7 @@ This plugin provides the Python support for the FreeRADIUS server project.
 Summary: MySQL support for freeradius
 Group: System Environment/Daemons
 Requires: %{name} = %{version}-%{release}
-BuildRequires: mysql-devel
+BuildRequires: mariadb-connector-c-devel
 
 %description mysql
 This plugin provides the MySQL support for the FreeRADIUS server project.
@@ -211,7 +211,7 @@ This plugin provides the REST support for the FreeRADIUS server project.
         --with-rlm-sql_postgresql-include-dir=/usr/include/pgsql \
         --with-rlm-sql-postgresql-lib-dir=%{_libdir} \
         --with-rlm-sql_mysql-include-dir=/usr/include/mysql \
-        --with-mysql-lib-dir=%{_libdir}/mysql \
+        --with-mysql-lib-dir=%{_libdir}/mariadb \
         --with-unixodbc-lib-dir=%{_libdir} \
         --with-rlm-dbm-lib-dir=%{_libdir} \
         --with-rlm-krb5-include-dir=/usr/kerberos/include \
@@ -801,6 +801,11 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Thu Oct 26 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.15-6
+- Use mariadb-connector-c-devel instead of mysql-devel or mariadb-devel
+  Resolves: Bug#1493904 Use mariadb-connector-c-devel instead of mysql-devel
+                        or mariadb-devel
+
 * Sun Aug 20 2017 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 3.0.15-5
 - Add Provides for the old name without %%_isa
 
