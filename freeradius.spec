@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.15
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -801,6 +801,9 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Sun Dec 10 2017 Björn Esser <besser82@fedoraproject.org> - 3.0.15-7
+- Rebuilt for libjson-c.so.3
+
 * Thu Oct 26 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3.0.15-6
 - Use mariadb-connector-c-devel instead of mysql-devel or mariadb-devel
   Resolves: Bug#1493904 Use mariadb-connector-c-devel instead of mysql-devel
