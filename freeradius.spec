@@ -169,7 +169,7 @@ This plugin provides the Python support for the FreeRADIUS server project.
 Summary: MySQL support for freeradius
 Group: System Environment/Daemons
 Requires: %{name} = %{version}-%{release}
-BuildRequires: mariadb-connector-c-devel
+BuildRequires: mysql-devel
 
 %description mysql
 This plugin provides the MySQL support for the FreeRADIUS server project.
@@ -239,7 +239,7 @@ This plugin provides the REST support for the FreeRADIUS server project.
         --with-rlm-sql_postgresql-include-dir=/usr/include/pgsql \
         --with-rlm-sql-postgresql-lib-dir=%{_libdir} \
         --with-rlm-sql_mysql-include-dir=/usr/include/mysql \
-        --with-mysql-lib-dir=%{_libdir}/mariadb \
+        --with-mysql-lib-dir=%{_libdir}/mysql \
         --with-unixodbc-lib-dir=%{_libdir} \
         --with-rlm-dbm-lib-dir=%{_libdir} \
         --with-rlm-krb5-include-dir=/usr/kerberos/include \
