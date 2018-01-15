@@ -790,7 +790,6 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/main/postgresql/schema.sql
 
 %dir %attr(750,root,radiusd) /etc/raddb/mods-config/sql/main/postgresql/extras
-%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/main/postgresql/extras/update_radacct_group.sql
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/main/postgresql/extras/voip-postpaid.conf
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/sql/main/postgresql/extras/cisco_h323_db_schema.sql
 
