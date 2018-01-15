@@ -530,7 +530,6 @@ exit 0
 %config(missingok) /etc/raddb/mods-enabled/date
 %config(missingok) /etc/raddb/mods-enabled/detail
 %config(missingok) /etc/raddb/mods-enabled/detail.log
-%config(missingok) /etc/raddb/mods-enabled/dhcp
 %config(missingok) /etc/raddb/mods-enabled/digest
 %config(missingok) /etc/raddb/mods-enabled/dynamic_clients
 %config(missingok) /etc/raddb/mods-enabled/eap
